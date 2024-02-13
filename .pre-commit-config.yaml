@@ -27,3 +27,8 @@ repos:
         language: system
         types:
           - c#
+      - id: standard-dotnet-format
+        name: Standard dotnet format
+        entry: dotnet format
+        pass_filenames: false
+        language: system

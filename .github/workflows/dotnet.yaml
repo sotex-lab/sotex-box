@@ -21,8 +21,8 @@ jobs:
 
     - name: Lint the solution
       run: |
-        dotnet format StaffHub.sln --verify-no-changes
+        dotnet format --verify-no-changes
 
     - name: Build the solution
       run: |
-        dotnet build StaffHub.sln
+        dotnet build
