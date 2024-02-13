@@ -15,3 +15,15 @@ repos:
         entry: make py-export
         language: system
         files: 'pyproject.toml'
+      - id: dotnet-tool-restore
+        name: Install dotnet tools
+        language: system
+        entry: dotnet tool restore
+        files: ".config/dotnet-tools.json"
+        pass_filenames: false
+      - id: csharpier
+        name: Run CSharpier on c# files
+        entry: dotnet tool run dotnet-csharpier
+        language: system
+        types:
+          - c#
