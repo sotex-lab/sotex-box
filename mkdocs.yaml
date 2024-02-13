@@ -1,0 +1,71 @@
+site_name: Sotex Box docs
+site_description: >-
+  A collection of docs for the Sotex box
+
+repo_name: Sotex Box
+repo_url: https://github.com/sotex-lab/sotex-box/
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.tooltips
+    - content.code.copy
+    - navigation.sections
+    - navigation.instant
+    - search.suggest
+    - search.highlight
+    - search.share
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.ico
+  logo: assets/favicon.ico
+
+plugins:
+  - search
+  - offline
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - git-committers:
+      repository: dfinity/dre
+      branch: main
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.keys
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables

@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-xml
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: export-requirements-txt
+        name: Export requirements.txt
+        entry: make py-export
+        language: system
+        files: 'pyproject.toml'
