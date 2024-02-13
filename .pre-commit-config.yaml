@@ -32,3 +32,4 @@ repos:
         entry: dotnet format
         pass_filenames: false
         language: system
+        files: "dotnet/"
