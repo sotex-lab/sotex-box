@@ -49,7 +49,7 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
   - git-committers:
-      repository: dfinity/dre
+      repository: sotex-lab/sotex-box
       branch: main
 
 # Extensions

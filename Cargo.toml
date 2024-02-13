@@ -1,8 +1,14 @@
-[package]
-name = "sotex-box"
+[workspace]
+
+members = [
+    "rs/client"
+]
+
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+authors = ["Sotex Solutions"]
+description = "The code for sotex box"
+documentation = "https://sotex-lab.github.io/sotex-box/"
