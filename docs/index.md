@@ -1,3 +1,3 @@
 # Repo description
 
-Repository for sotex-box
+Repository for source code of sotex-box
