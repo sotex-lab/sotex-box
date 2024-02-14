@@ -32,4 +32,5 @@ py-export: ## Export poetry into requirements
 
 .PHONY: edit-docs
 edit-docs: ## Run mkdocs local server for development
+	poetry install
 	poetry run mkdocs serve
