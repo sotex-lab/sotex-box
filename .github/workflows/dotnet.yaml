@@ -28,3 +28,7 @@ jobs:
     - name: Build the solution
       run: |
         dotnet build
+
+    - name: Test the solution
+      run: |
+        make dotnet-tests

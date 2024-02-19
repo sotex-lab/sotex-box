@@ -33,3 +33,9 @@ repos:
         pass_filenames: false
         language: system
         files: "dotnet/"
+      - id: dotnet-unit-test
+        name: Dotnet unit tests
+        entry: make dotnet-unit-tests
+        pass_filenames: false
+        language: system
+        files: "dotnet/"
