@@ -109,9 +109,13 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
     public async Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message)
     {
-        var bytes = Encoding.UTF8.GetBytes(
-            JsonSerializer.Serialize(message, _jsonSerializerOptions) + "\n"
-        );
+        var stringBuilder = new StringBuilder();
+        stringBuilder
+            .Append("data: ")
+            .Append(JsonSerializer.Serialize(message, _jsonSerializerOptions))
+            .AppendLine()
+            .AppendLine();
+        var bytes = Encoding.UTF8.GetBytes(stringBuilder.ToString());
         if (!_connections.TryGetValue(id, out var connection))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);

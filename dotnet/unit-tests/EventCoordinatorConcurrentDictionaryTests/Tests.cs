@@ -115,9 +115,10 @@ public class EventCoordinatorConcurrentDictionaryTests
         var outputStream = new MemoryStream();
         testConnection.Stream.CopyTo(outputStream);
 
-        var deserializedMessage = JsonConvert.DeserializeObject<TestMessage>(
-            Encoding.UTF8.GetString(outputStream.ToArray())
-        );
+        var decodedString = Encoding.UTF8.GetString(outputStream.ToArray());
+        decodedString.ShouldStartWith("data: ");
+        decodedString = decodedString.Split("data: ")[1];
+        var deserializedMessage = JsonConvert.DeserializeObject<TestMessage>(decodedString);
         deserializedMessage!.Message.ShouldBe(message.Message);
     }
 
