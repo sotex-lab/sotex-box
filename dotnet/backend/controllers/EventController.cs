@@ -29,6 +29,7 @@ public class EventController : ControllerBase
 
         var ourToken = result.Value;
         HttpContext.Response.Headers.Append("Content-Type", "text/event-stream");
+        HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
         while (!ourToken.IsCancellationRequested && !token.IsCancellationRequested) { }
 

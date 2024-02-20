@@ -25,3 +25,6 @@ host.ApplicationStopping.Register(connections.RemoveAll);
 app.MapControllers();
 
 app.Run();
+
+// Required for integration tests
+public partial class Program { }
