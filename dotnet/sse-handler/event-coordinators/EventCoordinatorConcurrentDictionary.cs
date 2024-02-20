@@ -26,8 +26,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
             _resolveGlobalLogger,
             new ConcurrentDictionary<string, Connection>(),
             new JsonEventSerializer()
-        )
-    { }
+        ) { }
 
     public EventCoordinatorConcurrentDictionary(
         ConcurrentDictionary<string, Connection> connections

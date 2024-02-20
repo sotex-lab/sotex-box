@@ -28,8 +28,7 @@ public class EventCoordinatorMutex : IEventCoordinator
             _resolveGlobalLogger,
             new Dictionary<string, Connection>(),
             new JsonEventSerializer()
-        )
-    { }
+        ) { }
 
     public EventCoordinatorMutex(Dictionary<string, Connection> connections)
         : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }

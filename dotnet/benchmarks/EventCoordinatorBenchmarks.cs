@@ -16,15 +16,21 @@ public class Benchmarks
     public int InitialSize { get; set; }
 
     // Implementation that is running
-    [Params(typeof(EventCoordinatorConcurrentDictionary), typeof(EventCoordinatorMutex), typeof(EventCoordinatorReaderWriterLock))]
+    [Params(
+        typeof(EventCoordinatorConcurrentDictionary),
+        typeof(EventCoordinatorMutex),
+        typeof(EventCoordinatorReaderWriterLock)
+    )]
     public Type Implementation { get; set; }
 
-    private static Dictionary<Type, IDictionary<string, Connection>> ConnectionsMapping = new Dictionary<Type, IDictionary<string, Connection>>
-    {
-        [typeof(EventCoordinatorConcurrentDictionary)] = new ConcurrentDictionary<string, Connection>(),
-        [typeof(EventCoordinatorMutex)] = new Dictionary<string, Connection>(),
-        [typeof(EventCoordinatorReaderWriterLock)] = new Dictionary<string, Connection>()
-    };
+    private static Dictionary<Type, IDictionary<string, Connection>> ConnectionsMapping =
+        new Dictionary<Type, IDictionary<string, Connection>>
+        {
+            [typeof(EventCoordinatorConcurrentDictionary)] =
+                new ConcurrentDictionary<string, Connection>(),
+            [typeof(EventCoordinatorMutex)] = new Dictionary<string, Connection>(),
+            [typeof(EventCoordinatorReaderWriterLock)] = new Dictionary<string, Connection>()
+        };
 
     private IEventCoordinator eventCoordinator;
 
@@ -56,9 +62,12 @@ public class Benchmarks
     [Arguments(1000)]
     public void Add_N(int amount)
     {
-        Parallel.ForEach(Enumerable.Range(0, amount), (i) =>
-        {
-            eventCoordinator.Add((InitialSize + i).ToString(), new MemoryStream());
-        });
+        Parallel.ForEach(
+            Enumerable.Range(0, amount),
+            (i) =>
+            {
+                eventCoordinator.Add((InitialSize + i).ToString(), new MemoryStream());
+            }
+        );
     }
 }

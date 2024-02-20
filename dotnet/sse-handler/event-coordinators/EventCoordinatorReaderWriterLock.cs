@@ -29,8 +29,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
             _resolveGlobalLogger,
             new Dictionary<string, Connection>(),
             new JsonEventSerializer()
-        )
-    { }
+        ) { }
 
     public EventCoordinatorReaderWriterLock(Dictionary<string, Connection> connections)
         : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
