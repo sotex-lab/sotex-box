@@ -21,12 +21,6 @@ repos:
         entry: dotnet tool restore
         files: ".config/dotnet-tools.json"
         pass_filenames: false
-      - id: csharpier
-        name: Run CSharpier on c# files
-        entry: dotnet tool run dotnet-csharpier
-        language: system
-        types:
-          - c#
       - id: standard-dotnet-format
         name: Standard dotnet format
         entry: dotnet format

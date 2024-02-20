@@ -1,54 +1,56 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotNext;
+using DotNext.Collections.Generic;
+using DotNext.Threading;
 using Microsoft.Extensions.Logging;
 using SseHandler.Serializers;
 
 namespace SseHandler.EventCoordinators;
 
-public class EventCoordinatorConcurrentDictionary : IEventCoordinator
+public class EventCoordinatorReaderWriterLock : IEventCoordinator
 {
-    private readonly ILogger<EventCoordinatorConcurrentDictionary> _logger;
-    private readonly ConcurrentDictionary<string, Connection> _connections;
+    private readonly ILogger<EventCoordinatorReaderWriterLock> _logger;
+    private readonly Dictionary<string, Connection> _connections;
+    private readonly ReaderWriterSpinLock _lock;
     private readonly IEventSerializer _eventSerializer;
-    private static ILogger<EventCoordinatorConcurrentDictionary> _resolveGlobalLogger =>
+
+    private static ILogger<EventCoordinatorReaderWriterLock> _resolveGlobalLogger =>
         LoggerFactory
             .Create(x =>
             {
                 x.SetMinimumLevel(LogLevel.Information);
             })
-            .CreateLogger<EventCoordinatorConcurrentDictionary>();
+            .CreateLogger<EventCoordinatorReaderWriterLock>();
 
-    public EventCoordinatorConcurrentDictionary()
+    public EventCoordinatorReaderWriterLock()
         : this(
             _resolveGlobalLogger,
-            new ConcurrentDictionary<string, Connection>(),
+            new Dictionary<string, Connection>(),
             new JsonEventSerializer()
         )
     { }
 
-    public EventCoordinatorConcurrentDictionary(
-        ConcurrentDictionary<string, Connection> connections
-    )
+    public EventCoordinatorReaderWriterLock(Dictionary<string, Connection> connections)
         : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
 
-    public EventCoordinatorConcurrentDictionary(
-        ILogger<EventCoordinatorConcurrentDictionary> logger,
+    public EventCoordinatorReaderWriterLock(
+        ILogger<EventCoordinatorReaderWriterLock> logger,
         IEventSerializer eventSerializer
     )
-        : this(logger, new ConcurrentDictionary<string, Connection>(), eventSerializer) { }
+        : this(logger, new Dictionary<string, Connection>(), eventSerializer) { }
 
-    public EventCoordinatorConcurrentDictionary(
-        ILogger<EventCoordinatorConcurrentDictionary> logger,
-        ConcurrentDictionary<string, Connection> connections,
+    public EventCoordinatorReaderWriterLock(
+        ILogger<EventCoordinatorReaderWriterLock> logger,
+        Dictionary<string, Connection> connections,
         IEventSerializer eventSerializer
     )
     {
         _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
+        _lock = new ReaderWriterSpinLock();
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -60,25 +62,32 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
             );
         }
 
+        _lock.EnterReadLock();
         if (_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
+            _lock.ExitReadLock();
+            _logger.LogTrace("Connections contain key {id}", id);
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.DuplicateKey
             );
         }
 
+        _lock.EnterWriteLock();
         if (!_connections.TryAdd(id, new Connection(id, stream)))
         {
+            _lock.ExitWriteLock();
+            _lock.ExitReadLock();
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.Unknown
             );
         }
 
-        var addedValue = _connections[id];
-        return new Result<CancellationTokenSource, EventCoordinatorError>(
-            addedValue.CancellationTokenSource
+        var result = new Result<CancellationTokenSource, EventCoordinatorError>(
+            _connections[id].CancellationTokenSource
         );
+        _lock.ExitWriteLock();
+        _lock.ExitReadLock();
+        return result;
     }
 
     public Result<bool, EventCoordinatorError> Remove(string id)
@@ -88,27 +97,38 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
 
+        _lock.EnterReadLock();
         if (!_connections.ContainsKey(id))
         {
+            _lock.ExitReadLock();
             _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
 
-        if (!_connections.TryRemove(id, out var connection))
+        _lock.EnterWriteLock();
+        var removed = _connections.TryRemove(id);
+        if (removed.IsNull)
         {
+            _lock.ExitWriteLock();
+            _lock.ExitReadLock();
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
-
-        connection!.CancellationTokenSource.Cancel();
+        removed.Value.CancellationTokenSource.Cancel();
+        _lock.ExitWriteLock();
+        _lock.ExitReadLock();
         return new Result<bool, EventCoordinatorError>(true);
     }
 
     public void RemoveAll()
     {
+        _lock.EnterReadLock();
+
         foreach (var connection in _connections.Keys)
         {
             Remove(connection);
         }
+
+        _lock.EnterReadLock();
     }
 
     public async Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message)
@@ -117,7 +137,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
-
+        _lock.EnterReadLock();
         if (!_connections.TryGetValue(id, out var connection))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
@@ -125,6 +145,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
+        _lock.ExitReadLock();
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

@@ -1,54 +1,55 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotNext;
+using DotNext.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using SseHandler.Serializers;
 
 namespace SseHandler.EventCoordinators;
 
-public class EventCoordinatorConcurrentDictionary : IEventCoordinator
+public class EventCoordinatorMutex : IEventCoordinator
 {
-    private readonly ILogger<EventCoordinatorConcurrentDictionary> _logger;
-    private readonly ConcurrentDictionary<string, Connection> _connections;
+    private readonly ILogger<EventCoordinatorMutex> _logger;
+    private readonly Dictionary<string, Connection> _connections;
+    private readonly Mutex _lock;
     private readonly IEventSerializer _eventSerializer;
-    private static ILogger<EventCoordinatorConcurrentDictionary> _resolveGlobalLogger =>
+
+    private static ILogger<EventCoordinatorMutex> _resolveGlobalLogger =>
         LoggerFactory
             .Create(x =>
             {
                 x.SetMinimumLevel(LogLevel.Information);
             })
-            .CreateLogger<EventCoordinatorConcurrentDictionary>();
+            .CreateLogger<EventCoordinatorMutex>();
 
-    public EventCoordinatorConcurrentDictionary()
+    public EventCoordinatorMutex()
         : this(
             _resolveGlobalLogger,
-            new ConcurrentDictionary<string, Connection>(),
+            new Dictionary<string, Connection>(),
             new JsonEventSerializer()
         )
     { }
 
-    public EventCoordinatorConcurrentDictionary(
-        ConcurrentDictionary<string, Connection> connections
-    )
+    public EventCoordinatorMutex(Dictionary<string, Connection> connections)
         : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
 
-    public EventCoordinatorConcurrentDictionary(
-        ILogger<EventCoordinatorConcurrentDictionary> logger,
+    public EventCoordinatorMutex(
+        ILogger<EventCoordinatorMutex> logger,
         IEventSerializer eventSerializer
     )
-        : this(logger, new ConcurrentDictionary<string, Connection>(), eventSerializer) { }
+        : this(logger, new Dictionary<string, Connection>(), eventSerializer) { }
 
-    public EventCoordinatorConcurrentDictionary(
-        ILogger<EventCoordinatorConcurrentDictionary> logger,
-        ConcurrentDictionary<string, Connection> connections,
+    public EventCoordinatorMutex(
+        ILogger<EventCoordinatorMutex> logger,
+        Dictionary<string, Connection> connections,
         IEventSerializer eventSerializer
     )
     {
         _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
+        _lock = new Mutex();
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -62,22 +63,23 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         if (_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.DuplicateKey
             );
         }
 
+        _lock.WaitOne();
         if (!_connections.TryAdd(id, new Connection(id, stream)))
         {
+            _lock.ReleaseMutex();
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.Unknown
             );
         }
+        _lock.ReleaseMutex();
 
-        var addedValue = _connections[id];
         return new Result<CancellationTokenSource, EventCoordinatorError>(
-            addedValue.CancellationTokenSource
+            _connections[id].CancellationTokenSource
         );
     }
 
@@ -90,16 +92,18 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         if (!_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
-            return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
+            return new Result<bool, EventCoordinatorError>(EventCoordinatorError.DuplicateKey);
         }
 
-        if (!_connections.TryRemove(id, out var connection))
+        _lock.WaitOne();
+        var removed = _connections.TryRemove(id);
+        if (removed.IsNull)
         {
+            _lock.ReleaseMutex();
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
-
-        connection!.CancellationTokenSource.Cancel();
+        _lock.ReleaseMutex();
+        removed.Value.CancellationTokenSource.Cancel();
         return new Result<bool, EventCoordinatorError>(true);
     }
 
@@ -117,7 +121,6 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
-
         if (!_connections.TryGetValue(id, out var connection))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
