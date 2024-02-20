@@ -46,3 +46,8 @@ dotnet-unit-tests: ## Run dotnet unit tests
 .PHONY: run-backend
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
+
+.PHONY: dotnet-benchmark
+dotnet-benchmark: ## Shorthand for running dotnet benchmarks
+	dotnet run -c Release --project dotnet/benchmarks
+	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md

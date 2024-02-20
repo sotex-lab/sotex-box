@@ -9,8 +9,8 @@ public static class EventCoordinatorExtensions
 {
     public static void AddEventCoordinator(this IServiceCollection services)
     {
-        services.AddSingleton<IEventCoordinator>(x => new EventCoordinatorConcurrentDictionary(
-            x.GetRequiredService<ILogger<EventCoordinatorConcurrentDictionary>>(),
+        services.AddSingleton<IEventCoordinator>(x => new EventCoordinatorMutex(
+            x.GetRequiredService<ILogger<EventCoordinatorMutex>>(),
             new JsonEventSerializer()
         ));
     }
