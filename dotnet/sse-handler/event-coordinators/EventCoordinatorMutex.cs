@@ -91,7 +91,7 @@ public class EventCoordinatorMutex : IEventCoordinator
 
         if (!_connections.ContainsKey(id))
         {
-            return new Result<bool, EventCoordinatorError>(EventCoordinatorError.DuplicateKey);
+            return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
 
         _lock.WaitOne();

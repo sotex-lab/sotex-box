@@ -87,6 +87,7 @@ public class EventCoordinatorsTests
 
         result.IsSuccessful.ShouldBeFalse();
         connections.Count.ShouldBe(beginningCount);
+        result.Error.ShouldBe(EventCoordinatorError.KeyNotFound);
     }
 
     [DataTestMethod]

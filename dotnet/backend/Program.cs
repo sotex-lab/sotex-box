@@ -9,6 +9,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddEventCoordinator();
 
+builder.Logging.AddJsonConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.TimestampFormat = "O";
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

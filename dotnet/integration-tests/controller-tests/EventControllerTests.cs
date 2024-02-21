@@ -52,6 +52,8 @@ public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Pro
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var content = await response.Content.ReadAsStringAsync();
+        content.ShouldContain(EventCoordinatorError.DuplicateKey.Stringify());
     }
 
     [Fact]
