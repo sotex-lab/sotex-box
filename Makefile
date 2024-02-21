@@ -34,3 +34,25 @@ py-export: ## Export poetry into requirements
 edit-docs: ## Run mkdocs local server for development
 	poetry install
 	poetry run mkdocs serve
+
+.PHONY: dotnet-tests
+dotnet-tests: dotnet-unit-tests
+dotnet-tests: dotnet-integration-tests
+dotnet-tests: ## Run all dotnet tests
+
+.PHONY: dotnet-unit-tests
+dotnet-unit-tests: ## Run dotnet unit tests
+	cd dotnet/unit-tests && dotnet test
+
+.PHONY: dotnet-integration-tests
+dotnet-integration-tests: ## Run dotnet unit tests
+	cd dotnet/integration-tests && dotnet test
+
+.PHONY: run-backend
+run-backend: ## Shorthand for running backend from cli
+	dotnet run --project dotnet/backend
+
+.PHONY: dotnet-benchmark
+dotnet-benchmark: ## Shorthand for running dotnet benchmarks
+	dotnet run -c Release --project dotnet/benchmarks
+	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md

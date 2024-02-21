@@ -32,3 +32,10 @@ You need a couple of tools to be able to fully work with this repository:
 | 4 | dotnet | ^8.0.1 | [🔗](https://dotnet.microsoft.com/en-us/download) | [🔗](https://dotnet.microsoft.com/en-us/download) | [🔗](https://dotnet.microsoft.com/en-us/download) |
 
 We will maintain a `Makefile` where we will try to link as much actions as possible. Although some cases may be left uncovered.
+
+Once you install the tools you should setup precommit hooks which help us maintain the code quality and runs tests on commit. Run the bellow command to do so.
+```bash
+precommit install
+```
+
+After that you can use `make` to run things from the repository. Some things that are not implemented require specific commands but those are a niece topic still.

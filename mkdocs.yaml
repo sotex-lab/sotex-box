@@ -18,6 +18,11 @@ theme:
     - search.suggest
     - search.highlight
     - search.share
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - toc.follow
+    - toc.integrate
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
@@ -52,6 +57,22 @@ plugins:
       repository: sotex-lab/sotex-box
       branch: main
 
+nav:
+  - Home: 'index.md'
+  - Introduction:
+    - Project overview: introduction/index.md
+    - System overview: introduction/system-overview.md
+    - Hardware design: introduction/hardware-design.md
+    - Software architecture: introduction/software-arch.md
+    - Development process: introduction/development-process.md
+    - Deployment: introduction/deployment.md
+  - Repository:
+    - Overview: repository/index.md
+    - Dotnet:
+      - Overview: repository/dotnet/index.md
+  - Benchmarks:
+    - EventCoordinator: 'benchmark-EventCoordinator.md'
+
 # Extensions
 markdown_extensions:
   - admonition
@@ -65,6 +86,9 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
+      pygments_lang_class: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.tabbed:
       alternate_style: true

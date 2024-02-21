@@ -27,9 +27,15 @@ repos:
         language: system
         types:
           - c#
-      - id: standard-dotnet-format
-        name: Standard dotnet format
-        entry: dotnet format
+      - id: dotnet-unit-test
+        name: Dotnet unit tests
+        entry: make dotnet-unit-tests
+        pass_filenames: false
+        language: system
+        files: "dotnet/"
+      - id: dotnet-integration-test
+        name: Dotnet integration tests
+        entry: make dotnet-integration-tests
         pass_filenames: false
         language: system
         files: "dotnet/"
