@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "benchmarks", "dotnet\benchm
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "integration-tests", "dotnet\integration-tests\integration-tests.csproj", "{8AAC5A04-28AA-4F53-BF47-C74E6C24013D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sotex-box", "infra\sotex-box.csproj", "{411912DC-ECB5-4194-B340-B97E04B80975}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{8AAC5A04-28AA-4F53-BF47-C74E6C24013D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AAC5A04-28AA-4F53-BF47-C74E6C24013D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AAC5A04-28AA-4F53-BF47-C74E6C24013D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{411912DC-ECB5-4194-B340-B97E04B80975}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{411912DC-ECB5-4194-B340-B97E04B80975}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{411912DC-ECB5-4194-B340-B97E04B80975}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{411912DC-ECB5-4194-B340-B97E04B80975}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{604EC26F-C175-4708-9C3A-48B8F65F31CC} = {F021D060-BCA2-4D32-B722-C6196A158C81}
