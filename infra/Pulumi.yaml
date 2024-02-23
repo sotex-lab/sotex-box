@@ -1,8 +1,0 @@
-name: sotex-box
-runtime: dotnet
-description: Sotex-box deployment
-config:
-  aws:profile: service-account
-  pulumi:tags:
-    value:
-      pulumi:template: aws-csharp

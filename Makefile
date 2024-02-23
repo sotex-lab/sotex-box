@@ -57,10 +57,10 @@ dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	dotnet run -c Release --project dotnet/benchmarks
 	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
 
-.PHONY: pulumi-up-dev
-pulumi-up-dev: ## Command to deploy the dev infra
-	pulumi up --cwd infra --stack dev
+.PHONY: pulumi-up-staging
+pulumi-up-staging: ## Command to deploy the staging infra
+	pulumi up --cwd infra/backend --stack staging
 
-.PHONY: pulumi-destroy-dev
-pulumi-destroy-dev: ## Command to destroy the dev infra
-	pulumi destroy --cwd infra --stack dev
+.PHONY: pulumi-destroy-staging
+pulumi-destroy-staging: ## Command to destroy the staging infra
+	pulumi destroy --cwd infra/backend --stack staging
