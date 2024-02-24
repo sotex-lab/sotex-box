@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using config_translator;
 using Pulumi;
 using Pulumi.Aws.Ec2;
 using Pulumi.Aws.Ec2.Inputs;
@@ -16,10 +18,11 @@ class SotexBoxStack : Stack
     {
         var stackName = Deployment.Instance.StackName;
         var config = new Config();
+        var mapped = new PulumiMapper(config).Map<MappedConfig>();
 
         var vpc = new Vpc(
             string.Format("{0}-vpc", stackName),
-            new VpcArgs { CidrBlock = config.Require("networking-vpc-cidrBlock"), }
+            new VpcArgs { CidrBlock = mapped.NetworkingVpcCidrBlock, }
         );
 
         var internetGateway = new InternetGateway(
@@ -35,7 +38,7 @@ class SotexBoxStack : Stack
                 {
                     new RouteTableRouteArgs
                     {
-                        CidrBlock = config.Require("networking-publicRoutingTable-cidrBlock"),
+                        CidrBlock = mapped.NetworkingPublicRoutingTableCidrBlock,
                         GatewayId = internetGateway.Id,
                     }
                 },
@@ -43,47 +46,30 @@ class SotexBoxStack : Stack
             }
         );
 
-        var firstSubnet = new Subnet(
-            string.Format("{0}-subnet-1a", stackName),
-            new SubnetArgs
-            {
-                VpcId = vpc.Id,
-                CidrBlock = config.RequireObject<List<string>>("networking-subnets-cidrBlock")[0],
-                AvailabilityZone = config.RequireObject<List<string>>(
-                    "networking-subnets-availabilityZone"
-                )[0],
-            }
-        );
+        var subnets = new List<Subnet>();
+        for (int i = 0; i < mapped.NetworkingSubnetsCidrBlock!.Count(); i++)
+        {
+            var subnet = new Subnet(
+                string.Format("{0}-subnet-{1}", stackName, i),
+                new SubnetArgs
+                {
+                    VpcId = vpc.Id,
+                    CidrBlock = mapped.NetworkingSubnetsCidrBlock!.ElementAt(i),
+                    AvailabilityZone = mapped.NetworkingSubnetsAvailabilityZone!.ElementAt(i),
+                }
+            );
 
-        new RouteTableAssociation(
-            string.Format("{0}-subnet-1a-assosiation", stackName),
-            new RouteTableAssociationArgs
-            {
-                SubnetId = firstSubnet.Id,
-                RouteTableId = publicRouteTable.Id
-            }
-        );
+            new RouteTableAssociation(
+                string.Format("{0}-subnet-{1}-assosiation", stackName, i),
+                new RouteTableAssociationArgs
+                {
+                    SubnetId = subnet.Id,
+                    RouteTableId = publicRouteTable.Id
+                }
+            );
 
-        var secondSubnet = new Subnet(
-            string.Format("{0}-subnet-1b", stackName),
-            new SubnetArgs
-            {
-                VpcId = vpc.Id,
-                CidrBlock = config.RequireObject<List<string>>("networking-subnets-cidrBlock")[1],
-                AvailabilityZone = config.RequireObject<List<string>>(
-                    "networking-subnets-availabilityZone"
-                )[1],
-            }
-        );
-
-        new RouteTableAssociation(
-            string.Format("{0}-subnet-1b-assosiation", stackName),
-            new RouteTableAssociationArgs
-            {
-                SubnetId = secondSubnet.Id,
-                RouteTableId = publicRouteTable.Id
-            }
-        );
+            subnets.Add(subnet);
+        }
 
         var securityGroup = new SecurityGroup(
             string.Format("{0}-security-group", stackName),
@@ -94,26 +80,20 @@ class SotexBoxStack : Stack
                 {
                     new SecurityGroupEgressArgs
                     {
-                        Protocol = config.Require("networking-securityGroup-egress-protocol"),
-                        FromPort = config.RequireInt32("networking-securityGroup-egress-fromPort"),
-                        ToPort = config.RequireInt32("networking-securityGroup-egress-toPort"),
-                        CidrBlocks =
-                        {
-                            config.Require("networking-securityGroup-egress-cidrBlocks")
-                        }
+                        Protocol = mapped.NetworkingSecurityGroupEgressProtocol,
+                        FromPort = mapped.NetworkingSecurityGroupEgressFromPort,
+                        ToPort = mapped.NetworkingSecurityGroupEgressToPort,
+                        CidrBlocks = { mapped.NetworkingSecurityGroupEgressCidrBlocks }
                     }
                 },
                 Ingress =
                 {
                     new SecurityGroupIngressArgs
                     {
-                        Protocol = config.Require("networking-securityGroup-ingress-protocol"),
-                        FromPort = config.RequireInt32("networking-securityGroup-ingress-fromPort"),
-                        ToPort = config.RequireInt32("networking-securityGroup-ingress-toPort"),
-                        CidrBlocks =
-                        {
-                            config.Require("networking-securityGroup-ingress-cidrBlocks")
-                        }
+                        Protocol = mapped.NetworkingSecurityGroupIngressProtocol,
+                        FromPort = mapped.NetworkingSecurityGroupIngressFromPort,
+                        ToPort = mapped.NetworkingSecurityGroupIngressToPort,
+                        CidrBlocks = { mapped.NetworkingSecurityGroupIngressCidrBlocks }
                     }
                 }
             }
@@ -123,18 +103,15 @@ class SotexBoxStack : Stack
         var rolePolicy = JsonSerializer.Serialize(
             new
             {
-                Version = config.Require("rolePolicy-version"),
+                Version = mapped.RolePolicyVersion,
                 Statement = new[]
                 {
                     new
                     {
-                        Sid = config.Require("rolePolicy-statement-sid"),
-                        Effect = config.Require("rolePolicy-statement-effect"),
-                        Principal = new
-                        {
-                            Service = config.Require("rolePolicy-statement-principalService")
-                        },
-                        Action = config.Require("rolePolicy-statement-action")
+                        Sid = mapped.RolePolicyStatementSid,
+                        Effect = mapped.RolePolicyStatementEffect,
+                        Principal = new { Service = mapped.RolePolicyStatementPrincipalService },
+                        Action = mapped.RolePolicyStatementAction
                     }
                 }
             }
@@ -150,7 +127,7 @@ class SotexBoxStack : Stack
             new RolePolicyAttachmentArgs
             {
                 Role = taskExecRole.Name,
-                PolicyArn = config.Require("rolePolicy-policyArn")
+                PolicyArn = mapped.RolePolicyPolicyArn
             }
         );
 
@@ -158,7 +135,7 @@ class SotexBoxStack : Stack
             string.Format("{0}-load-balancer", stackName),
             new LoadBalancerArgs
             {
-                Subnets = { firstSubnet.Id, secondSubnet.Id },
+                Subnets = subnets.Select(x => x.Id).ToList(),
                 SecurityGroups = { securityGroup.Id },
             }
         );
@@ -167,9 +144,9 @@ class SotexBoxStack : Stack
             string.Format("{0}-target-group", stackName),
             new TargetGroupArgs
             {
-                Port = config.RequireInt32("networking-targetGroup-port"),
-                Protocol = config.Require("networking-targetGroup-protocol"),
-                TargetType = config.Require("networking-targetGroup-targetType"),
+                Port = mapped.NetworkingTargetGroupPort,
+                Protocol = mapped.NetworkingTargetGroupProtocol,
+                TargetType = mapped.NetworkingTargetGroupTargetType,
                 VpcId = vpc.Id,
             }
         );
@@ -179,12 +156,12 @@ class SotexBoxStack : Stack
             new ListenerArgs
             {
                 LoadBalancerArn = loadBalancer.Arn,
-                Port = config.RequireInt32("networking-listener-port"),
+                Port = mapped.NetworkingListenerPort,
                 DefaultActions =
                 {
                     new ListenerDefaultActionArgs
                     {
-                        Type = config.Require("networking-listener-actionType"),
+                        Type = mapped.NetworkingListenerActionType,
                         TargetGroupArn = targetGroup.Arn
                     }
                 }
@@ -196,8 +173,8 @@ class SotexBoxStack : Stack
             new TaskDefinitionArgs
             {
                 Family = "fargate-task-definition",
-                Cpu = config.Require("taskDefinition-cpu"),
-                Memory = config.Require("taskDefinition-memory"),
+                Cpu = mapped.TaskDefinitionCpu,
+                Memory = mapped.TaskDefinitionMemory,
                 NetworkMode = "awsvpc",
                 RequiresCompatibilities = { "FARGATE" },
                 ExecutionRoleArn = taskExecRole.Arn,
@@ -207,18 +184,14 @@ class SotexBoxStack : Stack
                         new
                         {
                             name = stackName,
-                            image = config.Require("taskDefinition-backend-image"),
+                            image = mapped.TaskDefintionBackendImage,
                             portMappings = new[]
                             {
                                 new
                                 {
-                                    containerPort = config.RequireInt32(
-                                        "taskDefinition-backend-containerPort"
-                                    ),
-                                    hostPort = config.RequireInt32(
-                                        "taskDefinition-backend-hostPort"
-                                    ),
-                                    protocol = config.Require("taskDefinition-backend-protocol")
+                                    containerPort = mapped.TaskDefinitionBackendContainerPort,
+                                    hostPort = mapped.TaskDefinitionBackendHostPort,
+                                    protocol = mapped.TaskDefinitionBackendProtocol
                                 }
                             }
                         }
@@ -232,13 +205,13 @@ class SotexBoxStack : Stack
             new ServiceArgs
             {
                 Cluster = cluster.Arn,
-                DesiredCount = config.RequireInt32("service-desiredCount"),
+                DesiredCount = mapped.ServiceDesiredCount,
                 LaunchType = "FARGATE",
                 TaskDefinition = taskDefinition.Arn,
                 NetworkConfiguration = new ServiceNetworkConfigurationArgs
                 {
                     AssignPublicIp = true,
-                    Subnets = { firstSubnet.Id, secondSubnet.Id },
+                    Subnets = subnets.Select(x => x.Id).ToList(),
                     SecurityGroups = { securityGroup.Id }
                 },
                 LoadBalancers =
@@ -247,7 +220,7 @@ class SotexBoxStack : Stack
                     {
                         TargetGroupArn = targetGroup.Arn,
                         ContainerName = stackName,
-                        ContainerPort = config.RequireInt32("taskDefinition-backend-containerPort")
+                        ContainerPort = mapped.TaskDefinitionBackendContainerPort
                     }
                 }
             },
