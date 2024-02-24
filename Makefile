@@ -56,3 +56,17 @@ run-backend: ## Shorthand for running backend from cli
 dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	dotnet run -c Release --project dotnet/benchmarks
 	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
+
+.PHONY: flutter-create-emulator
+flutter-create-emulator: ## Shorthand for setting up an emulator
+	sdkmanager "system-images;android-31;google_apis_playstore;x86"
+	flutter emulators --create --name "local-emulator"
+
+.PHONY: flutter-run-launcher
+flutter-run-launcher: ## Shorthand for running the launcher app locally
+	flutter emulators --launch local-emulator
+	(cd android/launcher && flutter run -d emulator-5554)
+
+.PHONY: flutter-test-launcher
+flutter-test-launcher: ## Shorthand for running the launcher tests
+	(cd android/launcher && flutter test -r expanded)

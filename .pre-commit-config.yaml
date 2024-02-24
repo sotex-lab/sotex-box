@@ -40,3 +40,19 @@ repos:
         pass_filenames: false
         language: system
         files: "dotnet/"
+      - id: dart-format
+        name: Dart format
+        entry: dart format . --set-exit-if-changed
+        language: system
+        files: '\.(dart)$'
+        exclude: '^flutter/|^\.pub-cache/'
+      - id: flutter-analyze
+        name: Flutter analyze
+        entry: flutter analyze --preamble --congratulate --fatal-warnings
+        language: system
+        files: '\.(dart)$'
+        exclude: '^flutter/|^\.pub-cache/'
+      - id: flutter-test
+        name: Flutter test
+        entry: bash -c "cd ./android/launcher && flutter test -r expanded && exit $?"
+        language: system
