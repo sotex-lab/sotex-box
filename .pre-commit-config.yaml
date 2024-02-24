@@ -40,3 +40,9 @@ repos:
         pass_filenames: false
         language: system
         files: "dotnet/"
+      - id: pulumi-preview
+        name: Run preview of the pulumi config as a dry run
+        entry: make pulumi-preview
+        pass_filenames: false
+        language: system
+        files: "infra/"

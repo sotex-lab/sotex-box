@@ -70,6 +70,8 @@ nav:
     - Overview: repository/index.md
     - Dotnet:
       - Overview: repository/dotnet/index.md
+    - Infrastructure:
+      - Overview: repository/infra/index.md
   - Observability:
     - Overview: observability/index.md
   - Benchmarks:

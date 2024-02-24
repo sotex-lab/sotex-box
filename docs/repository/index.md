@@ -8,18 +8,19 @@ tree . -L 1 -a
 Remember to remove .gitignored files if they render-->
 ```bash
 .
-├── CODEOWNERS # File containing the codeowners of certain parts of the repository
 ├── .config # Folder that contains config files, e.g. config for dotnet tools
-├── docs # Folder containing all the documentation that is used to power this site
-├── dotnet # Folder containing all the dotnet code we use
 ├── .editorconfig # File that specifies how should files be formated
 ├── .github # Folder with workflows
+├── .pre-commit-config.yaml # Precommit configuration
+├── CODEOWNERS # File containing the codeowners of certain parts of the repository
 ├── Makefile # Make file that contains some quick-access shortcuts maintained by the team
+├── README.md # Readme that is rendered for github repository
+├── docs # Folder containing all the documentation that is used to power this site
+├── dotnet # Folder containing all the dotnet code we use
+├── infra # Folder containing all IAAC code we use
 ├── mkdocs.yaml # Configuration file for this site
 ├── poetry.lock # Lock of dependencies for poetry project
-├── .pre-commit-config.yaml # Precommit configuration
 ├── pyproject.toml # Poetry project specification
-├── README.md # Readme that is rendered for github repository
 ├── requirements.txt # Autoexported file for python used for docker images based of scripts
 └── sotex-box.sln # Solution file that manages dotnet code
 ```

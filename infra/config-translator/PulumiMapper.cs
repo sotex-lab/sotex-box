@@ -2,7 +2,7 @@
 using ConfigTranslator.Attributes;
 using Pulumi;
 
-namespace config_translator;
+namespace ConfigTranslator;
 
 public class PulumiMapper
 {

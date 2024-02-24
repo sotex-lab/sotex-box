@@ -1,3 +1,2 @@
 config:
   aws:region: eu-north-1
-  sotex-box:env: staging

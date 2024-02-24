@@ -64,3 +64,7 @@ pulumi-up-staging: ## Command to deploy the staging infra
 .PHONY: pulumi-destroy-staging
 pulumi-destroy-staging: ## Command to destroy the staging infra
 	pulumi destroy --cwd infra/backend --stack staging
+
+.PHONY: pulumi-preview
+pulumi-preview: ## Command to preview the staging infra
+	pulumi preview --cwd infra/backend --stack staging

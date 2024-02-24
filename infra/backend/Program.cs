@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using config_translator;
+using ConfigTranslator;
 using Pulumi;
 using Pulumi.Aws.Ec2;
 using Pulumi.Aws.Ec2.Inputs;
