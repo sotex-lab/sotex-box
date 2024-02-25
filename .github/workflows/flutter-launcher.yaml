@@ -26,14 +26,29 @@ jobs:
         flutter-version: '3.19.1'
         channel: 'stable'
 
-    - name: Check Formatting
-      working-directory: "./android/launcher"
+    - name: Format Flutter
       run: dart format . --set-exit-if-changed -o json
 
-    - name: Lint Flutter App
+    - name: Resolve Dependencies Launcher
       working-directory: "./android/launcher"
-      run: flutter analyze
+      run: flutter pub get
 
-    - name: Build Flutter App
+    - name: Resolve Dependencies Box
+      working-directory: "./android/sotex_box"
+      run: flutter pub get
+
+    - name: Lint Flutter Launcher
       working-directory: "./android/launcher"
+      run: flutter analyze --preamble --congratulate --fatal-warnings --fatal-infos
+
+    - name: Lint Flutter Box
+      working-directory: "./android/sotex_box"
+      run: flutter analyze --preamble --congratulate --fatal-warnings --fatal-infos
+
+    - name: Build Flutter Launcher
+      working-directory: "./android/launcher"
+      run: flutter build apk
+
+    - name: Build Flutter Box
+      working-directory: "./android/sotex_box"
       run: flutter build apk
