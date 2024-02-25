@@ -27,13 +27,6 @@ jobs:
         dotnet tool restore
         dotnet dotnet-csharpier --check .
 
-    - name: Setup pulumi
-      run: |
-        set -ex
-        curl -fsSL https://get.pulumi.com/ | bash
-        export PATH=$PATH:$HOME/.pulumi/bin
-        pulumi login
-
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
