@@ -3,7 +3,7 @@ name: Build Pulumi IaC
 on:
   pull_request:
     paths:
-      - '/infra'
+      - 'infra/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
