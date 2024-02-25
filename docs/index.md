@@ -36,7 +36,7 @@ We will maintain a `Makefile` where we will try to link as much actions as possi
 
 Once you install the tools you should setup precommit hooks which help us maintain the code quality and runs tests on commit. Run the bellow command to do so.
 ```bash
-precommit install
+pre-commit install
 ```
 
 After that you can use `make` to run things from the repository. Some things that are not implemented require specific commands but those are a niece topic still.

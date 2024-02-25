@@ -1,0 +1,50 @@
+name: Build Pulumi IaC
+
+on:
+  pull_request:
+    paths:
+      - '/infra'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Lint the solution
+      run: |
+        dotnet tool restore
+        dotnet dotnet-csharpier --check .
+
+    - name: Setup pulumi
+      run: |
+        set -ex
+        curl -fsSL https://get.pulumi.com/ | bash
+        export PATH=$PATH:$HOME/.pulumi/bin
+        pulumi login
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    - uses: pulumi/actions@v3
+      with:
+        command: preview
+        stack-name: sotex-box/staging
+        comment-on-pr: true
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

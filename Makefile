@@ -67,4 +67,4 @@ pulumi-destroy-staging: ## Command to destroy the staging infra
 
 .PHONY: pulumi-preview
 pulumi-preview: ## Command to preview the staging infra
-	pulumi preview --cwd infra/backend --stack staging
+	pulumi preview --cwd infra/backend --stack staging --suppress-progress
