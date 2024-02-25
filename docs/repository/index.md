@@ -8,6 +8,7 @@ tree . -L 1 -a
 Remember to remove .gitignored files if they render-->
 ```bash
 .
+├── android # Folder that contains android code that we use
 ├── CODEOWNERS # File containing the codeowners of certain parts of the repository
 ├── .config # Folder that contains config files, e.g. config for dotnet tools
 ├── docs # Folder containing all the documentation that is used to power this site

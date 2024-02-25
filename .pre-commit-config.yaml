@@ -48,11 +48,15 @@ repos:
         exclude: '^flutter/|^\.pub-cache/'
       - id: flutter-analyze
         name: Flutter analyze
-        entry: flutter analyze --preamble --congratulate --fatal-warnings
+        entry: flutter analyze --preamble --congratulate --fatal-warnings --fatal-infos
         language: system
         files: '\.(dart)$'
         exclude: '^flutter/|^\.pub-cache/'
-      - id: flutter-test
-        name: Flutter test
+      - id: flutter-launcher-tests
+        name: Flutter launcher tests
+        entry: bash -c "cd ./android/launcher && flutter test -r expanded && exit $?"
+        language: system
+      - id: flutter-sotex_box-tests
+        name: Flutter sotex_box tests
         entry: bash -c "cd ./android/launcher && flutter test -r expanded && exit $?"
         language: system

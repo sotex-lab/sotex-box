@@ -67,6 +67,20 @@ flutter-run-launcher: ## Shorthand for running the launcher app locally
 	flutter emulators --launch local-emulator
 	(cd android/launcher && flutter run -d emulator-5554)
 
+.PHONY: flutter-run-box
+flutter-run-box: ## Shorthand for running the sotex_box app locally
+	flutter emulators --launch local-emulator
+	(cd android/sotex_box && flutter run -d emulator-5554)
+
 .PHONY: flutter-test-launcher
 flutter-test-launcher: ## Shorthand for running the launcher tests
 	(cd android/launcher && flutter test -r expanded)
+
+.PHONY: flutter-test-box
+flutter-test-box: ## Shorthand for running the sotex_box tests
+	(cd android/sotex_box && flutter test -r expanded)
+
+.PHONY: flutter-test
+flutter-test: ## Shorthand for running all flutter tests
+	(cd android/launcher && flutter test -r expanded) &&
+	(cd android/sotex_box && flutter test -r expanded)
