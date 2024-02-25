@@ -39,7 +39,7 @@ Some random facts about the code:
 To kickstart your journey with Sotex-box development:
 
 1. Clone the repository
-2. Setup your environment: Follow instructions from [home page](/)
+2. Setup your environment: Follow instructions from [Working with repository](/repository/working-with-repository.html) guide
 3. Run the tests: Verify the project's functionallity by running the tests
 ```bash
 make dotnet-tests
