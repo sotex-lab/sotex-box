@@ -45,10 +45,10 @@ jobs:
       working-directory: "./android/sotex_box"
       run: flutter analyze --preamble --congratulate --fatal-warnings --fatal-infos
 
-    - name: Build Flutter Launcher
-      working-directory: "./android/launcher"
-      run: flutter build apk
+    # - name: Build Flutter Launcher
+    #   working-directory: "./android/launcher"
+    #   run: flutter build apk
 
-    - name: Build Flutter Box
-      working-directory: "./android/sotex_box"
-      run: flutter build apk
+    # - name: Build Flutter Box
+    #   working-directory: "./android/sotex_box"
+    #   run: flutter build apk
