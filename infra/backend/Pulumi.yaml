@@ -27,8 +27,8 @@ config:
     items:
       type: string
     default:
-      - eu-north-1a
-      - eu-north-1b
+      - eu-central-1a
+      - eu-central-1b
 
   sotex-box:networking-securityGroup-egress-protocol:
     description: Egress protocol settings
@@ -134,7 +134,7 @@ config:
     default: 80
     type: integer
   sotex-box:taskDefinition-backend-hostPort:
-    description: To which porn on host to map
+    description: To which port on host to map
     default: 80
     type: integer
   sotex-box:taskDefinition-backend-protocol:
