@@ -1,0 +1,10 @@
+.cache
+.config
+.github
+BenchmarkDotNet.Artifacts
+docs
+infra
+
+bin/
+obj/
+out/
