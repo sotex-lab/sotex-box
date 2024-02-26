@@ -56,3 +56,15 @@ run-backend: ## Shorthand for running backend from cli
 dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	dotnet run -c Release --project dotnet/benchmarks
 	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
+
+.PHONY: pulumi-up-staging
+pulumi-up-staging: ## Command to deploy the staging infra
+	pulumi up --cwd infra/backend --stack staging
+
+.PHONY: pulumi-destroy-staging
+pulumi-destroy-staging: ## Command to destroy the staging infra
+	pulumi destroy --cwd infra/backend --stack staging
+
+.PHONY: pulumi-preview
+pulumi-preview: ## Command to preview the staging infra
+	pulumi preview --cwd infra/backend --stack staging --suppress-progress

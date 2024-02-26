@@ -1,41 +1,20 @@
----
-title: Getting started
----
+Welcome to the comprehensive documentation landscape of Sotex-Box, where the hardware meets the software in a symphony of innovative advertising. This documentation serves as your guide, meticulously crafted to illuminate the intricate details of our ambitious endeavor.
 
-# Repository description
+## A Tale of Two Worlds
+Sotex-Box bridges the gap between the tangible realm of physical devices and intangible realm of software, orchestraing a seamless dance between the two. This documentation reflects this duality, catering to both the hardware engineers who breathe life into the physical device and the software maestros who craft the digital experience.
 
-Repository for source code of sotex-box. Here we will add most of the documentation including development, exploration and technical documentation.
+## Navigating the Roadmap
+Within these pages, you'll find meticulously arranged sections, each serving a distinct purpose:
 
-## Development
+* [System Overview](/introduction/system-overview.html): Unveiling the project's grand vision, its intended audience, and the groundbreaking value it delivers.
+* [Hardware Design](/introduction/hardware-design.html): Delving into the meticulous details of the device's form and function, exploring its components and intricacies.
+* [Software Architecture](/introduction/software-arch.html): Charting the inner workings of the software ecosystem, unveiling its components, interactions and data flow.
+* [Development process](/introduction/development-process.html): Witnessing the meticulous steps one should take during development, from concept to reality, using industry-leading practices and methodologies.
+* [Deployment](/introduction/deployment.html): Ensuring the smooth transition from development to the real world, with detailed deployment instructions.
 
-There are two main options:
+## Beyond the pages
+Remember, this documentation is an ever-evolving companion, continously updated to reflect the project's ongoing development and adaptation. Consider it a springboard for further exploration, a foundation for your understanding and a testament to the collaborative spirit that drives us forward.
 
-* Dev environment - with docker
-* Local tools
+Whether you're a seasoned engineer delving into the technical intricacies or a curious stakeholder seeking a broader understanding, we invite you to explore these pages. They hold the key to unlocking the potential of Sotex-box and realizing its groundbreaking vision.
 
-### Dev environment - with docker
-
-??? TODO
-    explain how to work with docker dev environment once its setup
-
-### Local tools
-You need a couple of tools to be able to fully work with this repository:
-
-!!! Tip for windows users
-    Even if you are using windows to get the best development experience its advised to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)!
-
-| # | Name | Version | Windows | Linux | Mac |
-|---|------|---------|---------|-------|-----|
-| 1 | python | ^3.9 | [🔗](https://www.python.org/downloads/windows/) | [🔗](https://www.python.org/downloads/source/) | [🔗](https://www.python.org/downloads/macos/) |
-| 2 | poetry | ^1.7.1 | [🔗](https://python-poetry.org/docs/#installing-with-the-official-installer) | [🔗](https://python-poetry.org/docs/#installing-with-the-official-installer) | [🔗](https://python-poetry.org/docs/#installing-with-the-official-installer) |
-| 3 | precommit | ^3.6.0 | [🔗](https://pre-commit.com/#install) | [🔗](https://pre-commit.com/#install) | [🔗](https://pre-commit.com/#install) |
-| 4 | dotnet | ^8.0.1 | [🔗](https://dotnet.microsoft.com/en-us/download) | [🔗](https://dotnet.microsoft.com/en-us/download) | [🔗](https://dotnet.microsoft.com/en-us/download) |
-
-We will maintain a `Makefile` where we will try to link as much actions as possible. Although some cases may be left uncovered.
-
-Once you install the tools you should setup precommit hooks which help us maintain the code quality and runs tests on commit. Run the bellow command to do so.
-```bash
-precommit install
-```
-
-After that you can use `make` to run things from the repository. Some things that are not implemented require specific commands but those are a niece topic still.
+**Happy reading, and welcome to the project!**
