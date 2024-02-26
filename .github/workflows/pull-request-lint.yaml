@@ -1,6 +1,5 @@
 name: Pull Request Linter
 on:
-  push:
   pull_request:
     types:
       - opened
