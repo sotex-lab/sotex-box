@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "dotnet/**"
+      - "distribution/docker/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
