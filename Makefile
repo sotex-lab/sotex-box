@@ -19,7 +19,7 @@ endif
 # If we're using podman create pods else if we're using docker create networks.
 export CURRENT_DIR = $(shell pwd)
 
-export COMMIT_SHA = $(shell git log -1 --pretty=format:"%H")
+COMMIT_SHA := $(if $(GITHUB_SHA),$(GITHUB_SHA),$(shell git log -1 --pretty=format:"%H"))
 
 FORMATTING_BEGIN_YELLOW = \033[0;33m
 FORMATTING_BEGIN_BLUE = \033[36m
@@ -73,8 +73,8 @@ pulumi-preview: ## Command to preview the staging infra
 
 .PHONY: container-build-backend
 container-build-backend: ## Command to build the container for backend
-	$(CONTAINER_TOOL) build -t ghcr.io/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile
+	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile
 
 .PHONY: container-push-backend
 container-push-backend: ## Command to push the container for backend
-	$(CONTAINER_TOOL) push ghcr.io/sotex-box/backend:$(COMMIT_SHA)
+	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)
