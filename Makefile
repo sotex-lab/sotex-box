@@ -84,3 +84,12 @@ container-build-backend: ## Command to build the container for backend
 .PHONY: container-push-backend
 container-push-backend: ## Command to push the container for backend
 	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)
+
+##@ Compose actions
+.PHONY: compose-up
+compose-up: ## Run local stack
+	$(CONTAINER_TOOL)-compose -f docker-compose.yaml up
+
+.PHONY: compose-down
+compose-down: ## Remove local stack
+	$(CONTAINER_TOOL)-compose -f docker-compose.yaml down
