@@ -28,6 +28,7 @@ FORMATTING_END = \033[0m
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+##@ Misc actions
 .PHONY: py-export
 py-export: ## Export poetry into requirements
 	poetry export > requirements.txt
@@ -37,6 +38,7 @@ edit-docs: ## Run mkdocs local server for development
 	poetry install
 	poetry run mkdocs serve
 
+##@ Testing
 .PHONY: dotnet-tests
 dotnet-tests: dotnet-unit-tests
 dotnet-tests: dotnet-integration-tests
@@ -50,15 +52,18 @@ dotnet-unit-tests: ## Run dotnet unit tests
 dotnet-integration-tests: ## Run dotnet unit tests
 	cd dotnet/integration-tests && dotnet test
 
+##@ Executing
 .PHONY: run-backend
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
 
+##@ Benchmarking
 .PHONY: dotnet-benchmark
 dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	dotnet run -c Release --project dotnet/benchmarks
 	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
 
+##@ Infrastructure actions
 .PHONY: pulumi-up-staging
 pulumi-up-staging: ## Command to deploy the staging infra
 	pulumi up --cwd infra/backend --stack staging
@@ -71,6 +76,7 @@ pulumi-destroy-staging: ## Command to destroy the staging infra
 pulumi-preview: ## Command to preview the staging infra
 	pulumi preview --cwd infra/backend --stack staging --suppress-progress
 
+##@ Container actions
 .PHONY: container-build-backend
 container-build-backend: ## Command to build the container for backend
 	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile

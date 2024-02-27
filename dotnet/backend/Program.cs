@@ -1,4 +1,5 @@
-﻿using SseHandler;
+﻿using OpenTelemetry.Metrics;
+using SseHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,16 @@ builder.Logging.AddJsonConsole(options =>
     options.TimestampFormat = "O";
 });
 
+builder
+    .Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddPrometheusExporter();
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -23,6 +34,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 var host = app.Services.GetRequiredService<IHostApplicationLifetime>();
 var connections = app.Services.GetRequiredService<IEventCoordinator>();
