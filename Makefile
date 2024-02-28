@@ -38,7 +38,12 @@ edit-docs: ## Run mkdocs local server for development
 	poetry install
 	poetry run mkdocs serve
 
-##@ Testing
+.PHONY: flutter-create-emulator
+flutter-create-emulator: ## Shorthand for setting up an emulator
+	sdkmanager "system-images;android-31;google_apis_playstore;x86"
+	flutter emulators --create --name "local-emulator"
+
+##@ Dotnet Testing
 .PHONY: dotnet-tests
 dotnet-tests: dotnet-unit-tests
 dotnet-tests: dotnet-integration-tests
@@ -52,10 +57,34 @@ dotnet-unit-tests: ## Run dotnet unit tests
 dotnet-integration-tests: ## Run dotnet unit tests
 	cd dotnet/integration-tests && dotnet test
 
+##@ Flutter testing
+.PHONY: flutter-test-launcher
+flutter-test-launcher: ## Shorthand for running the launcher tests
+	(cd android/launcher && flutter test -r expanded)
+
+.PHONY: flutter-test-box
+flutter-test-box: ## Shorthand for running the sotex_box tests
+	(cd android/sotex_box && flutter test -r expanded)
+
+.PHONY: flutter-test
+flutter-test: flutter-test-launcher
+flutter-test: flutter-test-box
+flutter-test: ## Shorthand for running all flutter tests
+
 ##@ Executing
 .PHONY: run-backend
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
+
+.PHONY: run-launcher
+run-launcher: ## Shorthand for running the launcher app locally
+	flutter emulators --launch local-emulator
+	(cd android/launcher && flutter run -d emulator-5554)
+
+.PHONY: run-box
+run-box: ## Shorthand for running the sotex_box app locally
+	flutter emulators --launch local-emulator
+	(cd android/sotex_box && flutter run -d emulator-5554)
 
 ##@ Benchmarking
 .PHONY: dotnet-benchmark

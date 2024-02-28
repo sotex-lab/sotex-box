@@ -12,6 +12,7 @@ Remember to remove .gitignored files if they render-->
 ├── .editorconfig # File that specifies how should files be formated
 ├── .github # Folder with workflows
 ├── .pre-commit-config.yaml # Precommit configuration
+├── android # Folder that contains android code that we use
 ├── CODEOWNERS # File containing the codeowners of certain parts of the repository
 ├── Makefile # Make file that contains some quick-access shortcuts maintained by the team
 ├── README.md # Readme that is rendered for github repository
