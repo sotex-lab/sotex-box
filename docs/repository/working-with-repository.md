@@ -23,6 +23,7 @@ You need a couple of tools to be able to fully work with this repository:
 | 5 | pulumi | ^3.107.0 | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) |
 | 6a | docker | ^23.0.5 | [🔗](https://docs.docker.com/desktop/install/windows-install/) | [🔗](https://docs.docker.com/desktop/install/linux-install/) | [🔗](https://docs.docker.com/desktop/install/mac-install/) |
 | 6b | podman | ^4.8.3 | [🔗](https://podman.io/docs/installation#windows) | [🔗](https://podman.io/docs/installation#installing-on-linux) | [🔗](https://podman.io/docs/installation#macos) |
+| 7 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
 
 We will maintain a `Makefile` where we will try to link as much actions as possible. Although some cases may be left uncovered.
 

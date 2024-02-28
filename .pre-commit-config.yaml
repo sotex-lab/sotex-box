@@ -43,6 +43,28 @@ repos:
         language: system
         files: "dotnet/"
 
+      ## Flutter checks
+      - id: dart-format
+        name: Dart format
+        entry: dart format .
+        language: system
+        files: '\.(dart)$'
+        exclude: '^flutter/|^\.pub-cache/'
+      - id: flutter-analyze
+        name: Flutter analyze
+        entry: flutter analyze --preamble --congratulate --fatal-warnings --fatal-infos
+        language: system
+        files: '\.(dart)$'
+        exclude: '^flutter/|^\.pub-cache/'
+      - id: flutter-launcher-tests
+        name: Flutter launcher tests
+        entry: make flutter-test-launcher
+        language: system
+      - id: flutter-sotex_box-tests
+        name: Flutter sotex_box tests
+        entry: make flutter-test-box
+        language: system
+
       ## Pulumi checks
       - id: pulumi-preview
         name: Run preview of the pulumi config as a dry run

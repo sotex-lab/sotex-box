@@ -1,0 +1,40 @@
+name: Flutter pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "android/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - directory: "./android/launcher"
+            name: launcher
+          - directory: "./android/sotex_box"
+            name: box
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Setup Flutter
+      uses: "subosito/flutter-action@v2.12.0"
+      with:
+        flutter-version: '3.19.1'
+        channel: 'stable'
+    - name: Format Flutter
+      run: dart format ${{ matrix.app.directory }} --set-exit-if-changed -o json
+    - name: Resolve Dependencies ${{ matrix.app.name }}
+      working-directory: ${{ matrix.app.directory }}
+      run: flutter pub get
+    - name: Lint Flutter ${{ matrix.app.name }}
+      working-directory: ${{ matrix.app.directory }}
+      run: flutter analyze --preamble --congratulate --fatal-warnings --fatal-infos

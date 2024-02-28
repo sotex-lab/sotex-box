@@ -70,6 +70,8 @@ nav:
     - Working with repository: repository/working-with-repository.md
     - Dotnet:
       - Overview: repository/dotnet/index.md
+    - Android:
+      - Overview: repository/android/index.md
     - Infrastructure:
       - Overview: repository/infra/index.md
     - Continous Integration:
