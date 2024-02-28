@@ -1,13 +1,4 @@
-We use [Dart](https://dart.dev/guides) and [Flutter](https://docs.flutter.dev/) for the frontend.
-
-## Directory layout
-
-```bash
-android
-├── launcher
-└── sotex_box
-```
-
+We use [Dart](https://dart.dev/guides) and [Flutter](https://docs.flutter.dev/) for the device frontend.
 
 ## High level frontend overview
 

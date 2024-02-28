@@ -81,6 +81,6 @@ flutter-test-box: ## Shorthand for running the sotex_box tests
 	(cd android/sotex_box && flutter test -r expanded)
 
 .PHONY: flutter-test
+flutter-test: flutter-test-launcher
+flutter-test: flutter-test-box
 flutter-test: ## Shorthand for running all flutter tests
-	(cd android/launcher && flutter test -r expanded) &&
-	(cd android/sotex_box && flutter test -r expanded)

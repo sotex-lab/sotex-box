@@ -42,7 +42,7 @@ repos:
         files: "dotnet/"
       - id: dart-format
         name: Dart format
-        entry: dart format . --set-exit-if-changed
+        entry: dart format .
         language: system
         files: '\.(dart)$'
         exclude: '^flutter/|^\.pub-cache/'
@@ -54,9 +54,9 @@ repos:
         exclude: '^flutter/|^\.pub-cache/'
       - id: flutter-launcher-tests
         name: Flutter launcher tests
-        entry: bash -c "cd ./android/launcher && flutter test -r expanded && exit $?"
+        entry: make flutter-test-launcher
         language: system
       - id: flutter-sotex_box-tests
         name: Flutter sotex_box tests
-        entry: bash -c "cd ./android/launcher && flutter test -r expanded && exit $?"
+        entry: make flutter-test-box
         language: system
