@@ -1,5 +1,6 @@
 ﻿using OpenTelemetry.Metrics;
 using SseHandler;
+using SseHandler.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Logging.AddJsonConsole(options =>
     options.TimestampFormat = "O";
 });
 
+builder.Services.AddDeviceMetrics();
 builder
     .Services.AddOpenTelemetry()
     .WithMetrics(metrics =>
@@ -26,7 +28,7 @@ builder
             .AddProcessInstrumentation()
             .AddHttpClientInstrumentation()
             .AddPrometheusExporter()
-            .AddMeter("Sotex.Web");
+            .AddMeter(IDeviceMetrics.MeterName);
     });
 var app = builder.Build();
 

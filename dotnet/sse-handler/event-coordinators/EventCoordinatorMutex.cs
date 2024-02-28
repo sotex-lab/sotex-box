@@ -1,72 +1,38 @@
 ﻿using System.Diagnostics.Metrics;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using DotNext;
 using DotNext.Collections.Generic;
-using Microsoft.Extensions.Logging;
+using SseHandler.Metrics;
 using SseHandler.Serializers;
 
 namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorMutex : IEventCoordinator
 {
-    private readonly ILogger<EventCoordinatorMutex> _logger;
     private readonly Dictionary<string, Connection> _connections;
-    private readonly Dictionary<string, Measurement<int>> _measurements;
     private readonly Mutex _lock;
     private readonly IEventSerializer _eventSerializer;
+    private readonly IDeviceMetrics _deviceMetrics;
 
-    private static ILogger<EventCoordinatorMutex> _resolveGlobalLogger =>
-        LoggerFactory
-            .Create(x =>
-            {
-                x.SetMinimumLevel(LogLevel.Information);
-            })
-            .CreateLogger<EventCoordinatorMutex>();
-
-    public EventCoordinatorMutex(Meter meter)
-        : this(
-            _resolveGlobalLogger,
-            new Dictionary<string, Connection>(),
-            new JsonEventSerializer(),
-            meter
-        ) { }
-
-    public EventCoordinatorMutex(Dictionary<string, Connection> connections)
-        : this(_resolveGlobalLogger, connections, new JsonEventSerializer(), new Meter("Sotex.Web"))
+    public EventCoordinatorMutex()
+        : this(new Dictionary<string, Connection>(), new JsonEventSerializer(), new DeviceMetrics())
     { }
 
-    public EventCoordinatorMutex(
-        ILogger<EventCoordinatorMutex> logger,
-        IEventSerializer eventSerializer,
-        IMeterFactory meterFactory
-    )
-        : this(
-            logger,
-            new Dictionary<string, Connection>(),
-            eventSerializer,
-            meterFactory.Create("Sotex.Web")
-        ) { }
+    public EventCoordinatorMutex(Dictionary<string, Connection> connections)
+        : this(connections, new JsonEventSerializer(), new DeviceMetrics()) { }
+
+    public EventCoordinatorMutex(IEventSerializer eventSerializer, IDeviceMetrics deviceMetrics)
+        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics) { }
 
     public EventCoordinatorMutex(
-        ILogger<EventCoordinatorMutex> logger,
         Dictionary<string, Connection> connections,
         IEventSerializer eventSerializer,
-        Meter meter
+        IDeviceMetrics deviceMetrics
     )
     {
-        _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
         _lock = new Mutex();
-        _measurements = new Dictionary<string, Measurement<int>>();
-        meter.CreateObservableGauge(
-            "sotex.web.device",
-            () => _measurements.Values,
-            "num",
-            "The number of devices currently connected to the backend instance"
-        );
+        _deviceMetrics = deviceMetrics;
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -93,7 +59,7 @@ public class EventCoordinatorMutex : IEventCoordinator
                 EventCoordinatorError.Unknown
             );
         }
-        _measurements[id] = new Measurement<int>(1, new KeyValuePair<string, object?>("id", id));
+        _deviceMetrics.Connected(id);
         _lock.ReleaseMutex();
 
         return new Result<CancellationTokenSource, EventCoordinatorError>(
@@ -120,7 +86,7 @@ public class EventCoordinatorMutex : IEventCoordinator
             _lock.ReleaseMutex();
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
-        _measurements[id] = new Measurement<int>(0, new KeyValuePair<string, object?>("id", id));
+        _deviceMetrics.Disconnected(id);
         _lock.ReleaseMutex();
         removed.Value.CancellationTokenSource.Cancel();
         return new Result<bool, EventCoordinatorError>(true);
