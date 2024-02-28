@@ -23,6 +23,7 @@ builder
         metrics
             .AddAspNetCoreInstrumentation()
             .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
             .AddHttpClientInstrumentation()
             .AddPrometheusExporter();
     });
