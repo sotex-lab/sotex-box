@@ -86,10 +86,18 @@ container-push-backend: ## Command to push the container for backend
 	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)
 
 ##@ Compose actions
+
+LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
+CURR_UID = $(shell id -u)
+CURR_GID = $(shell id -g)
+
 .PHONY: compose-up
+compose-up: container-build-backend
 compose-up: ## Run local stack
-	$(CONTAINER_TOOL)-compose -f docker-compose.yaml up
+	kill -9 $(LEFTOVER_PORTS) || true
+	COMMIT_SHA=$(COMMIT_SHA) CURR_UID=$(CURR_UID) CURR_GID=$(CURR_GID) $(CONTAINER_TOOL)-compose -f docker-compose.yaml up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
 	$(CONTAINER_TOOL)-compose -f docker-compose.yaml down
+	kill -9 $(LEFTOVER_PORTS) || true

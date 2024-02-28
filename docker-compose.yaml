@@ -1,14 +1,29 @@
 services:
+  backend:
+    container_name: backend
+    image: ghcr.io/sotex-lab/sotex-box/backend:${COMMIT_SHA}
+    ports:
+      - 8080:8080
+
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v2.50.1
-    ports:
-      - 9090:9090
+    userns_mode: keep-id
+    user: ${CURR_UID}:${CURR_GID}
+    network_mode: host
+    volumes:
+      - ./infra/config/prometheus:/etc/prometheus
+      - ./env/prometheus:/prometheus
 
   grafana:
     container_name: grafana
     image: grafana/grafana:10.2.4
-    ports:
-      - 3000:3000
+    user: ${CURR_UID}:${CURR_GID}
+    userns_mode: keep-id
+    network_mode: host
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./infra/config/grafana/provisioning:/etc/grafana/provisioning
+      - ./env/grafana:/var/lib/grafana
