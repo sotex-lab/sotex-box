@@ -25,7 +25,8 @@ builder
             .AddRuntimeInstrumentation()
             .AddProcessInstrumentation()
             .AddHttpClientInstrumentation()
-            .AddPrometheusExporter();
+            .AddPrometheusExporter()
+            .AddMeter("Sotex.Web");
     });
 var app = builder.Build();
 

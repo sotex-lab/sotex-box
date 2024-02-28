@@ -1,7 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Diagnostics.Metrics;
 using DotNext;
 using Microsoft.Extensions.Logging;
 using SseHandler.Serializers;
@@ -12,6 +10,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 {
     private readonly ILogger<EventCoordinatorConcurrentDictionary> _logger;
     private readonly ConcurrentDictionary<string, Connection> _connections;
+    private readonly Dictionary<string, Measurement<int>> _measurements;
     private readonly IEventSerializer _eventSerializer;
     private static ILogger<EventCoordinatorConcurrentDictionary> _resolveGlobalLogger =>
         LoggerFactory
@@ -21,33 +20,49 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
             })
             .CreateLogger<EventCoordinatorConcurrentDictionary>();
 
-    public EventCoordinatorConcurrentDictionary()
+    public EventCoordinatorConcurrentDictionary(Meter meter)
         : this(
             _resolveGlobalLogger,
             new ConcurrentDictionary<string, Connection>(),
-            new JsonEventSerializer()
+            new JsonEventSerializer(),
+            meter
         ) { }
 
     public EventCoordinatorConcurrentDictionary(
         ConcurrentDictionary<string, Connection> connections
     )
-        : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
+        : this(_resolveGlobalLogger, connections, new JsonEventSerializer(), new Meter("Sotex.Web"))
+    { }
 
     public EventCoordinatorConcurrentDictionary(
         ILogger<EventCoordinatorConcurrentDictionary> logger,
-        IEventSerializer eventSerializer
+        IEventSerializer eventSerializer,
+        IMeterFactory meterFactory
     )
-        : this(logger, new ConcurrentDictionary<string, Connection>(), eventSerializer) { }
+        : this(
+            logger,
+            new ConcurrentDictionary<string, Connection>(),
+            eventSerializer,
+            meterFactory.Create("Sotex.Web")
+        ) { }
 
     public EventCoordinatorConcurrentDictionary(
         ILogger<EventCoordinatorConcurrentDictionary> logger,
         ConcurrentDictionary<string, Connection> connections,
-        IEventSerializer eventSerializer
+        IEventSerializer eventSerializer,
+        Meter meter
     )
     {
         _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
+        _measurements = new Dictionary<string, Measurement<int>>();
+        meter.CreateObservableGauge(
+            "sotex.web.device",
+            () => _measurements.Values,
+            "num",
+            "The number of devices currently connected to the backend instance"
+        );
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -61,7 +76,6 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         if (_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.DuplicateKey
             );
@@ -73,7 +87,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
                 EventCoordinatorError.Unknown
             );
         }
-
+        _measurements[id] = new Measurement<int>(1, new KeyValuePair<string, object?>("id", id));
         var addedValue = _connections[id];
         return new Result<CancellationTokenSource, EventCoordinatorError>(
             addedValue.CancellationTokenSource
@@ -89,7 +103,6 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         if (!_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
 
@@ -99,6 +112,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         }
 
         connection!.CancellationTokenSource.Cancel();
+        _measurements[id] = new Measurement<int>(0, new KeyValuePair<string, object?>("id", id));
         return new Result<bool, EventCoordinatorError>(true);
     }
 

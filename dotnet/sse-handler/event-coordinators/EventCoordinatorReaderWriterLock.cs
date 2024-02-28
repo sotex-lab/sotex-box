@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.Metrics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotNext;
@@ -13,6 +14,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
 {
     private readonly ILogger<EventCoordinatorReaderWriterLock> _logger;
     private readonly Dictionary<string, Connection> _connections;
+    private readonly Dictionary<string, Measurement<int>> _measurements;
     private readonly ReaderWriterSpinLock _lock;
     private readonly IEventSerializer _eventSerializer;
 
@@ -24,32 +26,48 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
             })
             .CreateLogger<EventCoordinatorReaderWriterLock>();
 
-    public EventCoordinatorReaderWriterLock()
+    public EventCoordinatorReaderWriterLock(Meter meter)
         : this(
             _resolveGlobalLogger,
             new Dictionary<string, Connection>(),
-            new JsonEventSerializer()
+            new JsonEventSerializer(),
+            meter
         ) { }
 
     public EventCoordinatorReaderWriterLock(Dictionary<string, Connection> connections)
-        : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
+        : this(_resolveGlobalLogger, connections, new JsonEventSerializer(), new Meter("Sotex.Web"))
+    { }
 
     public EventCoordinatorReaderWriterLock(
         ILogger<EventCoordinatorReaderWriterLock> logger,
-        IEventSerializer eventSerializer
+        IEventSerializer eventSerializer,
+        IMeterFactory meterFactory
     )
-        : this(logger, new Dictionary<string, Connection>(), eventSerializer) { }
+        : this(
+            logger,
+            new Dictionary<string, Connection>(),
+            eventSerializer,
+            meterFactory.Create("Sotex.Web")
+        ) { }
 
     public EventCoordinatorReaderWriterLock(
         ILogger<EventCoordinatorReaderWriterLock> logger,
         Dictionary<string, Connection> connections,
-        IEventSerializer eventSerializer
+        IEventSerializer eventSerializer,
+        Meter meter
     )
     {
         _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
         _lock = new ReaderWriterSpinLock();
+        _measurements = new Dictionary<string, Measurement<int>>();
+        meter.CreateObservableGauge(
+            "sotex.web.device",
+            () => _measurements.Values,
+            "num",
+            "The number of devices currently connected to the backend instance"
+        );
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -65,7 +83,6 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         if (_connections.ContainsKey(id))
         {
             _lock.ExitReadLock();
-            _logger.LogTrace("Connections contain key {id}", id);
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.DuplicateKey
             );
@@ -86,6 +103,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         );
         _lock.ExitWriteLock();
         _lock.ExitReadLock();
+        _measurements[id] = new Measurement<int>(1, new KeyValuePair<string, object?>("id", id));
         return result;
     }
 
@@ -100,7 +118,6 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         if (!_connections.ContainsKey(id))
         {
             _lock.ExitReadLock();
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
 
@@ -113,6 +130,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
         removed.Value.CancellationTokenSource.Cancel();
+        _measurements[id] = new Measurement<int>(0, new KeyValuePair<string, object?>("id", id));
         _lock.ExitWriteLock();
         _lock.ExitReadLock();
         return new Result<bool, EventCoordinatorError>(true);

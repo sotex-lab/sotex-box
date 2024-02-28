@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics.Metrics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SseHandler.EventCoordinators;
 using SseHandler.Serializers;
@@ -20,7 +21,8 @@ public static class EventCoordinatorExtensions
         services.AddSingleton<IEventCoordinator>(x => new EventCoordinatorMutex(
             x.GetRequiredService<ILogger<EventCoordinatorMutex>>(),
             connections,
-            new JsonEventSerializer()
+            new JsonEventSerializer(),
+            x.GetRequiredService<IMeterFactory>().Create("Sotex.Web")
         ));
     }
 }
