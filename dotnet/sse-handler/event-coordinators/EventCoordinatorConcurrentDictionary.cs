@@ -21,9 +21,10 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         ) { }
 
     public EventCoordinatorConcurrentDictionary(
-        ConcurrentDictionary<string, Connection> connections
+        ConcurrentDictionary<string, Connection> connections,
+        IDeviceMetrics metrics
     )
-        : this(connections, new JsonEventSerializer(), new DeviceMetrics()) { }
+        : this(connections, new JsonEventSerializer(), metrics) { }
 
     public EventCoordinatorConcurrentDictionary(
         IEventSerializer eventSerializer,
@@ -115,6 +116,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
+        _deviceMetrics.Sent(id, message);
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

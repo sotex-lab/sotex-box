@@ -1,14 +1,19 @@
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.DependencyInjection;
+using SseHandler.Serializers;
 
 namespace SseHandler.Metrics;
 
-public static class DeviceMetricsExtensions
+internal static class DeviceMetricsExtensions
 {
-    public static void AddDeviceMetrics(this IServiceCollection services)
+    internal static void AddDeviceMetrics(
+        this IServiceCollection services,
+        EventSerializer eventSerializer
+    )
     {
         services.AddSingleton<IDeviceMetrics>(x => new DeviceMetrics(
-            x.GetRequiredService<IMeterFactory>()
+            x.GetRequiredService<IMeterFactory>(),
+            eventSerializer
         ));
     }
 }
@@ -19,13 +24,11 @@ public interface IDeviceMetrics
 
     void Connected(string key);
     void Disconnected(string key);
+    void Sent(string key, object message);
 }
 
 public class DeviceMetrics : IDeviceMetrics
 {
-    private readonly Dictionary<string, Measurement<int>> _measurements;
-    private readonly Mutex _mutex = new();
-
     private class FakeMeterFactory : IMeterFactory
     {
         public Meter Create(MeterOptions options) => new Meter(options);
@@ -33,20 +36,37 @@ public class DeviceMetrics : IDeviceMetrics
         public void Dispose() { }
     }
 
-    public DeviceMetrics()
-        : this(new FakeMeterFactory()) { }
-
-    public DeviceMetrics(IMeterFactory meterFactory)
+    private class MetricBag
     {
-        _measurements = new Dictionary<string, Measurement<int>>();
-        meterFactory
-            .Create("Sotex.Web")
-            .CreateObservableCounter(
-                "sotex.web.devices",
-                () => _measurements.Values,
-                "num",
-                "The number of devices currently connected to the backend instance"
-            );
+        public Measurement<int> IsConnected { get; set; }
+        public Measurement<long> SentBytes { get; set; }
+    }
+
+    private readonly Dictionary<string, MetricBag> _measurements;
+    private readonly EventSerializer _eventSerializer;
+    private readonly Mutex _mutex = new();
+
+    public DeviceMetrics()
+        : this(new FakeMeterFactory(), new JsonEventSerializer()) { }
+
+    public DeviceMetrics(IMeterFactory meterFactory, EventSerializer eventSerializer)
+    {
+        _eventSerializer = eventSerializer;
+        _measurements = new Dictionary<string, MetricBag>();
+        var meter = meterFactory.Create("Sotex.Web");
+        meter.CreateObservableCounter(
+            "sotex.web.devices",
+            () => _measurements.Values.Select(x => x.IsConnected),
+            "num",
+            "The number of devices currently connected to the backend instance"
+        );
+
+        meter.CreateObservableCounter(
+            "sotex.web.sent.bytes",
+            () => _measurements.Values.Select(x => x.SentBytes),
+            "B",
+            "Amount of bytes sent to device via server sent events"
+        );
     }
 
     private KeyValuePair<string, object?> Tag(string key) =>
@@ -55,14 +75,30 @@ public class DeviceMetrics : IDeviceMetrics
     public void Connected(string key)
     {
         _mutex.WaitOne();
-        _measurements[key] = new Measurement<int>(1, Tag(key));
+        if (!_measurements.ContainsKey(key))
+            _measurements[key] = new MetricBag();
+        _measurements[key].IsConnected = new Measurement<int>(1, Tag(key));
+        _measurements[key].SentBytes = new Measurement<long>(0, Tag(key));
         _mutex.ReleaseMutex();
     }
 
     public void Disconnected(string key)
     {
         _mutex.WaitOne();
-        _measurements[key] = new Measurement<int>(0, Tag(key));
+        _measurements[key].IsConnected = new Measurement<int>(0, Tag(key));
+        _measurements[key].SentBytes = new Measurement<long>(0, Tag(key));
+        _mutex.ReleaseMutex();
+    }
+
+    public void Sent(string key, object message)
+    {
+        var serialized = _eventSerializer.SerializeData(message);
+        long bytes = serialized.Length * sizeof(char);
+        _mutex.WaitOne();
+        _measurements[key].SentBytes = new Measurement<long>(
+            _measurements[key].SentBytes.Value + bytes,
+            Tag(key)
+        );
         _mutex.ReleaseMutex();
     }
 }

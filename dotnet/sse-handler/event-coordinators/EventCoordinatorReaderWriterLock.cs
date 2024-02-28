@@ -22,8 +22,11 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         : this(new Dictionary<string, Connection>(), new JsonEventSerializer(), new DeviceMetrics())
     { }
 
-    public EventCoordinatorReaderWriterLock(Dictionary<string, Connection> connections)
-        : this(connections, new JsonEventSerializer(), new DeviceMetrics()) { }
+    public EventCoordinatorReaderWriterLock(
+        Dictionary<string, Connection> connections,
+        IDeviceMetrics metrics
+    )
+        : this(connections, new JsonEventSerializer(), metrics) { }
 
     public EventCoordinatorReaderWriterLock(
         IEventSerializer eventSerializer,
@@ -136,6 +139,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
         _lock.ExitReadLock();
+        _deviceMetrics.Sent(id, message);
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

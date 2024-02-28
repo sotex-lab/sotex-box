@@ -17,8 +17,8 @@ public class EventCoordinatorMutex : IEventCoordinator
         : this(new Dictionary<string, Connection>(), new JsonEventSerializer(), new DeviceMetrics())
     { }
 
-    public EventCoordinatorMutex(Dictionary<string, Connection> connections)
-        : this(connections, new JsonEventSerializer(), new DeviceMetrics()) { }
+    public EventCoordinatorMutex(Dictionary<string, Connection> connections, IDeviceMetrics metrics)
+        : this(connections, new JsonEventSerializer(), metrics) { }
 
     public EventCoordinatorMutex(IEventSerializer eventSerializer, IDeviceMetrics deviceMetrics)
         : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics) { }
@@ -112,6 +112,7 @@ public class EventCoordinatorMutex : IEventCoordinator
         }
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
+        _deviceMetrics.Sent(id, message);
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

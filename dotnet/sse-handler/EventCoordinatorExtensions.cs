@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SseHandler.EventCoordinators;
 using SseHandler.Metrics;
 using SseHandler.Serializers;
@@ -19,9 +17,12 @@ public static class EventCoordinatorExtensions
         Dictionary<string, Connection> connections
     )
     {
+        var serializer = new JsonEventSerializer();
+
+        services.AddDeviceMetrics(serializer);
         services.AddSingleton<IEventCoordinator>(x => new EventCoordinatorMutex(
             connections,
-            new JsonEventSerializer(),
+            serializer,
             x.GetRequiredService<IDeviceMetrics>()
         ));
     }

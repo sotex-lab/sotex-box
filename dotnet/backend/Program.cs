@@ -17,7 +17,6 @@ builder.Logging.AddJsonConsole(options =>
     options.TimestampFormat = "O";
 });
 
-builder.Services.AddDeviceMetrics();
 builder
     .Services.AddOpenTelemetry()
     .WithMetrics(metrics =>
