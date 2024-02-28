@@ -19,6 +19,8 @@ endif
 # If we're using podman create pods else if we're using docker create networks.
 export CURRENT_DIR = $(shell pwd)
 
+COMMIT_SHA := $(if $(GITHUB_SHA),$(GITHUB_SHA),$(shell git log -1 --pretty=format:"%H"))
+
 FORMATTING_BEGIN_YELLOW = \033[0;33m
 FORMATTING_BEGIN_BLUE = \033[36m
 FORMATTING_END = \033[0m
@@ -84,3 +86,23 @@ flutter-test-box: ## Shorthand for running the sotex_box tests
 flutter-test: flutter-test-launcher
 flutter-test: flutter-test-box
 flutter-test: ## Shorthand for running all flutter tests
+
+.PHONY: pulumi-up-staging
+pulumi-up-staging: ## Command to deploy the staging infra
+	pulumi up --cwd infra/backend --stack staging
+
+.PHONY: pulumi-destroy-staging
+pulumi-destroy-staging: ## Command to destroy the staging infra
+	pulumi destroy --cwd infra/backend --stack staging
+
+.PHONY: pulumi-preview
+pulumi-preview: ## Command to preview the staging infra
+	pulumi preview --cwd infra/backend --stack staging --suppress-progress
+
+.PHONY: container-build-backend
+container-build-backend: ## Command to build the container for backend
+	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile
+
+.PHONY: container-push-backend
+container-push-backend: ## Command to push the container for backend
+	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)

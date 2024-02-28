@@ -16,12 +16,14 @@ repos:
         entry: make py-export
         language: system
         files: 'pyproject.toml'
+
+      ## Dotnet checks
       - id: dotnet-tool-restore
         name: Install dotnet tools
         language: system
         entry: dotnet tool restore
-        files: ".config/dotnet-tools.json"
         pass_filenames: false
+        always_run: true
       - id: csharpier
         name: Run CSharpier on c# files
         entry: dotnet tool run dotnet-csharpier
@@ -40,6 +42,8 @@ repos:
         pass_filenames: false
         language: system
         files: "dotnet/"
+
+      ## Flutter checks
       - id: dart-format
         name: Dart format
         entry: dart format .
@@ -60,3 +64,11 @@ repos:
         name: Flutter sotex_box tests
         entry: make flutter-test-box
         language: system
+
+      ## Pulumi checks
+      - id: pulumi-preview
+        name: Run preview of the pulumi config as a dry run
+        entry: make pulumi-preview
+        pass_filenames: false
+        language: system
+        files: "infra/"

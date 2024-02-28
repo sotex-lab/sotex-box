@@ -58,9 +58,8 @@ plugins:
       branch: main
 
 nav:
-  - Home: 'index.md'
   - Introduction:
-    - Project overview: introduction/index.md
+    - Project overview: index.md
     - System overview: introduction/system-overview.md
     - Hardware design: introduction/hardware-design.md
     - Software architecture: introduction/software-arch.md
@@ -68,10 +67,15 @@ nav:
     - Deployment: introduction/deployment.md
   - Repository:
     - Overview: repository/index.md
+    - Working with repository: repository/working-with-repository.md
     - Dotnet:
       - Overview: repository/dotnet/index.md
     - Android:
       - Overview: repository/android/index.md
+    - Infrastructure:
+      - Overview: repository/infra/index.md
+    - Continous Integration:
+      - Overview: repository/CI/index.md
   - Observability:
     - Overview: observability/index.md
   - Benchmarks:
