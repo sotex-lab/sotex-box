@@ -78,6 +78,7 @@ nav:
       - Overview: repository/CI/index.md
   - Observability:
     - Overview: observability/index.md
+    - Custom metrics: observability/custom-metrics.md
   - Benchmarks:
     - EventCoordinator: 'benchmark-EventCoordinator.md'
 
