@@ -95,15 +95,15 @@ dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 ##@ Infrastructure actions
 .PHONY: pulumi-up-staging
 pulumi-up-staging: ## Command to deploy the staging infra
-	pulumi up --cwd infra/backend --stack staging
+	pulumi up --cwd infra/backend --stack sotex/sotex-box/staging
 
 .PHONY: pulumi-destroy-staging
 pulumi-destroy-staging: ## Command to destroy the staging infra
-	pulumi destroy --cwd infra/backend --stack staging
+	pulumi destroy --cwd infra/backend --stack sotex/sotex-box/staging
 
 .PHONY: pulumi-preview
 pulumi-preview: ## Command to preview the staging infra
-	pulumi preview --cwd infra/backend --stack staging --suppress-progress
+	pulumi preview --cwd infra/backend --stack sotex/sotex-box/staging --suppress-progress
 
 ##@ Container actions
 .PHONY: container-build-backend
