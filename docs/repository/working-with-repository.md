@@ -24,9 +24,8 @@ You need a couple of tools to be able to fully work with this repository:
 | 6a | docker | ^23.0.5 | [🔗](https://docs.docker.com/desktop/install/windows-install/) | [🔗](https://docs.docker.com/desktop/install/linux-install/) | [🔗](https://docs.docker.com/desktop/install/mac-install/) |
 | 6b | podman | ^4.8.3 | [🔗](https://podman.io/docs/installation#windows) | [🔗](https://podman.io/docs/installation#installing-on-linux) | [🔗](https://podman.io/docs/installation#macos) |
 | 7 | java | ^21.0.2 | [🔗](https://www.oracle.com/java/technologies/downloads/) | [🔗](https://www.oracle.com/java/technologies/downloads/) | [🔗](https://www.oracle.com/java/technologies/downloads/) |
-| 8 | android studio | latest  | [🔗](https://developer.android.com/studio) | [🔗](https://developer.android.com/studio) | [🔗](https://developer.android.com/studio) |
-| 9 | cmdline-tools/sdkmanager | latest | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) |
-| 10 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
+| 8 | sdkmanager | ^12.0 | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) |
+| 9 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
 
 For more details about flutter installation, visit the android part of the docs.
 
