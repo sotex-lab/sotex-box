@@ -28,6 +28,7 @@ FORMATTING_END = \033[0m
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+##@ Misc actions
 .PHONY: py-export
 py-export: ## Export poetry into requirements
 	poetry export > requirements.txt
@@ -37,6 +38,12 @@ edit-docs: ## Run mkdocs local server for development
 	poetry install
 	poetry run mkdocs serve
 
+.PHONY: flutter-create-emulator
+flutter-create-emulator: ## Shorthand for setting up an emulator
+	sdkmanager "system-images;android-31;google_apis_playstore;x86"
+	flutter emulators --create --name "local-emulator"
+
+##@ Dotnet Testing
 .PHONY: dotnet-tests
 dotnet-tests: dotnet-unit-tests
 dotnet-tests: dotnet-integration-tests
@@ -50,30 +57,7 @@ dotnet-unit-tests: ## Run dotnet unit tests
 dotnet-integration-tests: ## Run dotnet unit tests
 	cd dotnet/integration-tests && dotnet test
 
-.PHONY: run-backend
-run-backend: ## Shorthand for running backend from cli
-	dotnet run --project dotnet/backend
-
-.PHONY: dotnet-benchmark
-dotnet-benchmark: ## Shorthand for running dotnet benchmarks
-	dotnet run -c Release --project dotnet/benchmarks
-	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
-
-.PHONY: flutter-create-emulator
-flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;google_apis_playstore;x86"
-	flutter emulators --create --name "local-emulator"
-
-.PHONY: flutter-run-launcher
-flutter-run-launcher: ## Shorthand for running the launcher app locally
-	flutter emulators --launch local-emulator
-	(cd android/launcher && flutter run -d emulator-5554)
-
-.PHONY: flutter-run-box
-flutter-run-box: ## Shorthand for running the sotex_box app locally
-	flutter emulators --launch local-emulator
-	(cd android/sotex_box && flutter run -d emulator-5554)
-
+##@ Flutter testing
 .PHONY: flutter-test-launcher
 flutter-test-launcher: ## Shorthand for running the launcher tests
 	(cd android/launcher && flutter test -r expanded)
@@ -87,6 +71,28 @@ flutter-test: flutter-test-launcher
 flutter-test: flutter-test-box
 flutter-test: ## Shorthand for running all flutter tests
 
+##@ Executing
+.PHONY: run-backend
+run-backend: ## Shorthand for running backend from cli
+	dotnet run --project dotnet/backend
+
+.PHONY: run-launcher
+run-launcher: ## Shorthand for running the launcher app locally
+	flutter emulators --launch local-emulator
+	(cd android/launcher && flutter run -d emulator-5554)
+
+.PHONY: run-box
+run-box: ## Shorthand for running the sotex_box app locally
+	flutter emulators --launch local-emulator
+	(cd android/sotex_box && flutter run -d emulator-5554)
+
+##@ Benchmarking
+.PHONY: dotnet-benchmark
+dotnet-benchmark: ## Shorthand for running dotnet benchmarks
+	dotnet run -c Release --project dotnet/benchmarks
+	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
+
+##@ Infrastructure actions
 .PHONY: pulumi-up-staging
 pulumi-up-staging: ## Command to deploy the staging infra
 	pulumi up --cwd infra/backend --stack staging
@@ -99,6 +105,7 @@ pulumi-destroy-staging: ## Command to destroy the staging infra
 pulumi-preview: ## Command to preview the staging infra
 	pulumi preview --cwd infra/backend --stack staging --suppress-progress
 
+##@ Container actions
 .PHONY: container-build-backend
 container-build-backend: ## Command to build the container for backend
 	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile
@@ -106,3 +113,20 @@ container-build-backend: ## Command to build the container for backend
 .PHONY: container-push-backend
 container-push-backend: ## Command to push the container for backend
 	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)
+
+##@ Compose actions
+
+LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
+CURR_UID = $(shell id -u)
+CURR_GID = $(shell id -g)
+
+.PHONY: compose-up
+compose-up: container-build-backend
+compose-up: ## Run local stack
+	kill -9 $(LEFTOVER_PORTS) || true
+	COMMIT_SHA=$(COMMIT_SHA) CURR_UID=$(CURR_UID) CURR_GID=$(CURR_GID) $(CONTAINER_TOOL)-compose -f docker-compose.yaml up
+
+.PHONY: compose-down
+compose-down: ## Remove local stack
+	$(CONTAINER_TOOL)-compose -f docker-compose.yaml down
+	kill -9 $(LEFTOVER_PORTS) || true

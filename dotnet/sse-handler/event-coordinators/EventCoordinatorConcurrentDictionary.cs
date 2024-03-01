@@ -1,53 +1,46 @@
 ﻿using System.Collections.Concurrent;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Diagnostics.Metrics;
 using DotNext;
 using Microsoft.Extensions.Logging;
+using SseHandler.Metrics;
 using SseHandler.Serializers;
 
 namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 {
-    private readonly ILogger<EventCoordinatorConcurrentDictionary> _logger;
     private readonly ConcurrentDictionary<string, Connection> _connections;
+    private readonly IDeviceMetrics _deviceMetrics;
     private readonly IEventSerializer _eventSerializer;
-    private static ILogger<EventCoordinatorConcurrentDictionary> _resolveGlobalLogger =>
-        LoggerFactory
-            .Create(x =>
-            {
-                x.SetMinimumLevel(LogLevel.Information);
-            })
-            .CreateLogger<EventCoordinatorConcurrentDictionary>();
 
     public EventCoordinatorConcurrentDictionary()
         : this(
-            _resolveGlobalLogger,
             new ConcurrentDictionary<string, Connection>(),
-            new JsonEventSerializer()
+            new JsonEventSerializer(),
+            new DeviceMetrics()
         ) { }
 
     public EventCoordinatorConcurrentDictionary(
-        ConcurrentDictionary<string, Connection> connections
-    )
-        : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
-
-    public EventCoordinatorConcurrentDictionary(
-        ILogger<EventCoordinatorConcurrentDictionary> logger,
-        IEventSerializer eventSerializer
-    )
-        : this(logger, new ConcurrentDictionary<string, Connection>(), eventSerializer) { }
-
-    public EventCoordinatorConcurrentDictionary(
-        ILogger<EventCoordinatorConcurrentDictionary> logger,
         ConcurrentDictionary<string, Connection> connections,
-        IEventSerializer eventSerializer
+        IDeviceMetrics metrics
+    )
+        : this(connections, new JsonEventSerializer(), metrics) { }
+
+    public EventCoordinatorConcurrentDictionary(
+        IEventSerializer eventSerializer,
+        IDeviceMetrics deviceMetrics
+    )
+        : this(new ConcurrentDictionary<string, Connection>(), eventSerializer, deviceMetrics) { }
+
+    public EventCoordinatorConcurrentDictionary(
+        ConcurrentDictionary<string, Connection> connections,
+        IEventSerializer eventSerializer,
+        IDeviceMetrics deviceMetrics
     )
     {
-        _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
+        _deviceMetrics = deviceMetrics;
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -61,7 +54,6 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         if (_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.DuplicateKey
             );
@@ -73,7 +65,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
                 EventCoordinatorError.Unknown
             );
         }
-
+        _deviceMetrics.Connected(id);
         var addedValue = _connections[id];
         return new Result<CancellationTokenSource, EventCoordinatorError>(
             addedValue.CancellationTokenSource
@@ -89,7 +81,6 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         if (!_connections.ContainsKey(id))
         {
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
 
@@ -99,6 +90,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         }
 
         connection!.CancellationTokenSource.Cancel();
+        _deviceMetrics.Disconnected(id);
         return new Result<bool, EventCoordinatorError>(true);
     }
 
@@ -124,6 +116,7 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
+        _deviceMetrics.Sent(id, message);
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

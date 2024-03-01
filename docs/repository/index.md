@@ -9,13 +9,16 @@ Remember to remove .gitignored files if they render-->
 ```bash
 .
 ├── .config # Folder that contains config files, e.g. config for dotnet tools
+├── .dockerignore # File that contains all the things that docker should include in the build process
 ├── .editorconfig # File that specifies how should files be formated
 ├── .github # Folder with workflows
 ├── .pre-commit-config.yaml # Precommit configuration
-├── android # Folder that contains android code that we use
 ├── CODEOWNERS # File containing the codeowners of certain parts of the repository
 ├── Makefile # Make file that contains some quick-access shortcuts maintained by the team
 ├── README.md # Readme that is rendered for github repository
+├── android # Folder that contains android code that we use
+├── distribution # Folder containing images for our stack
+├── docker-compose.yaml # Development stack
 ├── docs # Folder containing all the documentation that is used to power this site
 ├── dotnet # Folder containing all the dotnet code we use
 ├── infra # Folder containing all IAAC code we use

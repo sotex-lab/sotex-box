@@ -1,54 +1,38 @@
-﻿using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Diagnostics.Metrics;
 using DotNext;
 using DotNext.Collections.Generic;
-using Microsoft.Extensions.Logging;
+using SseHandler.Metrics;
 using SseHandler.Serializers;
 
 namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorMutex : IEventCoordinator
 {
-    private readonly ILogger<EventCoordinatorMutex> _logger;
     private readonly Dictionary<string, Connection> _connections;
     private readonly Mutex _lock;
     private readonly IEventSerializer _eventSerializer;
-
-    private static ILogger<EventCoordinatorMutex> _resolveGlobalLogger =>
-        LoggerFactory
-            .Create(x =>
-            {
-                x.SetMinimumLevel(LogLevel.Information);
-            })
-            .CreateLogger<EventCoordinatorMutex>();
+    private readonly IDeviceMetrics _deviceMetrics;
 
     public EventCoordinatorMutex()
-        : this(
-            _resolveGlobalLogger,
-            new Dictionary<string, Connection>(),
-            new JsonEventSerializer()
-        ) { }
+        : this(new Dictionary<string, Connection>(), new JsonEventSerializer(), new DeviceMetrics())
+    { }
 
-    public EventCoordinatorMutex(Dictionary<string, Connection> connections)
-        : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
+    public EventCoordinatorMutex(Dictionary<string, Connection> connections, IDeviceMetrics metrics)
+        : this(connections, new JsonEventSerializer(), metrics) { }
 
-    public EventCoordinatorMutex(
-        ILogger<EventCoordinatorMutex> logger,
-        IEventSerializer eventSerializer
-    )
-        : this(logger, new Dictionary<string, Connection>(), eventSerializer) { }
+    public EventCoordinatorMutex(IEventSerializer eventSerializer, IDeviceMetrics deviceMetrics)
+        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics) { }
 
     public EventCoordinatorMutex(
-        ILogger<EventCoordinatorMutex> logger,
         Dictionary<string, Connection> connections,
-        IEventSerializer eventSerializer
+        IEventSerializer eventSerializer,
+        IDeviceMetrics deviceMetrics
     )
     {
-        _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
         _lock = new Mutex();
+        _deviceMetrics = deviceMetrics;
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -75,6 +59,7 @@ public class EventCoordinatorMutex : IEventCoordinator
                 EventCoordinatorError.Unknown
             );
         }
+        _deviceMetrics.Connected(id);
         _lock.ReleaseMutex();
 
         return new Result<CancellationTokenSource, EventCoordinatorError>(
@@ -101,6 +86,7 @@ public class EventCoordinatorMutex : IEventCoordinator
             _lock.ReleaseMutex();
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
+        _deviceMetrics.Disconnected(id);
         _lock.ReleaseMutex();
         removed.Value.CancellationTokenSource.Cancel();
         return new Result<bool, EventCoordinatorError>(true);
@@ -124,9 +110,9 @@ public class EventCoordinatorMutex : IEventCoordinator
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
-
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
+        _deviceMetrics.Sent(id, message);
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

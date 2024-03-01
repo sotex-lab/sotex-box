@@ -1,55 +1,49 @@
-﻿using System.Text;
+﻿using System.Diagnostics.Metrics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DotNext;
 using DotNext.Collections.Generic;
 using DotNext.Threading;
 using Microsoft.Extensions.Logging;
+using SseHandler.Metrics;
 using SseHandler.Serializers;
 
 namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorReaderWriterLock : IEventCoordinator
 {
-    private readonly ILogger<EventCoordinatorReaderWriterLock> _logger;
     private readonly Dictionary<string, Connection> _connections;
     private readonly ReaderWriterSpinLock _lock;
     private readonly IEventSerializer _eventSerializer;
-
-    private static ILogger<EventCoordinatorReaderWriterLock> _resolveGlobalLogger =>
-        LoggerFactory
-            .Create(x =>
-            {
-                x.SetMinimumLevel(LogLevel.Information);
-            })
-            .CreateLogger<EventCoordinatorReaderWriterLock>();
+    private readonly IDeviceMetrics _deviceMetrics;
 
     public EventCoordinatorReaderWriterLock()
-        : this(
-            _resolveGlobalLogger,
-            new Dictionary<string, Connection>(),
-            new JsonEventSerializer()
-        ) { }
-
-    public EventCoordinatorReaderWriterLock(Dictionary<string, Connection> connections)
-        : this(_resolveGlobalLogger, connections, new JsonEventSerializer()) { }
+        : this(new Dictionary<string, Connection>(), new JsonEventSerializer(), new DeviceMetrics())
+    { }
 
     public EventCoordinatorReaderWriterLock(
-        ILogger<EventCoordinatorReaderWriterLock> logger,
-        IEventSerializer eventSerializer
-    )
-        : this(logger, new Dictionary<string, Connection>(), eventSerializer) { }
-
-    public EventCoordinatorReaderWriterLock(
-        ILogger<EventCoordinatorReaderWriterLock> logger,
         Dictionary<string, Connection> connections,
-        IEventSerializer eventSerializer
+        IDeviceMetrics metrics
+    )
+        : this(connections, new JsonEventSerializer(), metrics) { }
+
+    public EventCoordinatorReaderWriterLock(
+        IEventSerializer eventSerializer,
+        IDeviceMetrics deviceMetrics
+    )
+        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics) { }
+
+    public EventCoordinatorReaderWriterLock(
+        Dictionary<string, Connection> connections,
+        IEventSerializer eventSerializer,
+        IDeviceMetrics deviceMetrics
     )
     {
-        _logger = logger;
         _connections = connections;
         _eventSerializer = eventSerializer;
         _lock = new ReaderWriterSpinLock();
+        _deviceMetrics = deviceMetrics;
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -65,7 +59,6 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         if (_connections.ContainsKey(id))
         {
             _lock.ExitReadLock();
-            _logger.LogTrace("Connections contain key {id}", id);
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.DuplicateKey
             );
@@ -86,6 +79,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         );
         _lock.ExitWriteLock();
         _lock.ExitReadLock();
+        _deviceMetrics.Connected(id);
         return result;
     }
 
@@ -100,7 +94,6 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         if (!_connections.ContainsKey(id))
         {
             _lock.ExitReadLock();
-            _logger.LogTrace("Connections doesn't contain key {id}", id);
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
 
@@ -113,6 +106,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
         removed.Value.CancellationTokenSource.Cancel();
+        _deviceMetrics.Disconnected(id);
         _lock.ExitWriteLock();
         _lock.ExitReadLock();
         return new Result<bool, EventCoordinatorError>(true);
@@ -145,6 +139,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
         _lock.ExitReadLock();
+        _deviceMetrics.Sent(id, message);
         return new Result<bool, EventCoordinatorError>(true);
     }
 }

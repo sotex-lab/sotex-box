@@ -33,3 +33,16 @@ pre-commit install
 ```
 
 After that you can use `make` to run things from the repository. Some things that are not implemented require specific commands but those are a niece topic still.
+
+## Running the fullstack locally
+
+In order to support having 0 setup locally we've setup `docker-compose.yaml` that serves as a quick run and test tool for the stack. Most of the time it is expected to use this in order to work with the solution as a whole. Some of the tests require you to run the whole stack so you can see how the new feature you are implementing plays against the load. Some things cannot be reproduced locally (for example networking issues) but still you can see have a general idea of whether your improvement solves a problem or not.
+
+To start the stack simply run:
+```bash
+make compose-up
+```
+After you are done you can remove the stack by running
+```bash
+make compose-down
+```

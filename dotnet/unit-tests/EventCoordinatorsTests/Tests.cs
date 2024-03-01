@@ -1,9 +1,11 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
+using Moq;
 using Newtonsoft.Json;
 using Shouldly;
 using SseHandler;
 using SseHandler.EventCoordinators;
+using SseHandler.Metrics;
 
 namespace unit_tests;
 
@@ -23,13 +25,23 @@ public class EventCoordinatorsTests
         dictionary[testConnection.Id] = testConnection;
         dictionary[otherConnection.Id] = otherConnection;
 
+        var metricsMock = new Mock<IDeviceMetrics>();
+
         yield return new object[]
         {
-            new EventCoordinatorConcurrentDictionary(concurrentDictionary),
+            new EventCoordinatorConcurrentDictionary(concurrentDictionary, metricsMock.Object),
             concurrentDictionary
         };
-        yield return new object[] { new EventCoordinatorReaderWriterLock(dictionary), dictionary };
-        yield return new object[] { new EventCoordinatorMutex(dictionary), dictionary };
+        yield return new object[]
+        {
+            new EventCoordinatorReaderWriterLock(dictionary, metricsMock.Object),
+            dictionary
+        };
+        yield return new object[]
+        {
+            new EventCoordinatorMutex(dictionary, metricsMock.Object),
+            dictionary
+        };
     }
 
     [DataTestMethod]
