@@ -25,7 +25,9 @@ You need a couple of tools to be able to fully work with this repository:
 | 6b | podman | ^4.8.3 | [🔗](https://podman.io/docs/installation#windows) | [🔗](https://podman.io/docs/installation#installing-on-linux) | [🔗](https://podman.io/docs/installation#macos) |
 | 7 | java | ^21.0.2 | [🔗](https://www.oracle.com/java/technologies/downloads/) | [🔗](https://www.oracle.com/java/technologies/downloads/) | [🔗](https://www.oracle.com/java/technologies/downloads/) |
 | 8 | sdkmanager | ^12.0 | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) |
-| 9 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
+| 9 | gradle | ^4.4.1 | [🔗](https://gradle.org/install/) | [🔗](https://gradle.org/install/) | [🔗](https://gradle.org/install/) |
+| 10 | kotlin | ^1.9.21 | [🔗](https://kotlinlang.org/docs/command-line.html#manual-install) | [🔗](https://kotlinlang.org/docs/command-line.html#snap-package) | [🔗](https://kotlinlang.org/docs/command-line.html#homebrew) |
+| 11 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
 
 For more details about flutter installation, visit the android part of the docs.
 
