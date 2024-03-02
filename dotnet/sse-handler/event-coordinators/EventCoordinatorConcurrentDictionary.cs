@@ -72,6 +72,11 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         );
     }
 
+    public IEnumerable<string> GetConnectionIds()
+    {
+        return _connections.Keys;
+    }
+
     public Result<bool, EventCoordinatorError> Remove(string id)
     {
         if (string.IsNullOrEmpty(id))
