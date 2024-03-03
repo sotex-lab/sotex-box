@@ -28,6 +28,8 @@ FORMATTING_END = \033[0m
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+## TODO avdmanager create avd -n avd-name -k "system-images;android-31;google_apis;x86_64" --device "pixel"
+
 ##@ Misc actions
 .PHONY: py-export
 py-export: ## Export poetry into requirements
@@ -40,8 +42,12 @@ edit-docs: ## Run mkdocs local server for development
 
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;google_apis_playstore;x86"
+	sdkmanager "system-images;android-31;google_apis;x86_64"
 	flutter emulators --create --name "local-emulator"
+
+.PHONY: flutter-remove-emulator
+flutter-remove-emulator: ## Shorthand for removing an emulator (in case of changes)
+	avdmanager delete avd -n "local-emulator"
 
 ##@ Dotnet Testing
 .PHONY: dotnet-tests
