@@ -17,33 +17,49 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
     private readonly ReaderWriterSpinLock _lock;
     private readonly IEventSerializer _eventSerializer;
     private readonly IDeviceMetrics _deviceMetrics;
+    private readonly ILogger<EventCoordinatorReaderWriterLock> _logger;
+
+    private static ILogger<EventCoordinatorReaderWriterLock> GetLogger() =>
+        LoggerFactory
+            .Create(configure =>
+            {
+                configure.SetMinimumLevel(LogLevel.Trace);
+            })
+            .CreateLogger<EventCoordinatorReaderWriterLock>();
 
     public EventCoordinatorReaderWriterLock()
-        : this(new Dictionary<string, Connection>(), new JsonEventSerializer(), new DeviceMetrics())
-    { }
+        : this(
+            new Dictionary<string, Connection>(),
+            new JsonEventSerializer(),
+            new DeviceMetrics(),
+            GetLogger()
+        ) { }
 
     public EventCoordinatorReaderWriterLock(
         Dictionary<string, Connection> connections,
         IDeviceMetrics metrics
     )
-        : this(connections, new JsonEventSerializer(), metrics) { }
+        : this(connections, new JsonEventSerializer(), metrics, GetLogger()) { }
 
     public EventCoordinatorReaderWriterLock(
         IEventSerializer eventSerializer,
-        IDeviceMetrics deviceMetrics
+        IDeviceMetrics deviceMetrics,
+        ILogger<EventCoordinatorReaderWriterLock> logger
     )
-        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics) { }
+        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics, logger) { }
 
     public EventCoordinatorReaderWriterLock(
         Dictionary<string, Connection> connections,
         IEventSerializer eventSerializer,
-        IDeviceMetrics deviceMetrics
+        IDeviceMetrics deviceMetrics,
+        ILogger<EventCoordinatorReaderWriterLock> logger
     )
     {
         _connections = connections;
         _eventSerializer = eventSerializer;
         _lock = new ReaderWriterSpinLock();
         _deviceMetrics = deviceMetrics;
+        _logger = logger;
     }
 
     public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
@@ -65,6 +81,7 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         }
 
         _lock.EnterWriteLock();
+        _logger.LogInformation("Device {0}: adding device", id);
         if (!_connections.TryAdd(id, new Connection(id, stream)))
         {
             _lock.ExitWriteLock();
@@ -73,13 +90,14 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
                 EventCoordinatorError.Unknown
             );
         }
-
+        _logger.LogInformation("Device {0}: configuring metrics", id);
         var result = new Result<CancellationTokenSource, EventCoordinatorError>(
             _connections[id].CancellationTokenSource
         );
         _lock.ExitWriteLock();
         _lock.ExitReadLock();
         _deviceMetrics.Connected(id);
+        _logger.LogInformation("Device {0}: added", id);
         return result;
     }
 
