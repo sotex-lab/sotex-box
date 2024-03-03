@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { setTimeout, setInterval, clearInterval } from 'k6/experimental/timers';
+import { setTimeout } from 'k6/experimental/timers';
 import { check } from 'k6';
 
 export const options = {
@@ -10,9 +10,12 @@ export const options = {
 export default async function() {
   const id = __VU
   const url = __ENV.BACKEND_URL
+  const noopInterval = __ENV.NOOP_INTERVAL
   const second = 1000
   const totalSecs = __ENV.SECONDS
   const setTimeoutTotal = totalSecs - 5
+
+  const expectedNoops = Math.floor(setTimeoutTotal / noopInterval)
 
   const tags = {
     deviceId: id
@@ -21,7 +24,7 @@ export default async function() {
   // Get random number between 0 and setTimeoutTotal to send some data on that intervals
   const messageAmount = Math.floor(Math.random() * setTimeoutTotal)
 
-  console.log(`Test case explaination for ${__VU}: timeout: ${totalSecs}s, setTimeout: ${setTimeoutTotal}, messageAmount: ${messageAmount}`)
+  console.log(`Test case explaination for ${__VU}: timeout: ${totalSecs}s, setTimeout: ${setTimeoutTotal}, expectedNoops: ${expectedNoops}`)
 
   // Set closing timeout
   setTimeout(() => {
@@ -31,32 +34,22 @@ export default async function() {
     }, tags)
   }, setTimeoutTotal * second)
 
-  // Set interval for writing data to devices
-  const intervalId = setInterval(() => {
-    const sentMessage = http.get(`${url}/event/writedata?id=${id}&message=test`)
-    check(sentMessage, {
-      'Sent message status was 200' : (r) => r.status == 200
-    }, tags)
-  }, setTimeoutTotal * second / messageAmount)
-
   const res = await http.asyncRequest('GET', `${url}/event/connect?id=${id}`, {}, {
     timeout: `${totalSecs}s`
   })
-
-  clearInterval(intervalId)
 
   check(res, {
     'Get status was 200': (r) => r.status == 200,
     'Received all messages': (r) => {
       let totalLines = 0
       for (let line of r.body.split('\n\n')) {
-        if (line.includes("data: \"test\"")) {
+        if (line.includes("data: \"noop\"")) {
           totalLines += 1
         }
       }
 
       // Expect to drop less than 2 messages
-      return Math.abs(messageAmount - totalLines) < 2
+      return Math.abs(expectedNoops - totalLines) < 2
     }
   }, tags);
 }

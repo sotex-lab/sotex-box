@@ -22,6 +22,6 @@ public class NoopJob
             await _eventCoordinator.SendMessage(device, "noop");
         }
 
-        _logger.LogInformation("Sending noop singla finished");
+        _logger.LogInformation("Sending noop signal finished");
     }
 }
