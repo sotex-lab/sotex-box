@@ -10,6 +10,6 @@ public static class BackgroundJobClientConfiguration
     {
         var client = webApplication.Services.GetRequiredService<IRecurringJobManager>();
 
-        client.AddOrUpdate<NoopJob>("noop", noopJob => noopJob.SendNoop(), "0/15 * * ? * *");
+        client.AddOrUpdate<NoopJob>("noop", noopJob => noopJob.SendNoop(), NoopJob.Cron());
     }
 }
