@@ -2,6 +2,7 @@
 using DotNext;
 using DotNext.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using SseHandler.LoggerExtensions;
 using SseHandler.Metrics;
 using SseHandler.Serializers;
 
@@ -72,19 +73,20 @@ public class EventCoordinatorMutex : IEventCoordinator
         }
 
         _lock.WaitOne();
-        _logger.LogInformation("Device {0}: adding device", id);
+        _logger.LogEventCoordinator(id, "Trying to add device");
         if (!_connections.TryAdd(id, new Connection(id, stream)))
         {
             _lock.ReleaseMutex();
+            _logger.LogEventCoordinator(id, "Adding device failed for unknown reasons");
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.Unknown
             );
         }
-        _logger.LogInformation("Device {0}: configuring metrics", id);
+        _logger.LogEventCoordinator(id, "Configuring metrics");
         _deviceMetrics.Connected(id);
         _lock.ReleaseMutex();
 
-        _logger.LogInformation("Device {0}: added", id);
+        _logger.LogEventCoordinator(id, "Device successfully added");
         return new Result<CancellationTokenSource, EventCoordinatorError>(
             _connections[id].CancellationTokenSource
         );
@@ -108,12 +110,16 @@ public class EventCoordinatorMutex : IEventCoordinator
         }
 
         _lock.WaitOne();
+        _logger.LogEventCoordinator(id, "Trying to remove device");
         var removed = _connections.TryRemove(id);
         if (removed.IsNull)
         {
             _lock.ReleaseMutex();
+            _logger.LogEventCoordinator(id, "Removing device failed for unknown reasons");
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.Unknown);
         }
+        _logger.LogEventCoordinator(id, "Removing metrics");
+
         _deviceMetrics.Disconnected(id);
         _lock.ReleaseMutex();
         removed.Value.CancellationTokenSource.Cancel();
@@ -138,9 +144,13 @@ public class EventCoordinatorMutex : IEventCoordinator
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.KeyNotFound);
         }
+        _logger.LogEventCoordinator(id, "Sending message");
+
         await connection.Stream.WriteAsync(_eventSerializer.SerializeData(message));
         await connection.Stream.FlushAsync();
+        _logger.LogEventCoordinator(id, "Updating message metrics");
         _deviceMetrics.Sent(id, message);
+        _logger.LogEventCoordinator(id, "Message successfully sent");
         return new Result<bool, EventCoordinatorError>(true);
     }
 }
