@@ -57,3 +57,45 @@ public async Task Should_NotDoStuff_AuthError() {
 ```
 
 Try to write tests that cover the business logic and add value to the codebase ensuring that future changes to some code don't accidentally break the logic. Writing meaningless tests results in denied PR's.
+
+### Load testing
+For load testing, we use [k6](https://grafana.com/docs/k6/latest/). Since we know the goal we want to reach we need these kinds of tests to ensure that our implementation can work in desired circumstances. Keep in mind that our solution doesn't have to, and probably won't work for parameters greater than defined by these tests. If backend can work under load specified by these tests it is expected that it will work in production as well.
+
+For this tool there is no `make` action. One needs to run it on their own with their own desired parameters. To run the tests you should:
+
+1. The stack needs to run: `make compose-up`
+2. Run the `k6` tool:
+```bash
+k6 run load-tests/sse/connectionTest.js --vus 10 --iterations 10 --env BACKEND_URL=<backend-url> --env NOOP_INTERVAL=<noop-interval> --env SECONDS=<seconds>
+```
+
+Parameter explaination:
+
+1. `--vus`: number of virtual users to run. Each virtual user will be a separate [goroutine](https://go.dev/tour/concurrency/1) and will create a connection to the backend.
+2. `--iterations`: number of iterations to run. It should be atleast equal to `--vus`. If `iterations` is larger than `vus` then some users will run the test logic twice.
+3. `--env`: represent environment variables for the test
+
+Environment variable explaination:
+
+1. `BACKEND_URL`: depending on how you run backend this option can and will vary. If you run `make run-backend` this should have value of `http://localhost:5029`. If you run with `make compose-up` this should have value of `http://localhost:8080`. If you want to run tests against staging you should provide the dns name of staging and so on.
+2. `NOOP_INTERVAL`: specified noop interval in seconds. This number represents on how many seconds does the server send a `noop` signal. By default the server sends a `noop` each 15s so if you haven't provided an override then this parameter should have the value of `15`.
+3. `SECONDS`: the duration of the test in seconds. If you want to run a test for 10 minutes you should provide value of `600` here.
+
+Example run for stack run with `make compose-up` for `30` users for `10` minutes:
+```bash
+k6 run load-tests/sse/connectionTest.js --vus 30 --iterations 30 --env BACKEND_URL=http://localhost:8080 --env NOOP_INTERVAL=15 --env SECONDS=600
+```
+
+**Important notes**:
+
+Keep in mind that this test can be quite heavy. The test runs the threads in parallel and keeps them open for `SECONDS` amount of time. Since the server sends the `noop` signal at fixed rates you can easily calculate how much data will the test create. The noop signal looks like `data: "noop"\n\n` and by default the server sends 1 noop each 15 seconds.
+```bash
+noop = "data: \"noop\"\\n\\n"                       # 14 bytes
+NOOP_INTERVAL = 15                                  # 1 noop per 15 seconds
+SECONDS = 600                                       # 10 minutes
+vus = 10                                            # 10 virtual users
+iterations = 10                                     # 10 iterations
+bytes_per_user = SECONDS * noop / NOOP_INTERVAL     # 560 bytes
+total_bytes = bytes_per_user * vus                  # 5600 bytes ~ 5.46 kB
+```
+What this means is that one should be careful on how many users he spins and how long does the test last since it can be heavy on the machine running the test itself.
