@@ -21,9 +21,6 @@ export default async function() {
     deviceId: id
   }
 
-  // Get random number between 0 and setTimeoutTotal to send some data on that intervals
-  const messageAmount = Math.floor(Math.random() * setTimeoutTotal)
-
   console.log(`Test case explaination for ${__VU}: timeout: ${totalSecs}s, setTimeout: ${setTimeoutTotal}, expectedNoops: ${expectedNoops}`)
 
   // Set closing timeout
