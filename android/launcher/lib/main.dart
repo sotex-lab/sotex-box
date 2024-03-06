@@ -5,5 +5,5 @@ import 'package:launcher/app_observer.dart';
 
 void main() async {
   Bloc.observer = const AppObserver();
-  runApp(const CounterApp());
+  runApp(const SotexBoxApp());
 }
