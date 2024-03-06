@@ -117,14 +117,12 @@ container-push-backend: ## Command to push the container for backend
 ##@ Compose actions
 
 LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
-CURR_UID = $(shell id -u)
-CURR_GID = $(shell id -g)
 
 .PHONY: compose-up
 compose-up: container-build-backend
 compose-up: ## Run local stack
 	kill -9 $(LEFTOVER_PORTS) || true
-	COMMIT_SHA=$(COMMIT_SHA) CURR_UID=$(CURR_UID) CURR_GID=$(CURR_GID) $(CONTAINER_TOOL)-compose -f docker-compose.yaml --env-file .env up
+	COMMIT_SHA=$(COMMIT_SHA) $(CONTAINER_TOOL)-compose -f docker-compose.yaml --env-file .env up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack

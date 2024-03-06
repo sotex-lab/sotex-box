@@ -13,8 +13,6 @@ services:
       - prometheus:/prometheus
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME}
-    ports:
-      - 9090:9090
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -34,8 +32,6 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
     volumes:
       - ./infra/config/grafana/provisioning:/etc/grafana/provisioning
-    ports:
-      - 3000:3000
     command:
       - "sh"
       - "\"-c\""
@@ -44,11 +40,18 @@ services:
   nginx:
     container_name: nginx
     image: nginx:1.25.4-alpine3.18
+    environment:
+      - NGINX_PORT=${NGINX_PORT}
+      - DOLLAR=$
     ports:
-      - 80:80
+      - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
       - ./infra/config/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./infra/config/nginx/gateway.conf:/etc/nginx/gateway.conf
+      - ./infra/config/nginx/gateway.conf:/etc/nginx/gateway.conf.template
+    command:
+      - sh
+      - -c
+      - "envsubst < /etc/nginx/gateway.conf.template > /etc/nginx/apigateway.conf && cat /etc/nginx/apigateway.conf && nginx -g 'daemon off;'"
 
 volumes:
   grafana:
