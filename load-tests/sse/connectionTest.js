@@ -15,24 +15,26 @@ export default async function() {
   const second = 1000
   const totalSecs = __ENV.SECONDS
   const setTimeoutTotal = totalSecs - 5
+  const prefix_id = __ENV.PREFIX
+  const totalId = prefix_id + id
 
   const expectedNoops = Math.floor(setTimeoutTotal / noopInterval)
 
   const tags = {
-    deviceId: id
+    deviceId: totalId
   }
 
-  console.log(`Test case explaination for ${__VU}: timeout: ${totalSecs}s, setTimeout: ${setTimeoutTotal}, expectedNoops: ${expectedNoops}`)
+  console.log(`Test case explaination for ${totalId}: timeout: ${totalSecs}s, setTimeout: ${setTimeoutTotal}, expectedNoops: ${expectedNoops}`)
 
   // Set closing timeout
   setTimeout(() => {
-    const del = http.del(`${url}/event/forcedisconnect?id=${id}`)
+    const del = http.del(`${url}/event/forcedisconnect?id=${totalId}`)
     check(del, {
       'Delete status was 200': (r) => r.status == 200
     }, tags)
   }, setTimeoutTotal * second)
 
-  const res = await http.asyncRequest('GET', `${url}/event/connect?id=${id}`, {}, {
+  const res = await http.asyncRequest('GET', `${url}/event/connect?id=${totalId}`, {}, {
     timeout: `${totalSecs}s`
   })
 
