@@ -39,6 +39,12 @@ After that you can use `make` to run things from the repository. Some things tha
 
 In order to support having 0 setup locally we've setup `docker-compose.yaml` that serves as a quick run and test tool for the stack. Most of the time it is expected to use this in order to work with the solution as a whole. Some of the tests require you to run the whole stack so you can see how the new feature you are implementing plays against the load. Some things cannot be reproduced locally (for example networking issues) but still you can see have a general idea of whether your improvement solves a problem or not.
 
+!!! tip "Environment variables"
+    In order to tie everything together we are using environment variables. There is a `.env.template` which specifies all environment variables that we set. In order to start the stack you should first edit variables to suit your own. Start with
+    ```bash
+    cp .env.template .env
+    ```
+
 To start the stack simply run:
 ```bash
 make compose-up

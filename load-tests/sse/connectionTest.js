@@ -4,7 +4,8 @@ import { check } from 'k6';
 
 export const options = {
   vus: 10,
-  iterations: 10
+  iterations: 10,
+  duration: '60m'
 }
 
 export default async function() {

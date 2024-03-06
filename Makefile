@@ -117,10 +117,18 @@ container-push-backend: ## Command to push the container for backend
 ##@ Compose actions
 
 LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
+ENV_FILE := .env
 
 .PHONY: compose-up
 compose-up: container-build-backend
 compose-up: ## Run local stack
+	@if [ -z "$(wildcard $(ENV_FILE))" ]; then \
+        echo "$(ENV_FILE) does not exist. To run the stack you should create $(ENV_FILE). Use $(ENV_FILE).template to start"; \
+        exit 1; \
+    else \
+        echo "$(ENV_FILE) exists"; \
+    fi
+
 	kill -9 $(LEFTOVER_PORTS) || true
 	COMMIT_SHA=$(COMMIT_SHA) $(CONTAINER_TOOL)-compose -f docker-compose.yaml --env-file .env up
 
