@@ -124,7 +124,7 @@ CURR_GID = $(shell id -g)
 compose-up: container-build-backend
 compose-up: ## Run local stack
 	kill -9 $(LEFTOVER_PORTS) || true
-	COMMIT_SHA=$(COMMIT_SHA) CURR_UID=$(CURR_UID) CURR_GID=$(CURR_GID) $(CONTAINER_TOOL)-compose -f docker-compose.yaml up
+	COMMIT_SHA=$(COMMIT_SHA) CURR_UID=$(CURR_UID) CURR_GID=$(CURR_GID) $(CONTAINER_TOOL)-compose -f docker-compose.yaml --env-file .env up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
