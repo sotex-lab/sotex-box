@@ -15,7 +15,7 @@ export default async function() {
   const second = 1000
   const totalSecs = __ENV.SECONDS
   const setTimeoutTotal = totalSecs - 5
-  const prefix_id = __ENV.PREFIX
+  const prefix_id = (__ENV.PREFIX !== undefined && __ENV.PREFIX !== null) ? __ENV.PREFIX : '';
   const totalId = prefix_id + id
 
   const expectedNoops = Math.floor(setTimeoutTotal / noopInterval)

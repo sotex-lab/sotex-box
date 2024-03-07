@@ -16,6 +16,16 @@ export CONTAINER_TOOL ?= auto
 ifeq ($(CONTAINER_TOOL),auto)
 	override CONTAINER_TOOL = $(shell docker version >/dev/null 2>&1 && echo docker || echo podman)
 endif
+
+# Conditional assignment of COMPOSE_COMMAND
+ifeq ($(CONTAINER_TOOL),podman)
+    COMPOSE_COMMAND := podman-compose
+else ifeq ($(CONTAINER_TOOL),docker)
+    COMPOSE_COMMAND := docker compose
+else
+    $(error Unsupported value for CONTAINER_TOOL: $(CONTAINER_TOOL))
+endif
+
 # If we're using podman create pods else if we're using docker create networks.
 export CURRENT_DIR = $(shell pwd)
 
@@ -26,7 +36,7 @@ FORMATTING_BEGIN_BLUE = \033[36m
 FORMATTING_END = \033[0m
 
 help:
-	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}, ${COMPOSE_COMMAND}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Misc actions
 .PHONY: py-export
@@ -130,9 +140,9 @@ compose-up: ## Run local stack
     fi
 
 	kill -9 $(LEFTOVER_PORTS) || true
-	COMMIT_SHA=$(COMMIT_SHA) $(CONTAINER_TOOL)-compose -f docker-compose.yaml --env-file .env up
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml --env-file .env up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
-	$(CONTAINER_TOOL)-compose -f docker-compose.yaml down
+	$(COMPOSE_COMMAND) -f docker-compose.yaml down
 	kill -9 $(LEFTOVER_PORTS) || true
