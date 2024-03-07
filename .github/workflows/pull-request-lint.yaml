@@ -5,7 +5,7 @@ on:
       - opened
       - edited
       - reopened
-  push:
+      - synchronize
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
