@@ -85,7 +85,7 @@ run-backend: ## Shorthand for running backend from cli
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
 	flutter emulators --launch local-emulator
-	(cd android/launcher && flutter run -d emulator-5554)
+	(cd android/launcher && flutter run -d emulator-5554 --dart-define=SERVER_URL=http://localhost:8080)
 
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
