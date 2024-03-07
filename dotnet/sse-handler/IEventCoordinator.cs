@@ -9,6 +9,7 @@ public interface IEventCoordinator
     Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message);
     Result<bool, EventCoordinatorError> Remove(string id);
     void RemoveAll();
+    IEnumerable<string> GetConnectionIds();
 }
 
 public enum EventCoordinatorError

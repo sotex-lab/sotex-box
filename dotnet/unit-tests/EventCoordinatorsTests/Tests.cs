@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Moq;
 using Newtonsoft.Json;
@@ -116,6 +117,18 @@ public class EventCoordinatorsTests
         {
             connection.CancellationTokenSource.IsCancellationRequested.ShouldBeTrue();
         }
+    }
+
+    [DataTestMethod]
+    [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
+    public void Should_GetAll(
+        IEventCoordinator eventCoordinator,
+        IDictionary<string, Connection> connetions
+    )
+    {
+        var keys = eventCoordinator.GetConnectionIds();
+
+        keys.Select(connetions.ContainsKey).ShouldAllBe(x => x == true);
     }
 
     private class TestMessage

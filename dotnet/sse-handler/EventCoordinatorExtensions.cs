@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SseHandler.EventCoordinators;
 using SseHandler.Metrics;
 using SseHandler.Serializers;
@@ -23,7 +24,8 @@ public static class EventCoordinatorExtensions
         services.AddSingleton<IEventCoordinator>(x => new EventCoordinatorMutex(
             connections,
             serializer,
-            x.GetRequiredService<IDeviceMetrics>()
+            x.GetRequiredService<IDeviceMetrics>(),
+            x.GetRequiredService<ILogger<EventCoordinatorMutex>>()
         ));
     }
 }

@@ -1,19 +1,19 @@
 {
 	"annotations": {
-		"list": [
-			{
-				"builtIn": 1,
-				"datasource": {
-					"type": "grafana",
-					"uid": "-- Grafana --"
-				},
-				"enable": true,
-				"hide": true,
-				"iconColor": "rgba(0, 211, 255, 1)",
-				"name": "Annotations & Alerts",
-				"type": "dashboard"
-			}
-		]
+	  "list": [
+		{
+		  "builtIn": 1,
+		  "datasource": {
+			"type": "grafana",
+			"uid": "-- Grafana --"
+		  },
+		  "enable": true,
+		  "hide": true,
+		  "iconColor": "rgba(0, 211, 255, 1)",
+		  "name": "Annotations & Alerts",
+		  "type": "dashboard"
+		}
+	  ]
 	},
 	"editable": true,
 	"fiscalYearStartMonth": 0,
@@ -21,104 +21,128 @@
 	"links": [],
 	"liveNow": false,
 	"panels": [
-		{
-			"datasource": {
-				"type": "prometheus",
-				"uid": "PBFA97CFB590B2093"
+	  {
+		"datasource": {
+		  "type": "prometheus",
+		  "uid": "PBFA97CFB590B2093"
+		},
+		"fieldConfig": {
+		  "defaults": {
+			"color": {
+			  "mode": "palette-classic"
 			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "thresholds"
-					},
-					"custom": {
-						"fillOpacity": 70,
-						"hideFrom": {
-							"legend": false,
-							"tooltip": false,
-							"viz": false
-						},
-						"lineWidth": 1
-					},
-					"mappings": [],
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-							{
-								"color": "green",
-								"value": null
-							},
-							{
-								"color": "red",
-								"value": 0
-							},
-							{
-								"color": "green",
-								"value": 1
-							}
-						]
-					}
-				},
-				"overrides": []
+			"custom": {
+			  "axisBorderShow": false,
+			  "axisCenteredZero": false,
+			  "axisColorMode": "text",
+			  "axisLabel": "",
+			  "axisPlacement": "auto",
+			  "barAlignment": 0,
+			  "drawStyle": "line",
+			  "fillOpacity": 0,
+			  "gradientMode": "none",
+			  "hideFrom": {
+				"legend": false,
+				"tooltip": false,
+				"viz": false
+			  },
+			  "insertNulls": false,
+			  "lineInterpolation": "stepBefore",
+			  "lineWidth": 1,
+			  "pointSize": 5,
+			  "scaleDistribution": {
+				"type": "linear"
+			  },
+			  "showPoints": "auto",
+			  "spanNulls": false,
+			  "stacking": {
+				"group": "A",
+				"mode": "none"
+			  },
+			  "thresholdsStyle": {
+				"mode": "off"
+			  }
 			},
-			"gridPos": {
-				"h": 22,
-				"w": 24,
-				"x": 0,
-				"y": 0
-			},
-			"id": 1,
-			"options": {
-				"colWidth": 0.9,
-				"legend": {
-					"displayMode": "list",
-					"placement": "bottom",
-					"showLegend": true
-				},
-				"rowHeight": 0.9,
-				"showValue": "auto",
-				"tooltip": {
-					"mode": "single",
-					"sort": "none"
-				}
-			},
-			"pluginVersion": "10.2.4",
-			"targets": [
+			"mappings": [],
+			"max": 1,
+			"min": 0,
+			"thresholds": {
+			  "mode": "absolute",
+			  "steps": [
 				{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "PBFA97CFB590B2093"
-					},
-					"disableTextWrap": false,
-					"editorMode": "code",
-					"expr": "sotex_web_devices_num_total{job=\"backend\"}",
-					"fullMetaSearch": false,
-					"includeNullMetadata": true,
-					"instant": false,
-					"interval": "",
-					"legendFormat": "Device {{id}}",
-					"range": true,
-					"refId": "A",
-					"useBackend": false
+				  "color": "green",
+				  "value": null
+				},
+				{
+				  "color": "red",
+				  "value": 0
+				},
+				{
+				  "color": "green",
+				  "value": 1
 				}
-			],
-			"title": "Device connection status",
-			"type": "status-history"
-		}
+			  ]
+			}
+		  },
+		  "overrides": []
+		},
+		"gridPos": {
+		  "h": 14,
+		  "w": 24,
+		  "x": 0,
+		  "y": 0
+		},
+		"id": 1,
+		"options": {
+		  "legend": {
+			"calcs": [],
+			"displayMode": "list",
+			"placement": "right",
+			"showLegend": true
+		  },
+		  "tooltip": {
+			"mode": "single",
+			"sort": "none"
+		  }
+		},
+		"pluginVersion": "10.2.4",
+		"targets": [
+		  {
+			"datasource": {
+			  "type": "prometheus",
+			  "uid": "PBFA97CFB590B2093"
+			},
+			"disableTextWrap": false,
+			"editorMode": "code",
+			"expr": "sotex_web_devices_num_total{job=\"backend\"}",
+			"fullMetaSearch": false,
+			"includeNullMetadata": true,
+			"instant": false,
+			"interval": "",
+			"legendFormat": "Device {{id}}",
+			"range": true,
+			"refId": "A",
+			"useBackend": false
+		  }
+		],
+		"title": "Device connection status",
+		"type": "timeseries"
+	  }
 	],
 	"refresh": "",
 	"schemaVersion": 39,
 	"tags": [],
 	"templating": {
-		"list": []
+	  "list": []
 	},
 	"time": {
-		"from": "now-1h",
-		"to": "now"
+	  "from": "now-1h",
+	  "to": "now"
 	},
 	"timepicker": {},
 	"timezone": "",
 	"title": "Device connection status",
-	"version": 0,
+	"uid": "e8353505-e175-476f-97d2-7eb3f755d727",
+	"version": 2,
 	"weekStart": ""
-}
+  }

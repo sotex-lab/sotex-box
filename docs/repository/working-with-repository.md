@@ -24,6 +24,7 @@ You need a couple of tools to be able to fully work with this repository:
 | 6a | docker | ^23.0.5 | [🔗](https://docs.docker.com/desktop/install/windows-install/) | [🔗](https://docs.docker.com/desktop/install/linux-install/) | [🔗](https://docs.docker.com/desktop/install/mac-install/) |
 | 6b | podman | ^4.8.3 | [🔗](https://podman.io/docs/installation#windows) | [🔗](https://podman.io/docs/installation#installing-on-linux) | [🔗](https://podman.io/docs/installation#macos) |
 | 7 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
+| 8 | k6 | ^0.49.0 | [🔗](https://k6.io/docs/get-started/installation/#windows) | [🔗](https://k6.io/docs/get-started/installation/#linux) | [🔗](https://k6.io/docs/get-started/installation/#macos) |
 
 We will maintain a `Makefile` where we will try to link as much actions as possible. Although some cases may be left uncovered.
 

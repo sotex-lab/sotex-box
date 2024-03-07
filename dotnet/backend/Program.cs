@@ -1,4 +1,7 @@
-﻿using OpenTelemetry.Metrics;
+﻿using backend.Hangfire;
+using Hangfire;
+using Hangfire.Dashboard;
+using OpenTelemetry.Metrics;
 using SseHandler;
 using SseHandler.Metrics;
 
@@ -29,6 +32,16 @@ builder
             .AddPrometheusExporter()
             .AddMeter(IDeviceMetrics.MeterName);
     });
+
+builder.Services.AddHangfire(config =>
+    config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseInMemoryStorage()
+);
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -43,6 +56,14 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 var host = app.Services.GetRequiredService<IHostApplicationLifetime>();
 var connections = app.Services.GetRequiredService<IEventCoordinator>();
 host.ApplicationStopping.Register(connections.RemoveAll);
+
+app.EnqueueJobs();
+
+// TODO: Setup custom authorization once we have roles
+app.UseHangfireDashboard(
+    "/hangfire",
+    new DashboardOptions { IsReadOnlyFunc = (DashboardContext ctx) => true }
+);
 
 app.MapControllers();
 

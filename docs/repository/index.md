@@ -22,6 +22,7 @@ Remember to remove .gitignored files if they render-->
 ├── docs # Folder containing all the documentation that is used to power this site
 ├── dotnet # Folder containing all the dotnet code we use
 ├── infra # Folder containing all IAAC code we use
+├── load-tests # Folder containing all load tests
 ├── mkdocs.yaml # Configuration file for this site
 ├── poetry.lock # Lock of dependencies for poetry project
 ├── pyproject.toml # Poetry project specification

@@ -27,11 +27,17 @@ public class EventController : ControllerBase
             return;
         }
 
-        var ourToken = result.Value;
+        var ourToken = result.Value.Token;
         HttpContext.Response.Headers.Append("Content-Type", "text/event-stream");
         HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
-        while (!ourToken.IsCancellationRequested && !token.IsCancellationRequested) { }
+        var semaphore = new SemaphoreSlim(0);
+        token.Register(() => semaphore.Release());
+        ourToken.Register(() => semaphore.Release());
+        while (!ourToken.IsCancellationRequested && !token.IsCancellationRequested)
+        {
+            await semaphore.WaitAsync();
+        }
 
         _eventCoordinator.Remove(id);
     }
