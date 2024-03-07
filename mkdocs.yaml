@@ -81,11 +81,14 @@ nav:
     - Custom metrics: observability/custom-metrics.md
   - Benchmarks:
     - EventCoordinator: 'benchmark-EventCoordinator.md'
+  - Load test results:
+    - Device connections: 'load-tests/load-test-results-connections.md'
 
 # Extensions
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - footnotes
   - toc:
       permalink: true

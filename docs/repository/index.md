@@ -11,6 +11,7 @@ Remember to remove .gitignored files if they render-->
 ├── .config # Folder that contains config files, e.g. config for dotnet tools
 ├── .dockerignore # File that contains all the things that docker should include in the build process
 ├── .editorconfig # File that specifies how should files be formated
+├── .env.template # File that specifies all environment variables for docker
 ├── .github # Folder with workflows
 ├── .pre-commit-config.yaml # Precommit configuration
 ├── CODEOWNERS # File containing the codeowners of certain parts of the repository
