@@ -55,5 +55,4 @@ services:
       - "envsubst < /etc/nginx/gateway.conf.template > /etc/nginx/apigateway.conf && cat /etc/nginx/apigateway.conf && nginx -g 'daemon off;'"
 
 volumes:
-  grafana:
   prometheus:

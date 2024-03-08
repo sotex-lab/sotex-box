@@ -131,6 +131,7 @@ ENV_FILE := .env
 
 .PHONY: compose-up
 compose-up: container-build-backend
+compose-up: compose-down
 compose-up: ## Run local stack
 	@if [ -z "$(wildcard $(ENV_FILE))" ]; then \
         echo "$(ENV_FILE) does not exist. To run the stack you should create $(ENV_FILE). Use $(ENV_FILE).template to start"; \
@@ -139,10 +140,9 @@ compose-up: ## Run local stack
         echo "$(ENV_FILE) exists"; \
     fi
 
-	kill -9 $(LEFTOVER_PORTS) || true
-	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml --env-file .env up
+	mkdir -p volumes.local/minio
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml --env-file .env up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
-	$(COMPOSE_COMMAND) -f docker-compose.yaml down
-	kill -9 $(LEFTOVER_PORTS) || true
+	$(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down
