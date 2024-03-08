@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\sse-handler\sse-handler.csproj" />
+    <ProjectReference Include="..\model\model.csproj" />
+    <ProjectReference Include="..\persistence\persistence.csproj" />
   </ItemGroup>
 
 </Project>
