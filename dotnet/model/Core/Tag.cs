@@ -3,11 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace model.Core;
 
-public class Tag
+public class Tag : Entity<Guid>
 {
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    [Key]
-    public Guid Id { get; set; }
     public string Name { get; set; } = "";
     public IEnumerable<Ad> Ads { get; set; } = new List<Ad>();
 }

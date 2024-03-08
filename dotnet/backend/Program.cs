@@ -2,6 +2,7 @@
 using Hangfire;
 using Hangfire.Dashboard;
 using OpenTelemetry.Metrics;
+using persistence;
 using SseHandler;
 using SseHandler.Metrics;
 
@@ -41,6 +42,8 @@ builder.Services.AddHangfire(config =>
         .UseInMemoryStorage()
 );
 builder.Services.AddHangfireServer();
+
+builder.Services.AddSotexBoxDatabase();
 
 var app = builder.Build();
 

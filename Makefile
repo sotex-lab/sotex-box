@@ -146,3 +146,4 @@ compose-up: ## Run local stack
 .PHONY: compose-down
 compose-down: ## Remove local stack
 	$(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down
+	kill -9 $(LEFTOVER_PORTS) || true
