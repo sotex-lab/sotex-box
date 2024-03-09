@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Shouldly;
 using SseHandler;
 
 namespace IntegrationTests.ControllerTests;
 
+[Collection("Integration tests")]
 public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Program>>
 {
     private readonly ConfigurableBackendFactory<Program> _factory;
