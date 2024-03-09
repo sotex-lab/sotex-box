@@ -44,6 +44,7 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 
 builder.Services.AddSotexBoxDatabase();
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 

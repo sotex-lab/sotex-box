@@ -59,8 +59,15 @@ public abstract class Repository<TEntity, T, TContext> : IRepository<TEntity, T>
     {
         if (entity is null)
             return new Result<TEntity, RepositoryError>(RepositoryError.ArgumentNull);
-        func(entity);
-        await Context.SaveChangesAsync();
+        try
+        {
+            func(entity);
+            await Context.SaveChangesAsync();
+        }
+        catch (Exception)
+        {
+            return new Result<TEntity, RepositoryError>(RepositoryError.General);
+        }
         return new Result<TEntity, RepositoryError>(entity);
     }
 }

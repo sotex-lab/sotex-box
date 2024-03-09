@@ -26,7 +26,6 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
             postgresContainer.GetConnectionString()
         );
 
-        base.ConfigureWebHost(builder);
         builder.ConfigureServices(services =>
         {
             var eventCoordinatorDescriptor = services.Single(x =>

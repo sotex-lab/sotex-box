@@ -20,7 +20,8 @@ public enum RepositoryError
 {
     ArgumentNull,
     NotFound,
-    FailedToInit
+    FailedToInit,
+    General
 }
 
 public static class RepositoryErrorExtensions
@@ -31,6 +32,7 @@ public static class RepositoryErrorExtensions
             RepositoryError.ArgumentNull => "Passed argument was null\n",
             RepositoryError.NotFound => "Entity not found\n",
             RepositoryError.FailedToInit => "Failed to initialize database\n",
+            RepositoryError.General => "Database persistence failed\n",
             RepositoryError => "Catch-all error, shouldn't happen\n"
         };
 }

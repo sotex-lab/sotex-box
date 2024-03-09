@@ -5,6 +5,7 @@ using SseHandler;
 
 namespace IntegrationTests.ControllerTests;
 
+[Collection("Integration tests")]
 public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Program>>
 {
     private readonly ConfigurableBackendFactory<Program> _factory;
