@@ -1,4 +1,9 @@
 services:
+  backend:
+    depends_on:
+      - minio
+      - postgres
+
   minio:
     container_name: minio
     image: quay.io/minio/minio:RELEASE.2024-03-07T00-43-48Z
@@ -41,6 +46,8 @@ services:
     volumes:
       - ./infra/config/pgadmin/servers.json:/pgadmin4/servers.json
       - ./infra/config/pgadmin/postgres.pass:/pgadmin4/postgres.pass
+    depends_on:
+      - postgres
 
 volumes:
   postgres:

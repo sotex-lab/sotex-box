@@ -65,6 +65,8 @@ public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Pro
         var task = Task.Run(async () => await client.GetAsync($"/event/connect?id={id}"));
         var removeResponse = await client.DeleteAsync($"/event/ForceDisconnect?id={id}");
 
+        await Task.Delay(500);
+
         removeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         task.IsCompleted.ShouldBeTrue();
 

@@ -19,7 +19,8 @@ public interface IRepository<TEntity, T>
 public enum RepositoryError
 {
     ArgumentNull,
-    NotFound
+    NotFound,
+    FailedToInit
 }
 
 public static class RepositoryErrorExtensions
@@ -29,6 +30,7 @@ public static class RepositoryErrorExtensions
         {
             RepositoryError.ArgumentNull => "Passed argument was null\n",
             RepositoryError.NotFound => "Entity not found\n",
+            RepositoryError.FailedToInit => "Failed to initialize database\n",
             RepositoryError => "Catch-all error, shouldn't happen\n"
         };
 }

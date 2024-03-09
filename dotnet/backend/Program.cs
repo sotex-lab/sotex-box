@@ -47,6 +47,12 @@ builder.Services.AddSotexBoxDatabase();
 
 var app = builder.Build();
 
+var result = app.Migrate();
+if (!result.IsSuccessful)
+{
+    Environment.Exit(1);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
