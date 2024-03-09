@@ -1,7 +1,6 @@
 using System.Net;
 using Shouldly;
 
-[Collection("Integration tests")]
 public class MetricsTests : IClassFixture<ConfigurableBackendFactory<Program>>
 {
     private readonly ConfigurableBackendFactory<Program> _factory;

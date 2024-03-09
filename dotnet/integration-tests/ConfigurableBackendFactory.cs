@@ -18,6 +18,9 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
             .Build();
         postgresContainer.StartAsync().GetAwaiter().GetResult();
 
+        // We need to put here something because it has a check
+        // for the validity of connection string. Value from here
+        // gets overriden in the following code.
         Environment.SetEnvironmentVariable(
             "CONNECTION_STRING",
             postgresContainer.GetConnectionString()
@@ -33,6 +36,14 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
             services.Remove(eventCoordinatorDescriptor);
 
             services.AddEventCoordinator(Connections);
+
+            var databaseDescriptor = services.Single(x =>
+                x.Lifetime == ServiceLifetime.Scoped
+                && x.ServiceType == typeof(ApplicationDbContext)
+            );
+            services.Remove(databaseDescriptor);
+
+            services.AddSotexBoxDatabase(postgresContainer.GetConnectionString());
         });
     }
 }
