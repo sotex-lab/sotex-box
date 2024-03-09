@@ -49,7 +49,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 var app = builder.Build();
 
 var result = app.Migrate();
-if (!result.IsSuccessful)
+if (!result.IsSuccessful && app.Environment.IsEnvironment("test"))
 {
     Environment.Exit(1);
 }

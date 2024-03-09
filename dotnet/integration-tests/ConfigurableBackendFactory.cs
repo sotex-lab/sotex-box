@@ -1,5 +1,6 @@
 using DotNet.Testcontainers.Builders;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using persistence;
 using SseHandler;
 using Testcontainers.PostgreSql;
@@ -12,6 +13,8 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "test");
+
         var postgresContainer = new PostgreSqlBuilder()
             .WithCleanUp(true)
             .WithAutoRemove(true)
@@ -41,6 +44,10 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
                 && x.ServiceType == typeof(ApplicationDbContext)
             );
             services.Remove(databaseDescriptor);
+
+            new ApplicationDbContextFactory()
+                .CreateDbContext(postgresContainer.GetConnectionString())
+                .Database.Migrate();
 
             services.AddSotexBoxDatabase(postgresContainer.GetConnectionString());
         });

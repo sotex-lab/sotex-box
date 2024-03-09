@@ -22,10 +22,13 @@ public class ApplicationDbContext : DbContext
 
 public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
-    public ApplicationDbContext CreateDbContext(string[] args)
+    public ApplicationDbContext CreateDbContext(string[] args) =>
+        CreateDbContext(CONNECTION_STRING);
+
+    public ApplicationDbContext CreateDbContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseNpgsql(
-            CONNECTION_STRING
+            connectionString
         );
         return new ApplicationDbContext(options.Options);
     }
