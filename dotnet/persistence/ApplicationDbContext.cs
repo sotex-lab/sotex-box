@@ -17,6 +17,8 @@ public class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Ad>().Property(a => a.AdScope).HasConversion<string>();
+
+        modelBuilder.Entity<Ad>().Navigation(n => n.Tags).AutoInclude();
     }
 }
 

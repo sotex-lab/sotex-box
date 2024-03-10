@@ -10,7 +10,13 @@ public class CoreMapper : Profile
     {
         CreateMap<Ad, AdContract>()
             .ForMember(dest => dest.Scope, opt => opt.MapFrom(src => src.AdScope))
-            .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Name)))
-            .ReverseMap();
+            .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Name)));
+
+        CreateMap<AdContract, Ad>()
+            .ForMember(dest => dest.AdScope, opt => opt.MapFrom(src => src.Scope))
+            .ForMember(
+                dest => dest.Tags,
+                opt => opt.MapFrom(src => src.Tags.Select(tagName => new Tag { Name = tagName }))
+            );
     }
 }

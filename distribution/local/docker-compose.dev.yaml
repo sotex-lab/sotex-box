@@ -1,5 +1,7 @@
 services:
   backend:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=test
     links:
       - minio
       - postgres
