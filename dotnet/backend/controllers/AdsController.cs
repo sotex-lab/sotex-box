@@ -9,7 +9,7 @@ using persistence.Repository.Base;
 namespace backend.Controllers;
 
 [ApiController]
-[Route("/[controller]/[action]")]
+[Route("/[controller]")]
 public class AdsController(IAdRepository adRepository, ITagRepository tagRepository, IMapper mapper)
     : ControllerBase
 {
