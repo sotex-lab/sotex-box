@@ -1,15 +1,20 @@
+using System.Data.Common;
 using DotNet.Testcontainers.Builders;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using persistence;
+using Respawn;
 using SseHandler;
 using Testcontainers.PostgreSql;
 
-public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgram>
-    where TProgram : class
+public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsyncDisposable
 {
+    public const string IntegrationCollection = "integration collection";
     public Dictionary<string, Connection> Connections { get; set; } =
         new Dictionary<string, Connection>();
+
+    private Respawner? respawner;
+    private DbConnection? connection;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -29,6 +34,12 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
             postgresContainer.GetConnectionString()
         );
 
+        var respawnerOptions = new RespawnerOptions
+        {
+            SchemasToInclude = ["public"],
+            DbAdapter = DbAdapter.Postgres
+        };
+
         builder.ConfigureServices(services =>
         {
             var eventCoordinatorDescriptor = services.Single(x =>
@@ -45,11 +56,26 @@ public class ConfigurableBackendFactory<TProgram> : WebApplicationFactory<TProgr
             );
             services.Remove(databaseDescriptor);
 
-            new ApplicationDbContextFactory()
-                .CreateDbContext(postgresContainer.GetConnectionString())
-                .Database.Migrate();
+            var context = new ApplicationDbContextFactory().CreateDbContext(
+                postgresContainer.GetConnectionString()
+            );
+
+            context.Database.Migrate();
+
+            connection = context.Database.GetDbConnection();
+            connection.Open();
+
+            respawner = Respawner
+                .CreateAsync(connection, respawnerOptions)
+                .GetAwaiter()
+                .GetResult();
 
             services.AddSotexBoxDatabase(postgresContainer.GetConnectionString());
         });
     }
+
+    public void ResetDatabase() => respawner!.ResetAsync(connection!).GetAwaiter().GetResult();
 }
+
+[CollectionDefinition(ConfigurableBackendFactory.IntegrationCollection)]
+public class BackendCollection : ICollectionFixture<ConfigurableBackendFactory> { }

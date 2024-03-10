@@ -1,11 +1,14 @@
 using System.Net;
 using Shouldly;
 
-public class MetricsTests : IClassFixture<ConfigurableBackendFactory<Program>>
-{
-    private readonly ConfigurableBackendFactory<Program> _factory;
+namespace IntegrationTests.ControllerTests;
 
-    public MetricsTests(ConfigurableBackendFactory<Program> factory)
+[Collection(ConfigurableBackendFactory.IntegrationCollection)]
+public class MetricsTests
+{
+    private readonly ConfigurableBackendFactory _factory;
+
+    public MetricsTests(ConfigurableBackendFactory factory)
     {
         _factory = factory;
     }

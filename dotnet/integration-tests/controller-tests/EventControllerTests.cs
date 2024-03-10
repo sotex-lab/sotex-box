@@ -5,11 +5,12 @@ using SseHandler;
 
 namespace IntegrationTests.ControllerTests;
 
-public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Program>>
+[Collection(ConfigurableBackendFactory.IntegrationCollection)]
+public class EventControllerTests
 {
-    private readonly ConfigurableBackendFactory<Program> _factory;
+    private readonly ConfigurableBackendFactory _factory;
 
-    public EventControllerTests(ConfigurableBackendFactory<Program> factory)
+    public EventControllerTests(ConfigurableBackendFactory factory)
     {
         _factory = factory;
         _factory.Connections.Clear();
