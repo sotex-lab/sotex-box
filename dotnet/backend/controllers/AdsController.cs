@@ -1,17 +1,25 @@
 using System.Reflection.Metadata.Ecma335;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Util;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using model.Contracts;
 using model.Core;
 using persistence.Repository;
 using persistence.Repository.Base;
+using Tag = model.Core.Tag;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
-public class AdsController(IAdRepository adRepository, ITagRepository tagRepository, IMapper mapper)
-    : ControllerBase
+public class AdsController(
+    IAdRepository adRepository,
+    ITagRepository tagRepository,
+    IAmazonS3 s3,
+    IMapper mapper
+) : ControllerBase
 {
     [HttpGet]
     public async IAsyncEnumerable<AdContract> Get()
@@ -55,6 +63,54 @@ public class AdsController(IAdRepository adRepository, ITagRepository tagReposit
         mapped.Tags = foundTags;
 
         var maybeAd = await adRepository.Add(mapped);
+        if (!maybeAd.IsSuccessful)
+            BadRequest(maybeAd.Error.Stringify());
+
+        var ad = maybeAd.Value;
+
+        var preprocessedBucket = "non-processed";
+        try
+        {
+            if (!await AmazonS3Util.DoesS3BucketExistV2Async(s3, preprocessedBucket))
+            {
+                var putBucketRequest = new PutBucketRequest { BucketName = preprocessedBucket };
+
+                var bucketResponse = await s3.PutBucketAsync(putBucketRequest);
+                if (
+                    bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.OK
+                    || bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.Created
+                )
+                {
+                    return BadRequest("Couldn't create bucket");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+
+        var putObjectRequest = new PutObjectRequest
+        {
+            BucketName = preprocessedBucket,
+            Key = ad.Id.ToString(),
+            InputStream = new MemoryStream()
+        };
+
+        var response = await s3.PutObjectAsync(putObjectRequest);
+
+        if (
+            response.HttpStatusCode != System.Net.HttpStatusCode.OK
+            || response.HttpStatusCode != System.Net.HttpStatusCode.Created
+        )
+        {
+            return BadRequest(
+                string.Format("Received status code from s3: {}", response.HttpStatusCode)
+            );
+        }
+
+        ad.ObjectId = response.ETag;
+        maybeAd = await adRepository.Update(ad);
 
         return maybeAd.IsSuccessful
             ? CreatedAtAction(nameof(Post), new { id = maybeAd.Value.Id }, maybeAd.Value.Id)

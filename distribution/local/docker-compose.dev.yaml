@@ -32,6 +32,7 @@ services:
     image: postgres:16.2-bullseye
     environment:
       - POSTGRES_PASSWORD=postgres
+    user: root
     ports:
       - 5432:5432
     volumes:

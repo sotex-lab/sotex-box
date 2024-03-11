@@ -5,6 +5,10 @@ services:
     environment:
       - DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
       - CONNECTION_STRING=${CONNECTION_STRING}
+      - AWS_URL=${AWS_URL}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
 
   prometheus:
     container_name: prometheus
