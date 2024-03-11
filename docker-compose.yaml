@@ -9,6 +9,7 @@ services:
       - AWS_REGION=${AWS_REGION}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_PROTOCOL=${AWS_PROTOCOL}
 
   prometheus:
     container_name: prometheus

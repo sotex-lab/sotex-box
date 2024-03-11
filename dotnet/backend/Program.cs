@@ -1,4 +1,5 @@
-﻿using Amazon.S3;
+﻿using Amazon.Runtime.Internal.Util;
+using Amazon.S3;
 using backend.Hangfire;
 using Hangfire;
 using Hangfire.Dashboard;
@@ -56,6 +57,7 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
         AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION"),
         ForcePathStyle = true,
     };
+
     return new AmazonS3Client(
         Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!,
         Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!,

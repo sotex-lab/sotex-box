@@ -1,4 +1,5 @@
 using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
@@ -78,10 +79,12 @@ public class AdsController(
                 var bucketResponse = await s3.PutBucketAsync(putBucketRequest);
                 if (
                     bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.OK
-                    || bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.Created
+                    && bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.Created
                 )
                 {
-                    return BadRequest("Couldn't create bucket");
+                    return BadRequest(
+                        string.Format("Couldn't create bucket: {0}", bucketResponse.HttpStatusCode)
+                    );
                 }
             }
         }
@@ -101,7 +104,7 @@ public class AdsController(
 
         if (
             response.HttpStatusCode != System.Net.HttpStatusCode.OK
-            || response.HttpStatusCode != System.Net.HttpStatusCode.Created
+            && response.HttpStatusCode != System.Net.HttpStatusCode.Created
         )
         {
             return BadRequest(
@@ -112,8 +115,26 @@ public class AdsController(
         ad.ObjectId = response.ETag;
         maybeAd = await adRepository.Update(ad);
 
+        var request = new GetPreSignedUrlRequest()
+        {
+            BucketName = preprocessedBucket,
+            Key = ad.ObjectId,
+            Expires = DateTime.UtcNow.AddMinutes(30),
+            Protocol = Environment.GetEnvironmentVariable("AWS_PROTOCOL")! switch
+            {
+                "http" => Protocol.HTTP,
+                "https" => Protocol.HTTPS,
+                _ => throw new Exception("Unsupported protocol")
+            },
+        };
+        var presigned = await s3.GetPreSignedURLAsync(request);
+
         return maybeAd.IsSuccessful
-            ? CreatedAtAction(nameof(Post), new { id = maybeAd.Value.Id }, maybeAd.Value.Id)
+            ? CreatedAtAction(
+                nameof(Post),
+                new { id = maybeAd.Value.Id },
+                new { id = maybeAd.Value.Id, presigned }
+            )
             : BadRequest(maybeAd.Error.Stringify());
     }
 
