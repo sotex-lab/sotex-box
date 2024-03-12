@@ -53,11 +53,11 @@ flutter-create-emulator: ## Shorthand for setting up an emulator
 	sdkmanager "system-images;android-31;google_apis_playstore;x86"
 	flutter emulators --create --name "local-emulator"
 
+UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
 full-local-cleanup: compose-down
 full-local-cleanup: ## Run a full local cleanup of all volumes and dirs
-	@$(eval DOCKER_CMD := docker volume list -q --filter name=sotex)
-	@UNWANTED_VOLUMES := $(shell, $(DOCKER_CMD)
+	@echo $(UNWANTED_VOLUMES)
 	@$(foreach vol,$(UNWANTED_VOLUMES), \
         docker volume rm $(vol); \
 		)
