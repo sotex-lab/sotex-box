@@ -69,14 +69,14 @@ public class AdsController(
 
         var bucketResponse = await getOrCreateBucketService.GetNonProcessed();
         if (!bucketResponse.IsSuccessful)
-            return BadRequest("Internal problem, contact admin");
+            return await RemoveAdAndReturn(ad);
 
         var objectResponse = await putObjectService.PutEmpty(
             bucketResponse.Value,
             ad.Id.ToString()
         );
         if (!objectResponse.IsSuccessful)
-            return BadRequest("Internal problem, contact admin");
+            return await RemoveAdAndReturn(ad);
 
         ad.ObjectId = objectResponse.Value;
         maybeAd = await adRepository.Update(ad);
@@ -86,7 +86,7 @@ public class AdsController(
             ad.Id.ToString()
         );
         if (!objectResponse.IsSuccessful)
-            return BadRequest("Internal problem, contact admin");
+            return await RemoveAdAndReturn(ad);
 
         return maybeAd.IsSuccessful
             ? CreatedAtAction(
@@ -95,5 +95,14 @@ public class AdsController(
                 new { id = maybeAd.Value.Id, presigned = presignedResponse.Value }
             )
             : BadRequest(maybeAd.Error.Stringify());
+    }
+
+    private async Task<IActionResult> RemoveAdAndReturn(Ad ad)
+    {
+        var result = await adRepository.Delete(ad);
+        if (!result.IsSuccessful)
+            return BadRequest("Couldn't rollback ad creation. Contact admin");
+
+        return BadRequest("Internal problem, contact admin");
     }
 }
