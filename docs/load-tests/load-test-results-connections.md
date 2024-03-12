@@ -75,7 +75,7 @@ Result interpretation:
 The whole test metrics for 1 laptop can be found in [`test-output.json`](/assets/test-output.json){:download="test-output.json"}
 
 <figure markdown="span">
-  ![CPU utilization](/assets/cpu-util.png)
+  ![CPU utilization](/sotex-box/assets/cpu-util.png)
   <figcaption>CPU utilization for the test duration</figcaption>
 </figure>
 
@@ -85,7 +85,7 @@ For the whole test duration we can see that there were 2 spikes in the backend C
 * spike at `21:17`: roughly the time where all the tests ended which created 1200 http delete requests to the backend
 
 <figure markdown="span">
-  ![Memory consumption](/assets/memory.png)
+  ![Memory consumption](/sotex-box/assets/memory.png)
   <figcaption>Memory consumption</figcaption>
 </figure>
 

@@ -96,15 +96,4 @@ public class AdsController(
             )
             : BadRequest(maybeAd.Error.Stringify());
     }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var maybeResource = await adRepository.GetSingle(id);
-        if (!maybeResource.IsSuccessful)
-            return BadRequest(maybeResource.Error.Stringify());
-
-        var result = await adRepository.Delete(maybeResource.Value);
-        return result.IsSuccessful ? Ok() : BadRequest(result.Error.Stringify());
-    }
 }

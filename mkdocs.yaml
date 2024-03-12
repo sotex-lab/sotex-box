@@ -6,6 +6,8 @@ repo_name: Sotex Box
 repo_url: https://github.com/sotex-lab/sotex-box/
 edit_uri: edit/main/docs/
 
+site_url: http://:/sotex-box/
+
 theme:
   name: material
   features:
