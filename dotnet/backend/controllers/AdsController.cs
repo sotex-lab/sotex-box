@@ -17,7 +17,8 @@ public class AdsController(
     IMapper mapper,
     IGetOrCreateBucketService getOrCreateBucketService,
     IPutObjectService putObjectService,
-    IPreSignObjectService preSignObjectService
+    IPreSignObjectService preSignObjectService,
+    ILogger<AdsController> logger
 ) : ControllerBase
 {
     [HttpGet]
@@ -69,14 +70,14 @@ public class AdsController(
 
         var bucketResponse = await getOrCreateBucketService.GetNonProcessed();
         if (!bucketResponse.IsSuccessful)
-            return await RemoveAdAndReturn(ad);
+            return await RemoveAdAndReturn(ad, "bucket");
 
         var objectResponse = await putObjectService.PutEmpty(
             bucketResponse.Value,
             ad.Id.ToString()
         );
         if (!objectResponse.IsSuccessful)
-            return await RemoveAdAndReturn(ad);
+            return await RemoveAdAndReturn(ad, "creating");
 
         ad.ObjectId = objectResponse.Value;
         maybeAd = await adRepository.Update(ad);
@@ -85,8 +86,8 @@ public class AdsController(
             bucketResponse.Value,
             ad.Id.ToString()
         );
-        if (!objectResponse.IsSuccessful)
-            return await RemoveAdAndReturn(ad);
+        if (!presignedResponse.IsSuccessful)
+            return await RemoveAdAndReturn(ad, "presigning");
 
         return maybeAd.IsSuccessful
             ? CreatedAtAction(
@@ -94,11 +95,13 @@ public class AdsController(
                 new { id = maybeAd.Value.Id },
                 new { id = maybeAd.Value.Id, presigned = presignedResponse.Value }
             )
-            : BadRequest(maybeAd.Error.Stringify());
+            : await RemoveAdAndReturn(ad, "update");
     }
 
-    private async Task<IActionResult> RemoveAdAndReturn(Ad ad)
+    private async Task<IActionResult> RemoveAdAndReturn(Ad ad, string stage)
     {
+        logger.LogWarning("Error while creating an object in blob storage in stage {0}", stage);
+
         var result = await adRepository.Delete(ad);
         if (!result.IsSuccessful)
             return BadRequest("Couldn't rollback ad creation. Contact admin");
