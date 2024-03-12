@@ -1,7 +1,5 @@
-using Amazon.S3;
-using Amazon.S3.Model;
-using Amazon.S3.Util;
 using AutoMapper;
+using backend.Services.Aws;
 using Microsoft.AspNetCore.Mvc;
 using model.Contracts;
 using model.Core;
@@ -16,8 +14,10 @@ namespace backend.Controllers;
 public class AdsController(
     IAdRepository adRepository,
     ITagRepository tagRepository,
-    IAmazonS3 s3,
-    IMapper mapper
+    IMapper mapper,
+    IGetOrCreateBucketService getOrCreateBucketService,
+    IPutObjectService putObjectService,
+    IPreSignObjectService preSignObjectService
 ) : ControllerBase
 {
     [HttpGet]
@@ -67,73 +67,32 @@ public class AdsController(
 
         var ad = maybeAd.Value;
 
-        var preprocessedBucket = "non-processed";
-        try
-        {
-            if (!await AmazonS3Util.DoesS3BucketExistV2Async(s3, preprocessedBucket))
-            {
-                var putBucketRequest = new PutBucketRequest { BucketName = preprocessedBucket };
+        var bucketResponse = await getOrCreateBucketService.GetNonProcessed();
+        if (!bucketResponse.IsSuccessful)
+            return BadRequest("Internal problem, contact admin");
 
-                var bucketResponse = await s3.PutBucketAsync(putBucketRequest);
-                if (
-                    bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.OK
-                    && bucketResponse.HttpStatusCode != System.Net.HttpStatusCode.Created
-                )
-                {
-                    return BadRequest(
-                        string.Format("Couldn't create bucket: {0}", bucketResponse.HttpStatusCode)
-                    );
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+        var objectResponse = await putObjectService.PutEmpty(
+            bucketResponse.Value,
+            ad.Id.ToString()
+        );
+        if (!objectResponse.IsSuccessful)
+            return BadRequest("Internal problem, contact admin");
 
-        var putObjectRequest = new PutObjectRequest
-        {
-            BucketName = preprocessedBucket,
-            Key = ad.Id.ToString(),
-            InputStream = new MemoryStream()
-        };
-
-        var response = await s3.PutObjectAsync(putObjectRequest);
-
-        if (
-            response.HttpStatusCode != System.Net.HttpStatusCode.OK
-            && response.HttpStatusCode != System.Net.HttpStatusCode.Created
-        )
-        {
-            return BadRequest(
-                string.Format("Received status code from s3: {}", response.HttpStatusCode)
-            );
-        }
-
-        ad.ObjectId = response.ETag;
+        ad.ObjectId = objectResponse.Value;
         maybeAd = await adRepository.Update(ad);
 
-        var request = new GetPreSignedUrlRequest()
-        {
-            BucketName = preprocessedBucket,
-            Key = ad.Id.ToString(),
-            Expires = DateTime.UtcNow.AddMinutes(30),
-            Protocol = Environment.GetEnvironmentVariable("AWS_PROTOCOL")! switch
-            {
-                "http" => Protocol.HTTP,
-                "https" => Protocol.HTTPS,
-                _ => throw new Exception("Unsupported protocol")
-            },
-            Verb = HttpVerb.PUT,
-        };
-
-        var presigned = await s3.GetPreSignedURLAsync(request);
+        var presignedResponse = await preSignObjectService.Put(
+            bucketResponse.Value,
+            ad.Id.ToString()
+        );
+        if (!objectResponse.IsSuccessful)
+            return BadRequest("Internal problem, contact admin");
 
         return maybeAd.IsSuccessful
             ? CreatedAtAction(
                 nameof(Post),
                 new { id = maybeAd.Value.Id },
-                new { id = maybeAd.Value.Id, presigned }
+                new { id = maybeAd.Value.Id, presigned = presignedResponse.Value }
             )
             : BadRequest(maybeAd.Error.Stringify());
     }

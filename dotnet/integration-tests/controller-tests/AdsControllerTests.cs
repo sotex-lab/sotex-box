@@ -81,6 +81,9 @@ public class AdsControllerTests
             await response.Content.ReadAsStringAsync()
         )!;
 
+        responseContent.ShouldContainKey("id");
+        responseContent.ShouldContainKey("presigned");
+
         (await _adRepository.Fetch().CountAsync()).ShouldBe(1);
         (await _tagRepository.Fetch().CountAsync()).ShouldBe(1);
 
