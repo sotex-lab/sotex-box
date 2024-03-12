@@ -2,6 +2,8 @@ services:
   backend:
     environment:
       - ASPNETCORE_ENVIRONMENT=test
+      - AWS_PROXY_HOST=minio
+      - AWS_PROXY_PORT=9000
     links:
       - minio
       - postgres

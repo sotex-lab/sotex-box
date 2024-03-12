@@ -1,5 +1,4 @@
-﻿using Amazon.Runtime.Internal.Util;
-using Amazon.S3;
+﻿using backend.Aws;
 using backend.Hangfire;
 using Hangfire;
 using Hangfire.Dashboard;
@@ -49,28 +48,7 @@ builder.Services.AddHangfireServer();
 builder.Services.AddSotexBoxDatabase();
 builder.Services.AddAutoMapper(typeof(CoreMapper).Assembly);
 
-builder.Services.AddSingleton<IAmazonS3>(sp =>
-{
-    var clientConfig = new AmazonS3Config
-    {
-        ServiceURL = Environment.GetEnvironmentVariable("AWS_URL")!,
-        AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")!,
-        ForcePathStyle = true,
-    };
-
-    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")! == "test")
-    {
-        clientConfig.ProxyHost = "minio";
-        clientConfig.ProxyPort = 9000;
-        clientConfig.UseHttp = true;
-    }
-
-    return new AmazonS3Client(
-        Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!,
-        Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!,
-        clientConfig
-    );
-});
+builder.Services.ConfigureAwsClient();
 
 var app = builder.Build();
 

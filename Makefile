@@ -53,6 +53,16 @@ flutter-create-emulator: ## Shorthand for setting up an emulator
 	sdkmanager "system-images;android-31;google_apis_playstore;x86"
 	flutter emulators --create --name "local-emulator"
 
+.PHONY: full-local-cleanup
+full-local-cleanup: compose-down
+full-local-cleanup: ## Run a full local cleanup of all volumes and dirs
+	@$(eval DOCKER_CMD := docker volume list -q --filter name=sotex)
+	@UNWANTED_VOLUMES := $(shell, $(DOCKER_CMD)
+	@$(foreach vol,$(UNWANTED_VOLUMES), \
+        docker volume rm $(vol); \
+		)
+	@sudo rm -rf ./volumes.local
+
 ##@ Dotnet Testing
 .PHONY: dotnet-tests
 dotnet-tests: dotnet-unit-tests
@@ -64,6 +74,7 @@ dotnet-unit-tests: ## Run dotnet unit tests
 	cd dotnet/unit-tests && dotnet test
 
 .PHONY: dotnet-integration-tests
+dotnet-integration-tests: compose-down
 dotnet-integration-tests: ## Run dotnet unit tests
 	cd dotnet/integration-tests && dotnet test
 
