@@ -53,13 +53,17 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 {
     var clientConfig = new AmazonS3Config
     {
-        ServiceURL = Environment.GetEnvironmentVariable("AWS_URL"),
-        AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION"),
+        ServiceURL = Environment.GetEnvironmentVariable("AWS_URL")!,
+        AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")!,
         ForcePathStyle = true,
-        ProxyHost = "minio",
-        ProxyPort = 9000,
-        UseHttp = true
     };
+
+    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")! == "test")
+    {
+        clientConfig.ProxyHost = "minio";
+        clientConfig.ProxyPort = 9000;
+        clientConfig.UseHttp = true;
+    }
 
     return new AmazonS3Client(
         Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!,

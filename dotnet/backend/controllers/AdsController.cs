@@ -1,5 +1,3 @@
-using System.Reflection.Metadata.Ecma335;
-using System.Security.Cryptography;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
@@ -118,7 +116,7 @@ public class AdsController(
         var request = new GetPreSignedUrlRequest()
         {
             BucketName = preprocessedBucket,
-            Key = ad.ObjectId,
+            Key = ad.Id.ToString(),
             Expires = DateTime.UtcNow.AddMinutes(30),
             Protocol = Environment.GetEnvironmentVariable("AWS_PROTOCOL")! switch
             {
@@ -126,7 +124,7 @@ public class AdsController(
                 "https" => Protocol.HTTPS,
                 _ => throw new Exception("Unsupported protocol")
             },
-            Verb = HttpVerb.PUT
+            Verb = HttpVerb.PUT,
         };
 
         var presigned = await s3.GetPreSignedURLAsync(request);

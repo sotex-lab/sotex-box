@@ -141,7 +141,7 @@ compose-up: ## Run local stack
     fi
 
 	mkdir -p volumes.local/minio
-	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml --env-file .env up
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
