@@ -126,7 +126,9 @@ public class AdsController(
                 "https" => Protocol.HTTPS,
                 _ => throw new Exception("Unsupported protocol")
             },
+            Verb = HttpVerb.PUT
         };
+
         var presigned = await s3.GetPreSignedURLAsync(request);
 
         return maybeAd.IsSuccessful
