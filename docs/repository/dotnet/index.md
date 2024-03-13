@@ -9,8 +9,11 @@ dotnet
 ├── backend # Main api code
 ├── benchmarks # Benchmarks used for various performance testing
 ├── integration-tests # Integration tests related to backend
+├── model # Place where we keep core models and contracts used to transmit data
+├── persistence # Place where we keep database specific code
 ├── sse-handler # Library for handling server sent events
 └── unit-tests # Unit tests for libraries
+
 ```
 
 ## High level backend overview
@@ -36,7 +39,7 @@ make dotnet-unit-tests
 ```
 
 ### Integration testing
-For integration testing, we use [XUnit](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-8.0). All the tests are in `integration-tests` and can be run with `make`:
+For integration testing, we use [XUnit](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-8.0). Apart from that we use [Testcontainers](https://dotnet.testcontainers.org/) to mock the dependencies of our system. All the tests are in `integration-tests` and can be run with `make`:
 ```bash
 make dotnet-integration-tests
 ```

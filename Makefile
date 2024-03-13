@@ -53,6 +53,16 @@ flutter-create-emulator: ## Shorthand for setting up an emulator
 	sdkmanager "system-images;android-31;google_apis_playstore;x86"
 	flutter emulators --create --name "local-emulator"
 
+UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
+.PHONY: full-local-cleanup
+full-local-cleanup: compose-down
+full-local-cleanup: ## Run a full local cleanup of all volumes and dirs
+	@echo $(UNWANTED_VOLUMES)
+	@$(foreach vol,$(UNWANTED_VOLUMES), \
+        docker volume rm $(vol); \
+		)
+	@sudo rm -rf ./volumes.local
+
 ##@ Dotnet Testing
 .PHONY: dotnet-tests
 dotnet-tests: dotnet-unit-tests
@@ -64,6 +74,7 @@ dotnet-unit-tests: ## Run dotnet unit tests
 	cd dotnet/unit-tests && dotnet test
 
 .PHONY: dotnet-integration-tests
+dotnet-integration-tests: compose-down
 dotnet-integration-tests: ## Run dotnet unit tests
 	cd dotnet/integration-tests && dotnet test
 
@@ -131,6 +142,7 @@ ENV_FILE := .env
 
 .PHONY: compose-up
 compose-up: container-build-backend
+compose-up: compose-down
 compose-up: ## Run local stack
 	@if [ -z "$(wildcard $(ENV_FILE))" ]; then \
         echo "$(ENV_FILE) does not exist. To run the stack you should create $(ENV_FILE). Use $(ENV_FILE).template to start"; \
@@ -139,10 +151,10 @@ compose-up: ## Run local stack
         echo "$(ENV_FILE) exists"; \
     fi
 
-	kill -9 $(LEFTOVER_PORTS) || true
-	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml --env-file .env up
+	mkdir -p volumes.local/minio
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
-	$(COMPOSE_COMMAND) -f docker-compose.yaml down
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down
 	kill -9 $(LEFTOVER_PORTS) || true
