@@ -18,7 +18,7 @@ After making changes to the `infra/backend` project, be it the configuration cha
 ??? info "Automation does help!"
     One of the checks that are run on the pull request is checking the preview of changes that will be made to the infrastructure. If you made any changes to the infra and if they pass you will get a report by github bot that should look something like this:
 
-    ![Pulumi comment](/assets/pulumi-autocomment.png)
+    ![Pulumi comment](/sotex-box/assets/pulumi-autocomment.png)
 
     This will help the team and the reviewers (and you) to quickly inspect how the changes look like and if the pull request does what it is supposed to. Even if we try and push all our efforts in making the whole process bug proof they will occur but all these steps are bettering the Sotex-box ecosystem!
 

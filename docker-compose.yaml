@@ -4,6 +4,8 @@ services:
     image: ghcr.io/sotex-lab/sotex-box/backend:${COMMIT_SHA}
     environment:
       - DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
+    env_file:
+      - .env
 
   prometheus:
     container_name: prometheus
@@ -37,6 +39,8 @@ services:
       - "sh"
       - "\"-c\""
       - "grafana-cli admin reset-admin-password ${GF_SECURITY_ADMIN_PASSWORD} && /run.sh"
+    depends_on:
+      - prometheus
 
   nginx:
     container_name: nginx
@@ -53,7 +57,10 @@ services:
       - sh
       - -c
       - "envsubst < /etc/nginx/gateway.conf.template > /etc/nginx/apigateway.conf && cat /etc/nginx/apigateway.conf && nginx -g 'daemon off;'"
+    depends_on:
+      - grafana
+      - prometheus
+      - backend
 
 volumes:
-  grafana:
   prometheus:

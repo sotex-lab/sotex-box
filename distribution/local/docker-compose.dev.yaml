@@ -1,0 +1,68 @@
+services:
+  backend:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=test
+      - AWS_PROXY_HOST=minio
+      - AWS_PROXY_PORT=9000
+    links:
+      - minio
+      - postgres
+
+  minio:
+    container_name: minio
+    image: quay.io/minio/minio:RELEASE.2024-03-07T00-43-48Z
+    volumes:
+      - ./volumes.local/minio:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+      - MINIO_DEFAULT_BUCKETS='pre-processed'
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9001
+    healthcheck:
+      test: mc ready local
+      interval: 10s
+      timeout: 3s
+
+  postgres:
+    container_name: postgres
+    image: postgres:16.2-bullseye
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    user: root
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready -d postgres
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:8.4
+    user: root
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    ports:
+      - 5050:80
+    entrypoint: /bin/sh -c "chmod 600 /pgadmin4/postgres.pass; /entrypoint.sh"
+    volumes:
+      - ./infra/config/pgadmin/servers.json:/pgadmin4/servers.json
+      - ./infra/config/pgadmin/postgres.pass:/pgadmin4/postgres.pass
+    depends_on:
+      - postgres
+
+volumes:
+  postgres:

@@ -1,7 +1,11 @@
-﻿using backend.Hangfire;
+﻿using backend.Aws;
+using backend.Hangfire;
+using backend.Services;
 using Hangfire;
 using Hangfire.Dashboard;
+using model.Mappers;
 using OpenTelemetry.Metrics;
+using persistence;
 using SseHandler;
 using SseHandler.Metrics;
 
@@ -42,10 +46,22 @@ builder.Services.AddHangfire(config =>
 );
 builder.Services.AddHangfireServer();
 
+builder.Services.AddSotexBoxDatabase();
+builder.Services.AddAutoMapper(typeof(CoreMapper).Assembly);
+
+builder.Services.ConfigureAwsClient();
+builder.Services.RegisterOurServices();
+
 var app = builder.Build();
 
+var result = app.Migrate();
+if (!result.IsSuccessful && !app.Environment.IsEnvironment("test"))
+{
+    Environment.Exit(1);
+}
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("test"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
