@@ -16,10 +16,9 @@ services:
     environment:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=admin123
-      - MINIO_DEFAULT_BUCKETS='pre-processed'
-      - MINIO_NOTIFY_WEBHOOK_ENABLE_PREPROCESSED=on
-      - MINIO_NOTIFY_WEBHOOK_ENDPOINT_PREPROCESSED=http://localhost:8000/ad/callback
-      - MINIO_NOTIFY_WEBHOOK_AUTH_TOKEN_PREPROCESSED=
+      - MC_HOST_local=http://admin:admin123@localhost:9000
+      - MINIO_NOTIFY_WEBHOOK_ENABLE_ADPOSTHOOK=on
+      - MINIO_NOTIFY_WEBHOOK_ENDPOINT_ADPOSTHOOK=http://nginx:8000/ads/callback
     ports:
       - 9000:9000
       - 9001:9001
@@ -32,6 +31,25 @@ services:
       test: mc ready local
       interval: 10s
       timeout: 3s
+
+  configureminio:
+    image: quay.io/minio/mc
+    links:
+      - minio
+    restart: no
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 admin admin123 &&
+      buckets=("non-processed" "processed") &&
+      for bucket in "$${buckets[@]}"; do
+        mc mb local/"$$bucket" || true
+        mc anonymous set download local/"$$bucket" || true
+      done &&
+
+      mc event add local/non-processed arn:minio:sqs::ADPOSTHOOK:webhook --event put || true &&
+
+      exit 0;
+      "
 
   postgres:
     container_name: postgres
