@@ -17,6 +17,9 @@ services:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=admin123
       - MINIO_DEFAULT_BUCKETS='pre-processed'
+      - MINIO_NOTIFY_WEBHOOK_ENABLE_PREPROCESSED=on
+      - MINIO_NOTIFY_WEBHOOK_ENDPOINT_PREPROCESSED=http://localhost:8000/ad/callback
+      - MINIO_NOTIFY_WEBHOOK_AUTH_TOKEN_PREPROCESSED=
     ports:
       - 9000:9000
       - 9001:9001

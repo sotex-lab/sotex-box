@@ -108,4 +108,12 @@ public class AdsController(
 
         return BadRequest("Internal problem, contact admin");
     }
+
+    [HttpPost("callback")]
+    public IActionResult Callback(string data)
+    {
+        logger.LogInformation("Callback hit with data: {0}", data);
+
+        return Ok();
+    }
 }

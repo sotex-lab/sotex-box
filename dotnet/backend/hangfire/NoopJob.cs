@@ -38,13 +38,13 @@ public class NoopJob
 
     public async Task SendNoop()
     {
-        _logger.LogInformation("Sending noop signal to all connections");
+        _logger.LogDebug("Sending noop signal to all connections");
 
         foreach (var device in _eventCoordinator.GetConnectionIds())
         {
             await _eventCoordinator.SendMessage(device, "noop");
         }
 
-        _logger.LogInformation("Sending noop signal finished");
+        _logger.LogDebug("Sending noop signal finished");
     }
 }
