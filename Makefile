@@ -16,6 +16,16 @@ export CONTAINER_TOOL ?= auto
 ifeq ($(CONTAINER_TOOL),auto)
 	override CONTAINER_TOOL = $(shell docker version >/dev/null 2>&1 && echo docker || echo podman)
 endif
+
+# Conditional assignment of COMPOSE_COMMAND
+ifeq ($(CONTAINER_TOOL),podman)
+    COMPOSE_COMMAND := podman-compose
+else ifeq ($(CONTAINER_TOOL),docker)
+    COMPOSE_COMMAND := docker compose
+else
+    $(error Unsupported value for CONTAINER_TOOL: $(CONTAINER_TOOL))
+endif
+
 # If we're using podman create pods else if we're using docker create networks.
 export CURRENT_DIR = $(shell pwd)
 
@@ -26,7 +36,7 @@ FORMATTING_BEGIN_BLUE = \033[36m
 FORMATTING_END = \033[0m
 
 help:
-	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}, ${COMPOSE_COMMAND}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Misc actions
 .PHONY: py-export
@@ -43,6 +53,16 @@ flutter-create-emulator: ## Shorthand for setting up an emulator
 	sdkmanager "system-images;android-31;android-tv;arm64-v8a"
 	flutter emulators --create --name "local-emulator"
 
+UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
+.PHONY: full-local-cleanup
+full-local-cleanup: compose-down
+full-local-cleanup: ## Run a full local cleanup of all volumes and dirs
+	@echo $(UNWANTED_VOLUMES)
+	@$(foreach vol,$(UNWANTED_VOLUMES), \
+        docker volume rm $(vol); \
+		)
+	@sudo rm -rf ./volumes.local
+
 ##@ Dotnet Testing
 .PHONY: dotnet-tests
 dotnet-tests: dotnet-unit-tests
@@ -54,6 +74,7 @@ dotnet-unit-tests: ## Run dotnet unit tests
 	cd dotnet/unit-tests && dotnet test
 
 .PHONY: dotnet-integration-tests
+dotnet-integration-tests: compose-down
 dotnet-integration-tests: ## Run dotnet unit tests
 	cd dotnet/integration-tests && dotnet test
 
@@ -117,16 +138,23 @@ container-push-backend: ## Command to push the container for backend
 ##@ Compose actions
 
 LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
-CURR_UID = $(shell id -u)
-CURR_GID = $(shell id -g)
+ENV_FILE := .env
 
 .PHONY: compose-up
 compose-up: container-build-backend
+compose-up: compose-down
 compose-up: ## Run local stack
-	kill -9 $(LEFTOVER_PORTS) || true
-	COMMIT_SHA=$(COMMIT_SHA) CURR_UID=$(CURR_UID) CURR_GID=$(CURR_GID) $(CONTAINER_TOOL)-compose -f docker-compose.yaml up
+	@if [ -z "$(wildcard $(ENV_FILE))" ]; then \
+        echo "$(ENV_FILE) does not exist. To run the stack you should create $(ENV_FILE). Use $(ENV_FILE).template to start"; \
+        exit 1; \
+    else \
+        echo "$(ENV_FILE) exists"; \
+    fi
+
+	mkdir -p volumes.local/minio
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
-	$(CONTAINER_TOOL)-compose -f docker-compose.yaml down
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down
 	kill -9 $(LEFTOVER_PORTS) || true

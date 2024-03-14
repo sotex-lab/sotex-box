@@ -1,16 +1,16 @@
 using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Shouldly;
 using SseHandler;
 
 namespace IntegrationTests.ControllerTests;
 
-public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Program>>
+[Collection(ConfigurableBackendFactory.IntegrationCollection)]
+public class EventControllerTests
 {
-    private readonly ConfigurableBackendFactory<Program> _factory;
+    private readonly ConfigurableBackendFactory _factory;
 
-    public EventControllerTests(ConfigurableBackendFactory<Program> factory)
+    public EventControllerTests(ConfigurableBackendFactory factory)
     {
         _factory = factory;
         _factory.Connections.Clear();
@@ -64,6 +64,8 @@ public class EventControllerTests : IClassFixture<ConfigurableBackendFactory<Pro
         var client = _factory.CreateClient();
         var task = Task.Run(async () => await client.GetAsync($"/event/connect?id={id}"));
         var removeResponse = await client.DeleteAsync($"/event/ForceDisconnect?id={id}");
+
+        await Task.Delay(500);
 
         removeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         task.IsCompleted.ShouldBeTrue();

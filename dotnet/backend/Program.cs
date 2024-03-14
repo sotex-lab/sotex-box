@@ -1,4 +1,11 @@
-﻿using OpenTelemetry.Metrics;
+﻿using backend.Aws;
+using backend.Hangfire;
+using backend.Services;
+using Hangfire;
+using Hangfire.Dashboard;
+using model.Mappers;
+using OpenTelemetry.Metrics;
+using persistence;
 using SseHandler;
 using SseHandler.Metrics;
 
@@ -29,10 +36,32 @@ builder
             .AddPrometheusExporter()
             .AddMeter(IDeviceMetrics.MeterName);
     });
+
+builder.Services.AddHangfire(config =>
+    config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseInMemoryStorage()
+);
+builder.Services.AddHangfireServer();
+
+builder.Services.AddSotexBoxDatabase();
+builder.Services.AddAutoMapper(typeof(CoreMapper).Assembly);
+
+builder.Services.ConfigureAwsClient();
+builder.Services.RegisterOurServices();
+
 var app = builder.Build();
 
+var result = app.Migrate();
+if (!result.IsSuccessful && !app.Environment.IsEnvironment("test"))
+{
+    Environment.Exit(1);
+}
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("test"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -43,6 +72,14 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 var host = app.Services.GetRequiredService<IHostApplicationLifetime>();
 var connections = app.Services.GetRequiredService<IEventCoordinator>();
 host.ApplicationStopping.Register(connections.RemoveAll);
+
+app.EnqueueJobs();
+
+// TODO: Setup custom authorization once we have roles
+app.UseHangfireDashboard(
+    "/hangfire",
+    new DashboardOptions { IsReadOnlyFunc = (DashboardContext ctx) => true }
+);
 
 app.MapControllers();
 

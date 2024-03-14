@@ -6,6 +6,8 @@ repo_name: Sotex Box
 repo_url: https://github.com/sotex-lab/sotex-box/
 edit_uri: edit/main/docs/
 
+site_url: http://:/sotex-box/
+
 theme:
   name: material
   features:
@@ -81,11 +83,14 @@ nav:
     - Custom metrics: observability/custom-metrics.md
   - Benchmarks:
     - EventCoordinator: 'benchmark-EventCoordinator.md'
+  - Load test results:
+    - Device connections: 'load-tests/load-test-results-connections.md'
 
 # Extensions
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - footnotes
   - toc:
       permalink: true

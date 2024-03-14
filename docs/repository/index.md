@@ -11,6 +11,7 @@ Remember to remove .gitignored files if they render-->
 ├── .config # Folder that contains config files, e.g. config for dotnet tools
 ├── .dockerignore # File that contains all the things that docker should include in the build process
 ├── .editorconfig # File that specifies how should files be formated
+├── .env.template # File that specifies all environment variables for docker
 ├── .github # Folder with workflows
 ├── .pre-commit-config.yaml # Precommit configuration
 ├── CODEOWNERS # File containing the codeowners of certain parts of the repository
@@ -22,6 +23,7 @@ Remember to remove .gitignored files if they render-->
 ├── docs # Folder containing all the documentation that is used to power this site
 ├── dotnet # Folder containing all the dotnet code we use
 ├── infra # Folder containing all IAAC code we use
+├── load-tests # Folder containing all load tests
 ├── mkdocs.yaml # Configuration file for this site
 ├── poetry.lock # Lock of dependencies for poetry project
 ├── pyproject.toml # Poetry project specification

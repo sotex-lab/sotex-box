@@ -21,6 +21,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "backend", "infra\backend\ba
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "config-translator", "infra\config-translator\config-translator.csproj", "{4FFAD64F-98C7-4B98-BA66-C55CCB6760BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "model", "dotnet\model\model.csproj", "{D1C04601-B464-404B-9603-FB814E109C9F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "persistence", "dotnet\persistence\persistence.csproj", "{491DF35D-8D54-4344-A595-C5D6FEC70E3F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +59,14 @@ Global
 		{4FFAD64F-98C7-4B98-BA66-C55CCB6760BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FFAD64F-98C7-4B98-BA66-C55CCB6760BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FFAD64F-98C7-4B98-BA66-C55CCB6760BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1C04601-B464-404B-9603-FB814E109C9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1C04601-B464-404B-9603-FB814E109C9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1C04601-B464-404B-9603-FB814E109C9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1C04601-B464-404B-9603-FB814E109C9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,5 +79,7 @@ Global
 		{8AAC5A04-28AA-4F53-BF47-C74E6C24013D} = {F021D060-BCA2-4D32-B722-C6196A158C81}
 		{090EB950-5A89-4215-80D2-5BAE17C2BEDA} = {36FD6E2B-AFA6-4A17-8429-3AF1F36F13E1}
 		{4FFAD64F-98C7-4B98-BA66-C55CCB6760BA} = {36FD6E2B-AFA6-4A17-8429-3AF1F36F13E1}
+		{D1C04601-B464-404B-9603-FB814E109C9F} = {F021D060-BCA2-4D32-B722-C6196A158C81}
+		{491DF35D-8D54-4344-A595-C5D6FEC70E3F} = {F021D060-BCA2-4D32-B722-C6196A158C81}
 	EndGlobalSection
 EndGlobal
