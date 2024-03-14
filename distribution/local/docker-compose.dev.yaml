@@ -18,7 +18,7 @@ services:
       - MINIO_ROOT_PASSWORD=admin123
       - MC_HOST_local=http://admin:admin123@localhost:9000
       - MINIO_NOTIFY_WEBHOOK_ENABLE_ADPOSTHOOK=on
-      - MINIO_NOTIFY_WEBHOOK_ENDPOINT_ADPOSTHOOK=http://nginx:8000/ads/callback
+      - MINIO_NOTIFY_WEBHOOK_ENDPOINT_ADPOSTHOOK=http://local-pusher:5000/webhook
     ports:
       - 9000:9000
       - 9001:9001
@@ -84,6 +84,19 @@ services:
       - ./infra/config/pgadmin/postgres.pass:/pgadmin4/postgres.pass
     depends_on:
       - postgres
+
+  sqs:
+    container_name: sqs
+    image: softwaremill/elasticmq-native
+    ports:
+      - 9324:9324
+      - 9325:9325
+    volumes:
+      - ./infra/config/sqs/elasticmq.conf:/opt/elasticmq.conf
+
+  local-pusher:
+    container_name: local-pusher
+    image: ghcr.io/sotex-lab/sotex-box/local-pusher:${COMMIT_SHA}
 
 volumes:
   postgres:

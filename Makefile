@@ -131,6 +131,10 @@ pulumi-preview: ## Command to preview the staging infra
 container-build-backend: ## Command to build the container for backend
 	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile
 
+.PHONY: container-build-local-pusher
+container-build-local-pusher: ## Command to build the local pusher
+	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/local-pusher:$(COMMIT_SHA) . -f distribution/docker/local-pusher.dockerfile
+
 .PHONY: container-push-backend
 container-push-backend: ## Command to push the container for backend
 	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)
@@ -142,6 +146,7 @@ ENV_FILE := .env
 
 .PHONY: compose-up
 compose-up: container-build-backend
+compose-up: container-build-local-pusher
 compose-up: compose-down
 compose-up: ## Run local stack
 	@if [ -z "$(wildcard $(ENV_FILE))" ]; then \
