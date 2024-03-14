@@ -50,8 +50,8 @@ edit-docs: ## Run mkdocs local server for development
 
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;google_apis_playstore;x86"
-	flutter emulators --create --name "local-emulator"
+	sdkmanager "system-images;android-31;google-tv;x86"
+	avdmanager create avd -n "android_tv" -k "system-images;android-31;google-tv;x86" --force
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
@@ -99,12 +99,12 @@ run-backend: ## Shorthand for running backend from cli
 
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
-	flutter emulators --launch local-emulator
+	emulator -avd "android_tv" 
 	(cd android/launcher && flutter run -d emulator-5554)
 
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
-	flutter emulators --launch local-emulator
+	emulator -avd "android_tv" -skin 1920x1080 
 	(cd android/sotex_box && flutter run -d emulator-5554)
 
 ##@ Benchmarking
