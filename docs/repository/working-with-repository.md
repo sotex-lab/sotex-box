@@ -13,8 +13,14 @@ You need a couple of tools to be able to fully work with this repository:
 | 5 | pulumi | ^3.107.0 | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) |
 | 6a | docker (suggested) | ^23.0.5 | [🔗](https://docs.docker.com/desktop/install/windows-install/) | [🔗](https://docs.docker.com/desktop/install/linux-install/) | [🔗](https://docs.docker.com/desktop/install/mac-install/) |
 | 6b | podman | ^4.8.3 | [🔗](https://podman.io/docs/installation#windows) | [🔗](https://podman.io/docs/installation#installing-on-linux) | [🔗](https://podman.io/docs/installation#macos) |
-| 7 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
-| 8 | k6 | ^0.49.0 | [🔗](https://k6.io/docs/get-started/installation/#windows) | [🔗](https://k6.io/docs/get-started/installation/#linux) | [🔗](https://k6.io/docs/get-started/installation/#macos) |
+| 7 | java | ^21.0.2 | [🔗](https://www.oracle.com/java/technologies/downloads/) | [🔗](https://www.oracle.com/java/technologies/downloads/) | [🔗](https://www.oracle.com/java/technologies/downloads/) |
+| 8 | sdkmanager | ^12.0 | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) | [🔗](https://developer.android.com/tools/sdkmanager) |
+| 9 | gradle | ^4.4.1 | [🔗](https://gradle.org/install/) | [🔗](https://gradle.org/install/) | [🔗](https://gradle.org/install/) |
+| 10 | kotlin | ^1.9.21 | [🔗](https://kotlinlang.org/docs/command-line.html#manual-install) | [🔗](https://kotlinlang.org/docs/command-line.html#snap-package) | [🔗](https://kotlinlang.org/docs/command-line.html#homebrew) |
+| 11 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
+| 12 | k6 | ^0.49.0 | [🔗](https://k6.io/docs/get-started/installation/#windows) | [🔗](https://k6.io/docs/get-started/installation/#linux) | [🔗](https://k6.io/docs/get-started/installation/#macos) |
+
+For more details about flutter installation, visit the android part of the docs.
 
 We will maintain a `Makefile` where we will try to link as much actions as possible. Although some cases may be left uncovered.
 

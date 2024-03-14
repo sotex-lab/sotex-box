@@ -50,7 +50,7 @@ edit-docs: ## Run mkdocs local server for development
 
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;google_apis_playstore;x86"
+	sdkmanager "system-images;android-31;android-tv;arm64-v8a"
 	flutter emulators --create --name "local-emulator"
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
