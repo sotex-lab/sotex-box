@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Amazon.S3;
+using Amazon.SQS;
 using backend.Aws;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -52,13 +53,13 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
         {
             ["ASPNETCORE_ENVIRONMENT"] = "test",
             ["CONNECTION_STRING"] = postgresContainer.GetConnectionString(),
-            ["AWS_URL"] = "http://localhost:9000",
+            ["AWS_S3_URL"] = "http://localhost:9000",
             ["AWS_REGION"] = "localhost",
-            ["AWS_ACCESS_KEY"] = environmentVars["MINIO_ROOT_USER"],
-            ["AWS_SECRET_KEY"] = environmentVars["MINIO_ROOT_PASSWORD"],
+            ["AWS_S3_ACCESS_KEY"] = environmentVars["MINIO_ROOT_USER"],
+            ["AWS_S3_SECRET_KEY"] = environmentVars["MINIO_ROOT_PASSWORD"],
             ["AWS_PROTOCOL"] = "http",
             ["AWS_PROXY_HOST"] = "localhost",
-            ["AWS_PROXY_PORT"] = "9000"
+            ["AWS_PROXY_PORT"] = "9000",
         };
 
         foreach (var kvp in backendEnvVars)
@@ -109,7 +110,12 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             );
             services.Remove(s3Descriptor);
 
-            services.ConfigureAwsClient();
+            var sqsDescriptor = services.Single(x =>
+                x.Lifetime == ServiceLifetime.Singleton && x.ServiceType == typeof(IAmazonSQS)
+            );
+            services.Remove(sqsDescriptor);
+
+            services.ConfigureAwsClients();
         });
     }
 

@@ -13,7 +13,7 @@ public interface IGetOrCreateBucketService
 
 public enum GetOrCreateBucketError
 {
-    Unknown,
+    Unknown = 1,
     FailedToCreateBucket,
     FailedToListBuckets,
     NotFound,
