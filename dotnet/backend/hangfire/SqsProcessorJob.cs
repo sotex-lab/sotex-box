@@ -1,8 +1,11 @@
+using System.Runtime.CompilerServices;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Newtonsoft.Json;
 using persistence.Repository;
 using persistence.Repository.Base;
+
+[assembly: InternalsVisibleTo("unit-tests")]
 
 namespace backend.Hangfire;
 
