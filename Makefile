@@ -73,10 +73,11 @@ dotnet-tests: ## Run all dotnet tests
 dotnet-unit-tests: ## Run dotnet unit tests
 	cd dotnet/unit-tests && dotnet test
 
+TOP_LEVEL := $(shell git rev-parse --show-toplevel)
 .PHONY: dotnet-integration-tests
 dotnet-integration-tests: compose-down
 dotnet-integration-tests: ## Run dotnet unit tests
-	cd dotnet/integration-tests && dotnet test
+	cd dotnet/integration-tests && TOP_LEVEL=$(TOP_LEVEL) dotnet test
 
 ##@ Flutter testing
 .PHONY: flutter-test-launcher

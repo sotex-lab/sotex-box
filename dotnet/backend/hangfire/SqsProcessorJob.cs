@@ -11,7 +11,7 @@ namespace backend.Hangfire;
 
 public class SqsProcessorJob : GenericCronJob<SqsProcessorJob>, IGenericCronJob
 {
-    public static string EnvironmentVariableName => "SQS_INTERVAL";
+    public static string EnvironmentVariableName => "SQS_CRON";
     private readonly IAmazonSQS _sqsClient;
     private readonly IAdRepository _adRepository;
 

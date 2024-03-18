@@ -8,13 +8,13 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using persistence;
 using Respawn;
-using Shouldly;
 using SseHandler;
 using Testcontainers.PostgreSql;
 
 public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsyncDisposable
 {
     public const string IntegrationCollection = "integration collection";
+    public const int IntegrationCronIntervalSeconds = 15;
     public Dictionary<string, Connection> Connections { get; set; } =
         new Dictionary<string, Connection>();
 
@@ -24,6 +24,8 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        var topLevel = Environment.GetEnvironmentVariable("TOP_LEVEL")!;
+
         var environmentVars = new Dictionary<string, string>
         {
             ["MINIO_ROOT_USER"] = "admin",
@@ -47,7 +49,22 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             .WithName("minio")
             .Build();
 
-        Task.WhenAll([postgresContainer.StartAsync(), minioContainer.StartAsync()]).Wait();
+        var sqsContainer = new ContainerBuilder()
+            .WithName("sqs")
+            .WithImage("softwaremill/elasticmq-native")
+            .WithPortBinding(9324, 9324)
+            .WithPortBinding(9325, 9325)
+            .WithBindMount($"{topLevel}/infra/config/sqs/elasticmq.conf", "/opt/elasticmq.conf")
+            .Build();
+
+        Task.WhenAll(
+                [
+                    postgresContainer.StartAsync(),
+                    minioContainer.StartAsync(),
+                    sqsContainer.StartAsync()
+                ]
+            )
+            .Wait();
 
         var backendEnvVars = new Dictionary<string, string>
         {
@@ -60,6 +77,10 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["AWS_PROTOCOL"] = "http",
             ["AWS_PROXY_HOST"] = "localhost",
             ["AWS_PROXY_PORT"] = "9000",
+            ["AWS_SQS_URL"] = "http://sqs:9324",
+            ["AWS_SQS_ACCESS_KEY"] = "x",
+            ["AWS_SQS_SECRET_KEY"] = "x",
+            ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = "/000000000000/nonprocessed",
         };
 
         foreach (var kvp in backendEnvVars)
