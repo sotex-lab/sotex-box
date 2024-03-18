@@ -36,6 +36,12 @@ repos:
         pass_filenames: false
         language: system
         files: "dotnet/"
+      - id: dotnet-integration-test
+        name: Dotnet integration tests
+        entry: make dotnet-integration-tests
+        pass_filenames: false
+        language: system
+        files: "dotnet/"
 
       ## Flutter checks
       - id: dart-format

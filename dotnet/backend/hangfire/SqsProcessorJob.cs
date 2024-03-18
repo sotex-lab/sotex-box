@@ -6,6 +6,7 @@ using persistence.Repository;
 using persistence.Repository.Base;
 
 [assembly: InternalsVisibleTo("unit-tests")]
+[assembly: InternalsVisibleTo("integration-tests")]
 
 namespace backend.Hangfire;
 

@@ -77,7 +77,7 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["AWS_PROTOCOL"] = "http",
             ["AWS_PROXY_HOST"] = "localhost",
             ["AWS_PROXY_PORT"] = "9000",
-            ["AWS_SQS_URL"] = "http://sqs:9324",
+            ["AWS_SQS_URL"] = "http://localhost:9324",
             ["AWS_SQS_ACCESS_KEY"] = "x",
             ["AWS_SQS_SECRET_KEY"] = "x",
             ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = "/000000000000/nonprocessed",
