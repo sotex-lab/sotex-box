@@ -70,40 +70,46 @@ CoconaApp.Run(
             return;
         }
 
-        var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(1) };
+        var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(10) };
 
         attempt = 0;
         while (true)
         {
-            logger.LogInformation("Attempt {0}: pinging backend", attempt++);
-            var response = await client.GetAsync("http://localhost:8000/swagger/index.html");
-
             if (ctx.CancellationToken.IsCancellationRequested)
             {
                 logger.LogInformation("Shutdown requested");
                 return;
             }
-
-            if (response.IsSuccessStatusCode)
+            logger.LogInformation("Attempt {0}: pinging backend", attempt++);
+            try
             {
-                logger.LogInformation("Backend started");
-                break;
+                var response = await client.GetAsync("http://localhost:8000/swagger/index.html");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    logger.LogInformation("Backend started");
+                    break;
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.BadGateway)
+                {
+                    logger.LogInformation("Status code was bad gateway.");
+                    await Task.Delay(1000);
+                    continue;
+                }
+
+                logger.LogWarning("Backend responded with status code: {0}", response.StatusCode);
+
+                if (attempt >= 5)
+                {
+                    logger.LogWarning("Our backend didn't start");
+                    await Task.Delay(100000, ctx.CancellationToken);
+                    return;
+                }
             }
-
-            if (response.StatusCode == System.Net.HttpStatusCode.BadGateway)
+            catch (TaskCanceledException)
             {
-                logger.LogInformation("Status code was bad gateway.");
-                await Task.Delay(1000);
-                continue;
-            }
-
-            logger.LogWarning("Backend responded with status code: {0}", response.StatusCode);
-
-            if (attempt >= 5)
-            {
-                logger.LogWarning("Our backend didn't start");
-                await Task.Delay(100000, ctx.CancellationToken);
-                return;
+                logger.LogInformation("Received timeout, retrying");
             }
         }
 

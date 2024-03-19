@@ -1,3 +1,4 @@
+using DotNetRetry.Rules;
 using DotNext;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -31,30 +32,49 @@ public static class ApplicationDbContextExtensions
         var scope = app.Services.CreateScope();
         var logger = scope.ServiceProvider.GetService<ILogger<ApplicationDbContext>>()!;
         var db = scope.ServiceProvider.GetService<ApplicationDbContext>()!;
-        var pendingMigrations = db.Database.GetPendingMigrations();
 
-        if (pendingMigrations == null || !pendingMigrations.Any())
-        {
-            logger.LogInformation("No pending migrations should be applied.");
-            return new Result<ApplicationDbContext, RepositoryError>(db);
-        }
+        var rule = Rule.Setup(Strategy.Exponential)
+            .Config(options =>
+            {
+                options.Attempts = 3;
+                options.Time = TimeSpan.FromSeconds(5);
+            });
+        var response = new Result<ApplicationDbContext, RepositoryError>(db);
 
-        logger.LogInformation(
-            "Performing {0} migrations: {1}",
-            pendingMigrations.Count(),
-            string.Join(",", pendingMigrations)
-        );
-        try
-        {
-            db.Database.Migrate();
-        }
-        catch (Exception e)
-        {
-            logger.LogError("Error during migrating database: {0}", e);
-            return new Result<ApplicationDbContext, RepositoryError>(RepositoryError.FailedToInit);
-        }
+        rule.OnFailure(
+                (_, _) =>
+                {
+                    response = new Result<ApplicationDbContext, RepositoryError>(
+                        RepositoryError.FailedToInit
+                    );
+                }
+            )
+            .Attempt(() =>
+            {
+                try
+                {
+                    var pendingMigrations = db.Database.GetPendingMigrations();
 
-        logger.LogInformation("Successfully migrated pending migrations");
-        return new Result<ApplicationDbContext, RepositoryError>(db);
+                    if (pendingMigrations == null || !pendingMigrations.Any())
+                    {
+                        logger.LogInformation("No pending migrations should be applied.");
+                        return;
+                    }
+
+                    logger.LogInformation(
+                        "Performing {0} migrations: {1}",
+                        pendingMigrations.Count(),
+                        string.Join(",", pendingMigrations)
+                    );
+                    db.Database.Migrate();
+
+                    logger.LogInformation("Successfully migrated pending migrations");
+                }
+                catch (Exception)
+                {
+                    logger.LogWarning("Caught expcetion while migrating. Retrying...");
+                }
+            });
+        return response;
     }
 }
