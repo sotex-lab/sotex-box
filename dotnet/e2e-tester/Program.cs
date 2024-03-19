@@ -8,7 +8,7 @@ CoconaApp.Run(
         var logger = LoggerFactory
             .Create(options =>
             {
-                options.AddConsole();
+                options.AddSimpleConsole(opts => opts.TimestampFormat = "O");
                 options.SetMinimumLevel(LogLevel.Information);
             })
             .CreateLogger("e2e-tests");
@@ -21,6 +21,10 @@ CoconaApp.Run(
             .WithName("e2e-tester")
             .WithImage("e2e")
             .WithPrivileged(true)
+            .WithPortBinding(8000)
+            .WithPortBinding(5050)
+            .WithBindMount("/var/lib/docker/image", "/var/lib/docker/image")
+            .WithBindMount("/var/lib/docker/overlay2", "/var/lib/docker/overlay2")
             .Build();
 
         await stack.StartAsync();
@@ -50,6 +54,57 @@ CoconaApp.Run(
             logger.LogInformation("Waiting for stack to start");
             await Task.Delay(1000);
             attempt++;
+        }
+
+        logger.LogInformation("Starting our services");
+
+        var composeResult = await stack.ExecAsync(["make", "compose-up-d"], ctx.CancellationToken);
+
+        if (composeResult.ExitCode == 0)
+        {
+            logger.LogInformation("Our services started");
+        }
+        else
+        {
+            logger.LogWarning("Couldn't start our services due to:\n{0}", composeResult.Stderr);
+            return;
+        }
+
+        var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(1) };
+
+        attempt = 0;
+        while (true)
+        {
+            logger.LogInformation("Attempt {0}: pinging backend", attempt++);
+            var response = await client.GetAsync("http://localhost:8000/swagger/index.html");
+
+            if (ctx.CancellationToken.IsCancellationRequested)
+            {
+                logger.LogInformation("Shutdown requested");
+                return;
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation("Backend started");
+                break;
+            }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.BadGateway)
+            {
+                logger.LogInformation("Status code was bad gateway.");
+                await Task.Delay(1000);
+                continue;
+            }
+
+            logger.LogWarning("Backend responded with status code: {0}", response.StatusCode);
+
+            if (attempt >= 5)
+            {
+                logger.LogWarning("Our backend didn't start");
+                await Task.Delay(100000, ctx.CancellationToken);
+                return;
+            }
         }
 
         await stack.StopAsync();
