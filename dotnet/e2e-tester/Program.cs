@@ -21,8 +21,9 @@ CoconaApp.Run(
             .WithName("e2e-tester")
             .WithImage("e2e")
             .WithPrivileged(true)
-            .WithPortBinding(8000)
-            .WithPortBinding(5050)
+            .WithPortBinding(8000, true)
+            .WithPortBinding(5050, true)
+            .WithPortBinding(9000, true)
             .WithBindMount("/var/lib/docker/image", "/var/lib/docker/image")
             .WithBindMount("/var/lib/docker/overlay2", "/var/lib/docker/overlay2")
             .Build();

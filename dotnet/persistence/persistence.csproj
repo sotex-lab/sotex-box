@@ -10,13 +10,14 @@
 
   <ItemGroup>
     <PackageReference Include="DotNext" Version="5.2.0" />
-    <PackageReference Include="gdyrra.dotnet.retry" Version="2.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
+    <PackageReference Include="polly.core" Version="8.3.1" />
+    <PackageReference Include="polly.extensions" Version="8.3.1" />
   </ItemGroup>
 
   <PropertyGroup>
