@@ -142,7 +142,6 @@ container-push-backend: ## Command to push the container for backend
 
 ##@ Compose actions
 
-LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
 ENV_FILE := .env
 
 .PHONY: compose-up
@@ -163,4 +162,3 @@ compose-up: ## Run local stack
 .PHONY: compose-down
 compose-down: ## Remove local stack
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down
-	kill -9 $(LEFTOVER_PORTS) || true
