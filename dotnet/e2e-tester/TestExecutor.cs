@@ -82,64 +82,14 @@ public class TestExecutor
 
     public async Task<bool> Start()
     {
-        Info("Starting test environment");
-
-        await testEnvironment.StartAsync(token);
-        try
-        {
-            await pipeline.ExecuteAsync(
-                static async (executor, token) =>
-                {
-                    executor.Info("Pinging test environment");
-                    var result = await executor.testEnvironment.ExecAsync(
-                        ["docker", "info"],
-                        token
-                    );
-
-                    if (!result.Stdout.EndsWith("Server:\n"))
-                    {
-                        return;
-                    }
-
-                    executor.Warn("Test environment still not started...");
-                    throw new KeyNotFoundException("docker");
-                },
-                this,
-                token
-            );
-        }
-        catch (Exception e)
-        {
-            Error(e.Message);
+        if (!await StartEnvironment())
             return false;
-        }
 
-        Info("Started test environment");
-
-        Info("Overriding minio url");
-
-        var writeResult = await testEnvironment.ExecAsync(
-            ["sed", "-i", $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g", ".env"]
-        );
-        if (writeResult.ExitCode != 0)
-        {
-            Error("Received exit status code {0}: \n{1}", writeResult.ExitCode, writeResult.Stderr);
+        if (!await OverrideMinioUrl())
             return false;
-        }
 
-        Info("Starting our stack");
-
-        var composeResult = await testEnvironment.ExecAsync(["make", "compose-up-d"], token);
-
-        if (composeResult.ExitCode != 0)
-        {
-            Error(
-                "Received exit status code {0}: \n{1}",
-                composeResult.ExitCode,
-                composeResult.Stderr
-            );
+        if (!await StartStack())
             return false;
-        }
 
         client = new HttpClient()
         {
@@ -152,51 +102,11 @@ public class TestExecutor
             Timeout = TimeSpan.FromSeconds(10)
         };
 
-        try
-        {
-            await pipeline.ExecuteAsync(
-                static async (executor, token) =>
-                {
-                    executor.Info("Pinging backend to see if its up");
-
-                    var response = await executor.client!.GetAsync("/swagger/index.html");
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return;
-                    }
-
-                    executor.Warn("Ping failed with status code: {0}", response.StatusCode);
-                    throw new KeyNotFoundException("backend");
-                },
-                this,
-                token
-            );
-        }
-        catch (Exception e)
-        {
-            Error(e.Message);
+        if (!await EnsureBackendStarted())
             return false;
-        }
 
-        try
-        {
-            applicationDbContext = new ApplicationDbContextFactory().CreateDbContext(
-                $"Host=localhost;Port={testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
-            );
-
-            dbConnection = applicationDbContext.Database.GetDbConnection();
-            await dbConnection.OpenAsync(token);
-
-            respawner = await Respawner.CreateAsync(dbConnection, respawnerOptions);
-
-            Info("Database communication established");
-        }
-        catch (Exception e)
-        {
-            Error("Error while creating database connection: {0}", e.Message);
+        if (!await ConfigureDatabaseConnection())
             return false;
-        }
 
         Info("Stack started successfully");
         return true;
@@ -225,6 +135,142 @@ public class TestExecutor
                 Warn("Couldn't clean minio bucket {0}, Stderr: \n{1}", bucket, output.Stderr);
             }
         }
+    }
+
+    private async Task<bool> ConfigureDatabaseConnection()
+    {
+        try
+        {
+            applicationDbContext = new ApplicationDbContextFactory().CreateDbContext(
+                $"Host=localhost;Port={testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
+            );
+
+            dbConnection = applicationDbContext.Database.GetDbConnection();
+            await dbConnection.OpenAsync(token);
+
+            respawner = await Respawner.CreateAsync(dbConnection, respawnerOptions);
+
+            Info("Database communication established");
+        }
+        catch (Exception e)
+        {
+            Error("Error while creating database connection: {0}", e.Message);
+            return false;
+        }
+        return true;
+    }
+
+    private async Task<bool> EnsureBackendStarted()
+    {
+        try
+        {
+            await pipeline.ExecuteAsync(
+                static async (executor, token) =>
+                {
+                    executor.Info("Pinging backend to see if its up");
+
+                    var response = await executor.client!.GetAsync("/swagger/index.html");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return;
+                    }
+
+                    executor.Warn("Ping failed with status code: {0}", response.StatusCode);
+                    throw new KeyNotFoundException("backend");
+                },
+                this,
+                token
+            );
+        }
+        catch (Exception e)
+        {
+            Error(e.Message);
+            return false;
+        }
+        return true;
+    }
+
+    private async Task<bool> StartStack()
+    {
+        Info("Starting our stack");
+
+        var composeResult = await testEnvironment.ExecAsync(["make", "compose-up-d"], token);
+
+        if (composeResult.ExitCode != 0)
+        {
+            Error(
+                "Received exit status code {0}: \n{1}",
+                composeResult.ExitCode,
+                composeResult.Stderr
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> OverrideMinioUrl()
+    {
+        Info("Overriding minio url");
+
+        var writeResult = await testEnvironment.ExecAsync(
+            ["sed", "-i", $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g", ".env"]
+        );
+        if (writeResult.ExitCode != 0)
+        {
+            Error("Received exit status code {0}: \n{1}", writeResult.ExitCode, writeResult.Stderr);
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> StartEnvironment()
+    {
+        Info("Starting test environment");
+
+        await testEnvironment.StartAsync(token);
+
+        if (!await EnvironmentStarted())
+            return false;
+
+        Info("Started test environment");
+
+        return true;
+    }
+
+    private async Task<bool> EnvironmentStarted()
+    {
+        try
+        {
+            await pipeline.ExecuteAsync(
+                static async (executor, token) =>
+                {
+                    executor.Info("Pinging test environment");
+                    var result = await executor.testEnvironment.ExecAsync(
+                        ["docker", "info"],
+                        token
+                    );
+
+                    if (!result.Stdout.EndsWith("Server:\n"))
+                    {
+                        return;
+                    }
+
+                    executor.Warn("Test environment still not started...");
+                    throw new KeyNotFoundException("docker");
+                },
+                this,
+                token
+            );
+        }
+        catch (Exception e)
+        {
+            Error(e.Message);
+            return false;
+        }
+        return true;
     }
 
     private void Info(string message, params object[] args) =>
