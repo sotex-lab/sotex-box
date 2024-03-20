@@ -7,6 +7,7 @@ services:
     links:
       - minio
       - postgres
+      - sqs
 
   minio:
     container_name: minio

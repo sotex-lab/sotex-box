@@ -102,6 +102,17 @@ public class TestExecutor
 
         Info("Started test environment");
 
+        Info("Overriding minio url");
+
+        var writeResult = await testEnvironment.ExecAsync(
+            ["sed", "-i", $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g", ".env"]
+        );
+        if (writeResult.ExitCode != 0)
+        {
+            Error("Received exit status code {0}: \n{1}", writeResult.ExitCode, writeResult.Stderr);
+            return false;
+        }
+
         Info("Starting our stack");
 
         var composeResult = await testEnvironment.ExecAsync(["make", "compose-up-d"], token);
