@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
-    async (string parallelism, CoconaAppContext ctx) =>
+    async (int parallelism, CoconaAppContext ctx) =>
     {
         var loggerFactory = LoggerFactory.Create(options =>
         {
@@ -10,14 +10,31 @@ CoconaApp.Run(
             options.SetMinimumLevel(LogLevel.Information);
         });
         var globalLogger = loggerFactory.CreateLogger("global");
-        var testExecutor = new TestExecutor(loggerFactory, "test-executor", ctx.CancellationToken);
+
+        var executors = new List<TestExecutor>();
+
+        for (int i = 0; i < parallelism; i++)
+        {
+            executors.Add(new TestExecutor(loggerFactory, i.ToString(), ctx.CancellationToken));
+        }
+
         try
         {
-            var outcome = await testExecutor.Start();
-            if (outcome)
+            var tasks = executors.Select((x, i) => (x.Start(), i));
+            await Task.WhenAll(tasks.Select(x => x.Item1));
+            foreach (var task in tasks)
             {
-                await Task.Delay(100_000, ctx.CancellationToken);
+                var outcome = await task.Item1;
+
+                if (!outcome)
+                {
+                    globalLogger.LogWarning("Executor {0} failed to start", task.i.ToString());
+                    throw new OperationCanceledException();
+                }
             }
+
+            globalLogger.LogInformation("All executors running");
+            await Task.Delay(TimeSpan.FromMinutes(5), ctx.CancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -25,7 +42,8 @@ CoconaApp.Run(
         }
         finally
         {
-            await testExecutor.Stop();
+            var tasks = executors.Select(x => x.Stop());
+            await Task.WhenAll(tasks);
         }
     }
 );

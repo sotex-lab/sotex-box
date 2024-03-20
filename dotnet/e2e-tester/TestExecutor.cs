@@ -30,7 +30,7 @@ public class TestExecutor
         testEnvironment = new ContainerBuilder()
             .WithAutoRemove(true)
             .WithCleanUp(true)
-            .WithName("e2e-tester")
+            .WithName($"e2e-tester-{name}")
             .WithImage("e2e")
             .WithPrivileged(true)
             .WithPortBinding(BACKEND_PORT, true)
