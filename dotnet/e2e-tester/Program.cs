@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
-    async (int parallelism, CoconaAppContext ctx) =>
+    async (int parallelism, string absolutePath, CoconaAppContext ctx) =>
     {
         var loggerFactory = LoggerFactory.Create(options =>
         {
@@ -15,7 +15,9 @@ CoconaApp.Run(
 
         for (int i = 0; i < parallelism; i++)
         {
-            executors.Add(new TestExecutor(loggerFactory, i.ToString(), ctx.CancellationToken));
+            executors.Add(
+                new TestExecutor(loggerFactory, absolutePath, i.ToString(), ctx.CancellationToken)
+            );
         }
 
         try

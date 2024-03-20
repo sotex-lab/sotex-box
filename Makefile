@@ -84,12 +84,16 @@ export PARALLELISM ?= auto
 ifeq ($(PARALLELISM),auto)
 	override PARALLELISM = 3
 endif
+export ABSOLUTE_PATH ?= auto
+ifeq ($(ABSOLUTE_PATH),auto)
+	override ABSOLUTE_PATH = $(shell git rev-parse --show-toplevel)
+endif
 .PHONY: dotnet-e2e-tests
 dotnet-e2e-tests: container-build-backend
 dotnet-e2e-tests: container-build-local-pusher
 dotnet-e2e-tests: ## Run dotnet e2e tests, excluded from dotnet-test
 	$(CONTAINER_TOOL) build -t e2e -f distribution/docker/e2e.dockerfile .
-	dotnet run --project dotnet/e2e-tester --parallelism $(PARALLELISM)
+	dotnet run --project dotnet/e2e-tester --parallelism $(PARALLELISM) --absolute-path $(ABSOLUTE_PATH)
 
 ##@ Flutter testing
 .PHONY: flutter-test-launcher

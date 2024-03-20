@@ -26,6 +26,7 @@ public class TestExecutor
 
     public TestExecutor(
         ILoggerFactory loggerFactory,
+        string absolutePath,
         string friendlyName = "",
         CancellationToken cancelToken = default
     )
@@ -48,6 +49,19 @@ public class TestExecutor
             .WithPrivileged(true)
             .WithBindMount("/var/lib/docker/overlay2", "/var/lib/docker/overlay2")
             .WithBindMount("/var/lib/docker/image", "/var/lib/docker/image")
+            .WithBindMount($"{absolutePath}/.git", "/sotex/.git")
+            .WithBindMount($"{absolutePath}/distribution", "/sotex/distribution")
+            .WithBindMount($"{absolutePath}/dotnet/backend", "/sotex/dotnet/backend")
+            .WithBindMount($"{absolutePath}/dotnet/model", "/sotex/dotnet/model")
+            .WithBindMount($"{absolutePath}/dotnet/persistence", "/sotex/dotnet/persistence")
+            .WithBindMount($"{absolutePath}/dotnet/sse-handler", "/sotex/dotnet/sse-handler")
+            .WithBindMount($"{absolutePath}/infra/config", "/sotex/infra/config")
+            .WithBindMount($"{absolutePath}/python", "/sotex/python")
+            .WithBindMount($"{absolutePath}/Makefile", "/sotex/Makefile")
+            .WithBindMount($"{absolutePath}/poetry.lock", "/sotex/poetry.lock")
+            .WithBindMount($"{absolutePath}/pyproject.toml", "/sotex/pyproject.toml")
+            .WithBindMount($"{absolutePath}/requirements.txt", "/sotex/requirements.txt")
+            .WithBindMount($"{absolutePath}/docker-compose.yaml", "/sotex/docker-compose.yaml")
             .WithPortBinding(BACKEND_PORT, true)
             .WithPortBinding(DATABASE_PORT, true)
             .WithPortBinding(MINIO_PORT, true)
