@@ -85,6 +85,8 @@ ifeq ($(PARALLELISM),auto)
 	override PARALLELISM = 3
 endif
 .PHONY: dotnet-e2e-tests
+dotnet-e2e-tests: container-build-backend
+dotnet-e2e-tests: container-build-local-pusher
 dotnet-e2e-tests: ## Run dotnet e2e tests, excluded from dotnet-test
 	$(CONTAINER_TOOL) build -t e2e -f distribution/docker/e2e.dockerfile .
 	dotnet run --project dotnet/e2e-tester --parallelism $(PARALLELISM)
@@ -173,8 +175,6 @@ compose-up: ## Run local stack
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up
 
 .PHONY: compose-up-d
-compose-up-d: container-build-backend
-compose-up-d: container-build-local-pusher
 compose-up-d: compose-down
 compose-up-d: ensure-setup
 compose-up-d: ## Run local stack detached. Used for e2e tests

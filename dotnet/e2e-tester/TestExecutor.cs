@@ -1,13 +1,17 @@
+using System.Data.Common;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using persistence;
 using Polly;
 using Polly.Retry;
+using Respawn;
 
 public class TestExecutor
 {
     private static int BACKEND_PORT = 8000;
-    private static int DATABASE_PORT = 5050;
+    private static int DATABASE_PORT = 5432;
     private static int MINIO_PORT = 9000;
     private readonly IContainer testEnvironment;
     private readonly ILogger<TestExecutor> logger;
@@ -15,6 +19,10 @@ public class TestExecutor
     private readonly CancellationToken token;
     private readonly ResiliencePipeline pipeline;
     private HttpClient? client;
+    private RespawnerOptions respawnerOptions;
+    private Respawner? respawner;
+    private DbConnection? dbConnection;
+    private ApplicationDbContext? applicationDbContext;
 
     public TestExecutor(
         ILoggerFactory loggerFactory,
@@ -25,6 +33,11 @@ public class TestExecutor
         logger = loggerFactory.CreateLogger<TestExecutor>();
         name = friendlyName;
         token = cancelToken;
+        respawnerOptions = new RespawnerOptions
+        {
+            SchemasToInclude = ["public"],
+            DbAdapter = DbAdapter.Postgres
+        };
         Info("Creating test environment");
 
         testEnvironment = new ContainerBuilder()
@@ -33,6 +46,8 @@ public class TestExecutor
             .WithName($"e2e-tester-{name}")
             .WithImage("e2e")
             .WithPrivileged(true)
+            .WithBindMount("/var/lib/docker/overlay2", "/var/lib/docker/overlay2")
+            .WithBindMount("/var/lib/docker/image", "/var/lib/docker/image")
             .WithPortBinding(BACKEND_PORT, true)
             .WithPortBinding(DATABASE_PORT, true)
             .WithPortBinding(MINIO_PORT, true)
@@ -139,6 +154,25 @@ public class TestExecutor
             return false;
         }
 
+        try
+        {
+            applicationDbContext = new ApplicationDbContextFactory().CreateDbContext(
+                $"Host=localhost;Port={testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
+            );
+
+            dbConnection = applicationDbContext.Database.GetDbConnection();
+            await dbConnection.OpenAsync(token);
+
+            respawner = await Respawner.CreateAsync(dbConnection, respawnerOptions);
+
+            Info("Database communication established");
+        }
+        catch (Exception e)
+        {
+            Error("Error while creating database connection: {0}", e.Message);
+            return false;
+        }
+
         Info("Stack started successfully");
         return true;
     }
@@ -147,6 +181,25 @@ public class TestExecutor
     {
         Info("Stopping stack");
         await testEnvironment.StopAsync();
+    }
+
+    public async Task ResetStorages()
+    {
+        await respawner!.ResetAsync(dbConnection!);
+
+        var buckets = new string[] { "non-processed" };
+
+        foreach (var bucket in buckets)
+        {
+            var output = await testEnvironment.ExecAsync(
+                ["docker", "exec", "minio", "mc", "rm", "--recursive", "--force", $"/data/{bucket}"]
+            );
+
+            if (output.ExitCode != 0)
+            {
+                Warn("Couldn't clean minio bucket {0}, Stderr: \n{1}", bucket, output.Stderr);
+            }
+        }
     }
 
     private void Info(string message, params object[] args) =>
