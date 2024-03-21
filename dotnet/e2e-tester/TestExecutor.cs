@@ -15,6 +15,7 @@ public class TestExecutor
     private static int MINIO_PORT = 9000;
     private readonly IContainer testEnvironment;
     private readonly ILogger<TestExecutor> logger;
+    private readonly ILoggerFactory loggerFactory;
     private readonly string name;
     private readonly CancellationToken token;
     private readonly ResiliencePipeline pipeline;
@@ -25,12 +26,13 @@ public class TestExecutor
     private ApplicationDbContext? applicationDbContext;
 
     public TestExecutor(
-        ILoggerFactory loggerFactory,
+        ILoggerFactory logFactory,
         string absolutePath,
         string friendlyName = "",
         CancellationToken cancelToken = default
     )
     {
+        loggerFactory = logFactory;
         logger = loggerFactory.CreateLogger<TestExecutor>();
         name = friendlyName;
         token = cancelToken;
@@ -118,7 +120,7 @@ public class TestExecutor
         await testEnvironment.StopAsync();
     }
 
-    public async Task ResetStorages()
+    private async Task ResetStorages()
     {
         await respawner!.ResetAsync(dbConnection!);
 
@@ -135,6 +137,54 @@ public class TestExecutor
                 Warn("Couldn't clean minio bucket {0}, Stderr: \n{1}", bucket, output.Stderr);
             }
         }
+    }
+
+    public async Task<IEnumerable<TestSummary>> TestBatch(Type[] tests)
+    {
+        var summaries = new List<TestSummary>();
+
+        var options = new RetryStrategyOptions
+        {
+            BackoffType = DelayBackoffType.Constant,
+            MaxRetryAttempts = 3,
+            MaxDelay = TimeSpan.FromSeconds(10),
+            OnRetry = async (_) =>
+            {
+                await ResetStorages();
+            }
+        };
+        var pipeline = new ResiliencePipelineBuilder().AddRetry(options).Build();
+        var logger = loggerFactory.CreateLogger<E2ETest>();
+        var testContext = new E2ECtx(logger, pipeline, token);
+
+        Info("Batch contains {0} tests. Running...", tests.Length);
+
+        foreach (var test in tests)
+        {
+            E2ETest instance;
+            try
+            {
+                instance = (E2ETest)Activator.CreateInstance(test, testContext)!;
+            }
+            catch (Exception e)
+            {
+                Error("Error during test initialization: {0}", e.Message);
+                var badSummary = new TestSummary
+                {
+                    Description = "unknown",
+                    Name = test.Name,
+                    ErrorMessage = string.Format("Error during test initialization: {0}", e.Message)
+                };
+                summaries.Add(badSummary);
+                continue;
+            }
+
+            summaries.Add(await instance.Test());
+        }
+
+        Info("Batch finished");
+
+        return summaries;
     }
 
     private async Task<bool> ConfigureDatabaseConnection()

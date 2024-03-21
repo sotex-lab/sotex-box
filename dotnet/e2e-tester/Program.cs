@@ -1,4 +1,5 @@
-﻿using Cocona;
+﻿using System.Reflection;
+using Cocona;
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
@@ -36,7 +37,27 @@ CoconaApp.Run(
             }
 
             globalLogger.LogInformation("All executors running");
-            await Task.Delay(TimeSpan.FromMinutes(5), ctx.CancellationToken);
+
+            globalLogger.LogInformation("Discoverying tests...");
+            var types = Assembly
+                .GetExecutingAssembly()
+                .GetTypes()
+                .Where(type =>
+                    type.IsClass
+                    && !type.IsAbstract
+                    && type.IsSubclassOf(typeof(E2ETest))
+                    && type.Namespace != null
+                    && type.Namespace.StartsWith("e2e_tester")
+                );
+
+            var testTasks = types
+                .Select((item, index) => new { Item = item, BatchIndex = index / executors.Count })
+                .GroupBy(x => x.BatchIndex, x => x.Item)
+                .Select(index => executors[index.Key].TestBatch(index.ToArray()));
+
+            await Task.WhenAll(testTasks);
+
+            globalLogger.LogInformation("All tests finished");
         }
         catch (OperationCanceledException)
         {
