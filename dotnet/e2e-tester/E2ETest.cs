@@ -11,8 +11,6 @@ public abstract class E2ETest
     private readonly E2ECtx ctx;
     private TestSummary summary;
 
-    private IEnumerable<Type> repositories;
-
     public E2ETest(E2ECtx c)
     {
         ctx = c;
@@ -23,9 +21,6 @@ public abstract class E2ETest
             AllowFail = AllowFail(),
             Retries = -1
         };
-        repositories = typeof(ApplicationDbContext)
-            .Assembly.GetTypes()
-            .Where(x => x.GenericTypeArguments.Contains(typeof(ApplicationDbContext)));
     }
 
     public async Task<TestSummary> Test()
@@ -52,7 +47,14 @@ public abstract class E2ETest
         catch (Exception e)
         {
             var message = Regex.Replace(string.Join(' ', e.Message.Split()), @"\s+", " ");
-            Error(message);
+            var lenght = message.Length;
+            var cap = 70;
+            message = message.Substring(0, Math.Min(cap, lenght));
+            if (lenght > cap)
+            {
+                message = string.Format("{0}...", message);
+            }
+            Error(e.Message);
             summary.ErrorMessage = message;
         }
 
@@ -92,12 +94,16 @@ public abstract class E2ETest
         where TEntity : Entity<T>, new()
         where T : IComparable, IEquatable<T>
     {
-        var repoType = repositories
-            .Where(x =>
-                x.GenericTypeArguments.Contains(typeof(TEntity))
-                && x.GenericTypeArguments.Contains(typeof(T))
-            )
-            .FirstOrDefault();
+        var repoType = typeof(ApplicationDbContext)
+            .Assembly.GetTypes()
+            .FirstOrDefault(x =>
+                x.IsSubclassOf(typeof(Repository<TEntity, T, ApplicationDbContext>))
+            );
+        Info(
+            "Requesting repo that has TEntity '{0}' and T '{1}'",
+            typeof(TEntity).Name,
+            typeof(T).Name
+        );
         repoType.ShouldNotBeNull(
             string.Format(
                 "Repo type not found with TEntity '{0}' and T '{1}'",

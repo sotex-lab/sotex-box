@@ -40,10 +40,11 @@ public class CreateAdTest : E2ETest
 
         var adPath = Path.Combine(ResourcesDir(), "test-add.png");
 
-        var request = new HttpRequestMessage(HttpMethod.Put, responseContent["presigned"]);
-        request.Headers.Add("Content-Type", "image/png");
-
-        request.Content = new ByteArrayContent(await File.ReadAllBytesAsync(adPath, token));
+        var request = new HttpRequestMessage(HttpMethod.Put, responseContent["presigned"])
+        {
+            Content = new ByteArrayContent(await File.ReadAllBytesAsync(adPath, token))
+        };
+        request.Content.Headers.Add("Content-Type", "image/png");
 
         var putResponse = await client.SendAsync(request, token);
 
