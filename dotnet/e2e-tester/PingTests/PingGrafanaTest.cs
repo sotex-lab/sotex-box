@@ -17,7 +17,7 @@ public class PingGrafanaTest : E2ETest
     {
         var client = GetClient();
 
-        var response = await client.GetAsync("/grafana");
+        var response = await client.GetAsync("/grafana", token);
 
         response.IsSuccessStatusCode.ShouldBeTrue();
     }

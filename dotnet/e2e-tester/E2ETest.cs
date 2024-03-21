@@ -1,11 +1,17 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using model.Core;
+using persistence;
+using persistence.Repository.Base;
 using Polly;
+using Shouldly;
 
 public abstract class E2ETest
 {
     private readonly E2ECtx ctx;
     private TestSummary summary;
+
+    private IEnumerable<Type> repositories;
 
     public E2ETest(E2ECtx c)
     {
@@ -17,6 +23,9 @@ public abstract class E2ETest
             AllowFail = AllowFail(),
             Retries = -1
         };
+        repositories = typeof(ApplicationDbContext)
+            .Assembly.GetTypes()
+            .Where(x => x.GenericTypeArguments.Contains(typeof(ApplicationDbContext)));
     }
 
     public async Task<TestSummary> Test()
@@ -74,6 +83,32 @@ public abstract class E2ETest
             Timeout = TimeSpan.FromSeconds(15)
         };
     }
+
+    protected string ResourcesDir() => ctx.ResourcesDir;
+
+    protected TimeSpan DefaultJobInterval() => TimeSpan.FromSeconds(15);
+
+    protected IRepository<TEntity, T> GetRepository<TEntity, T>()
+        where TEntity : Entity<T>, new()
+        where T : IComparable, IEquatable<T>
+    {
+        var repoType = repositories
+            .Where(x =>
+                x.GenericTypeArguments.Contains(typeof(TEntity))
+                && x.GenericTypeArguments.Contains(typeof(T))
+            )
+            .FirstOrDefault();
+        repoType.ShouldNotBeNull(
+            string.Format(
+                "Repo type not found with TEntity '{0}' and T '{1}'",
+                typeof(TEntity).Name,
+                typeof(T).Name
+            )
+        );
+
+        return (IRepository<TEntity, T>)
+            Activator.CreateInstance(repoType, ctx.ApplicationDbContext)!;
+    }
 }
 
 public class E2ECtx
@@ -82,18 +117,24 @@ public class E2ECtx
     public CancellationToken Token { get; }
     public ResiliencePipeline Pipeline { get; }
     public int BackendPort { get; }
+    public string ResourcesDir { get; }
+    public ApplicationDbContext ApplicationDbContext { get; }
 
     public E2ECtx(
         ILogger<E2ETest> logger,
         ResiliencePipeline pipeline,
         int backendPort,
+        string resourcesDir,
+        ApplicationDbContext applicationDbContext,
         CancellationToken token = default
     )
     {
+        ResourcesDir = resourcesDir;
         Logger = logger;
         Pipeline = pipeline;
         Token = token;
         BackendPort = backendPort;
+        ApplicationDbContext = applicationDbContext;
     }
 }
 

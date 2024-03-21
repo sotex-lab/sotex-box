@@ -25,14 +25,16 @@ public class TestExecutor
     private Respawner? respawner;
     private DbConnection? dbConnection;
     private ApplicationDbContext? applicationDbContext;
+    private string absolutePath;
 
     public TestExecutor(
         ILoggerFactory logFactory,
-        string absolutePath,
+        string path,
         string friendlyName = "",
         CancellationToken cancelToken = default
     )
     {
+        absolutePath = path;
         loggerFactory = logFactory;
         logger = loggerFactory.CreateLogger<TestExecutor>();
         name = friendlyName;
@@ -160,6 +162,8 @@ public class TestExecutor
             logger,
             pipeline,
             testEnvironment.GetMappedPublicPort(BACKEND_PORT),
+            $"{absolutePath}/dotnet/e2e-tester/Resources",
+            applicationDbContext!,
             token
         );
 
