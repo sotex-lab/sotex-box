@@ -3,12 +3,21 @@ using Cocona;
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
-    async (int parallelism, string absolutePath, CoconaAppContext ctx) =>
+    async (int parallelism, string absolutePath, string? log, CoconaAppContext ctx) =>
     {
         var loggerFactory = LoggerFactory.Create(options =>
         {
             options.AddSimpleConsole(opts => opts.TimestampFormat = "O");
-            options.SetMinimumLevel(LogLevel.Information);
+            options.SetMinimumLevel(
+                log switch
+                {
+                    "warn" => LogLevel.Warning,
+                    "error" => LogLevel.Error,
+                    "trace" => LogLevel.Trace,
+                    "debug" => LogLevel.Debug,
+                    _ => LogLevel.Information,
+                }
+            );
         });
         var globalLogger = loggerFactory.CreateLogger("global");
 
@@ -56,6 +65,9 @@ CoconaApp.Run(
                 .Select(index => executors[index.Key].TestBatch(index.ToArray()));
 
             await Task.WhenAll(testTasks);
+            var totalSummaries = testTasks.SelectMany(x => x.Result);
+
+            globalLogger.LogInformation("Received {0} tests", totalSummaries.Count());
 
             globalLogger.LogInformation("All tests finished");
         }

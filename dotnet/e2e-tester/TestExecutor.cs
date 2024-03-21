@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Amazon.Runtime;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
@@ -155,7 +156,12 @@ public class TestExecutor
         };
         var pipeline = new ResiliencePipelineBuilder().AddRetry(options).Build();
         var logger = loggerFactory.CreateLogger<E2ETest>();
-        var testContext = new E2ECtx(logger, pipeline, token);
+        var testContext = new E2ECtx(
+            logger,
+            pipeline,
+            testEnvironment.GetMappedPublicPort(BACKEND_PORT),
+            token
+        );
 
         Info("Batch contains {0} tests. Running...", tests.Length);
 

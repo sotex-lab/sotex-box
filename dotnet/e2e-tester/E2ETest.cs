@@ -55,6 +55,15 @@ public abstract class E2ETest
 
     protected void Error(string message, params object[] args) =>
         ctx.Logger.LogError("Test {0}: {1}", Name(), string.Format(message, args));
+
+    protected HttpClient GetClient()
+    {
+        return new HttpClient
+        {
+            BaseAddress = new Uri($"http://localhost:{ctx.BackendPort}"),
+            Timeout = TimeSpan.FromSeconds(15)
+        };
+    }
 }
 
 public class E2ECtx
@@ -62,16 +71,19 @@ public class E2ECtx
     public ILogger<E2ETest> Logger { get; }
     public CancellationToken Token { get; }
     public ResiliencePipeline Pipeline { get; }
+    public int BackendPort { get; }
 
     public E2ECtx(
         ILogger<E2ETest> logger,
         ResiliencePipeline pipeline,
+        int backendPort,
         CancellationToken token = default
     )
     {
         Logger = logger;
         Pipeline = pipeline;
         Token = token;
+        BackendPort = backendPort;
     }
 }
 
