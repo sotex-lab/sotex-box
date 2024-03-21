@@ -18,6 +18,6 @@ public class PingPrometheusTest : E2ETest
 
         var response = await client.GetAsync("/prometheus");
 
-        response.IsSuccessStatusCode.ShouldBe(true);
+        response.IsSuccessStatusCode.ShouldBeTrue();
     }
 }

@@ -17,6 +17,6 @@ public class PingBackendTest : E2ETest
 
         var response = await client.GetAsync("/swagger/index.html");
 
-        response.IsSuccessStatusCode.ShouldBe(true);
+        response.IsSuccessStatusCode.ShouldBeTrue();
     }
 }

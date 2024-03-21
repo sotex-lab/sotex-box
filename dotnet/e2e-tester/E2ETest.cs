@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Polly;
 
@@ -35,8 +36,9 @@ public abstract class E2ETest
         }
         catch (Exception e)
         {
-            Error(e.Message);
-            summary.ErrorMessage = e.Message;
+            var message = Regex.Replace(string.Join(' ', e.Message.Split()), @"\s+", " ");
+            Error(message);
+            summary.ErrorMessage = message;
         }
 
         return summary;

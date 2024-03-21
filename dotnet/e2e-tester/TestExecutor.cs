@@ -88,7 +88,7 @@ public class TestExecutor
         if (!await StartEnvironment())
             return false;
 
-        if (!await OverrideMinioUrl())
+        if (!await OverrideEnvVariables())
             return false;
 
         if (!await StartStack())
@@ -266,17 +266,34 @@ public class TestExecutor
         return true;
     }
 
-    private async Task<bool> OverrideMinioUrl()
+    private async Task<bool> OverrideEnvVariables()
     {
-        Info("Overriding minio url");
-
-        var writeResult = await testEnvironment.ExecAsync(
-            ["sed", "-i", $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g", ".env"]
-        );
-        if (writeResult.ExitCode != 0)
+        var commmands = new[]
         {
-            Error("Received exit status code {0}: \n{1}", writeResult.ExitCode, writeResult.Stderr);
-            return false;
+            new[]
+            {
+                "sed",
+                "-i",
+                $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g",
+                ".env"
+            },
+            ["sed", "-i", $"s/:8000/:{testEnvironment.GetMappedPublicPort(BACKEND_PORT)}/g", ".env"]
+        };
+
+        Info("Overriding environment variables");
+
+        foreach (var command in commmands)
+        {
+            var writeResult = await testEnvironment.ExecAsync(command);
+            if (writeResult.ExitCode != 0)
+            {
+                Error(
+                    "Received exit status code {0}: \n{1}",
+                    writeResult.ExitCode,
+                    writeResult.Stderr
+                );
+                return false;
+            }
         }
 
         return true;

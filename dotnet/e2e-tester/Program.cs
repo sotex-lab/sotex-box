@@ -1,10 +1,13 @@
-﻿using System.Reflection;
+﻿using System.Data;
+using System.Reflection;
 using Cocona;
+using ConsoleTables;
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
     async (int parallelism, string absolutePath, string? log, CoconaAppContext ctx) =>
     {
+        var testSummaries = new List<TestSummary>();
         var loggerFactory = LoggerFactory.Create(options =>
         {
             options.AddSimpleConsole(opts => opts.TimestampFormat = "O");
@@ -65,9 +68,12 @@ CoconaApp.Run(
                 .Select(index => executors[index.Key].TestBatch(index.ToArray()));
 
             await Task.WhenAll(testTasks);
-            var totalSummaries = testTasks.SelectMany(x => x.Result);
+            foreach (var task in testTasks)
+            {
+                testSummaries.AddRange(await task);
+            }
 
-            globalLogger.LogInformation("Received {0} tests", totalSummaries.Count());
+            globalLogger.LogInformation("Received {0} tests", testSummaries.Count());
 
             globalLogger.LogInformation("All tests finished");
         }
@@ -79,6 +85,47 @@ CoconaApp.Run(
         {
             var tasks = executors.Select(x => x.Stop());
             await Task.WhenAll(tasks);
+            if (!testSummaries.Any())
+                Environment.Exit(0);
+
+            ConsoleTable
+                .From(
+                    testSummaries.Select(x => new
+                    {
+                        x.Name,
+                        Result = x.Outcome ? "✅" : "❌",
+                        Duration = string.Format("{0}s", x.Elapsed),
+                        x.Retries,
+                        Error = string.IsNullOrEmpty(x.ErrorMessage) ? "/" : x.ErrorMessage,
+                        x.Description
+                    })
+                )
+                .Write(Format.Alternative);
+
+            var succeeded = testSummaries.Count(x => x.Outcome);
+            var succeededProcentage = Math.Round(100 * (double)succeeded / testSummaries.Count);
+
+            ConsoleTable
+                .From(
+                    new[]
+                    {
+                        new
+                        {
+                            Result = "Succeeded",
+                            Count = succeeded,
+                            Procentage = string.Format("{0}%", succeededProcentage)
+                        },
+                        new
+                        {
+                            Result = "Failed",
+                            Count = testSummaries.Count - succeeded,
+                            Procentage = string.Format("{0}%", 100 - succeededProcentage)
+                        },
+                    }
+                )
+                .Write(Format.Alternative);
+
+            Environment.Exit(succeeded == testSummaries.Count ? 0 : 1);
         }
     }
 );

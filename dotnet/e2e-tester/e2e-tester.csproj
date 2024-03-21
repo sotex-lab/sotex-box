@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Cocona" Version="2.2.0" />
+    <PackageReference Include="ConsoleTables" Version="2.6.1" />
     <PackageReference Include="respawn" Version="6.2.1" />
     <PackageReference Include="shouldly" Version="4.2.1" />
     <PackageReference Include="testcontainers" Version="3.7.0" />
