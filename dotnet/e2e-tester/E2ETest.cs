@@ -10,7 +10,13 @@ public abstract class E2ETest
     public E2ETest(E2ECtx c)
     {
         ctx = c;
-        summary = new TestSummary { Description = Description(), Name = Name(), };
+        summary = new TestSummary
+        {
+            Description = Description(),
+            Name = Name(),
+            AllowFail = AllowFail(),
+            Retries = -1
+        };
     }
 
     public async Task<TestSummary> Test()
@@ -46,6 +52,8 @@ public abstract class E2ETest
 
     protected abstract string Name();
     protected abstract string Description();
+
+    protected virtual bool AllowFail() => false;
 
     protected abstract Task Run(CancellationToken token);
 
@@ -97,4 +105,5 @@ public class TestSummary
     public int Retries { get; set; }
     public TimeSpan Elapsed { get; set; }
     public string? ErrorMessage { get; set; }
+    public bool AllowFail { get; set; }
 }

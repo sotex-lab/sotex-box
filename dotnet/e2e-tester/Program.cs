@@ -2,11 +2,19 @@
 using System.Reflection;
 using Cocona;
 using ConsoleTables;
+using DotNet.Testcontainers.Configurations;
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
     async (int parallelism, string absolutePath, string? log, CoconaAppContext ctx) =>
     {
+        TestcontainersSettings.Logger = LoggerFactory
+            .Create(options =>
+            {
+                options.SetMinimumLevel(LogLevel.Critical);
+            })
+            .CreateLogger("testcontainers");
+
         var testSummaries = new List<TestSummary>();
         var loggerFactory = LoggerFactory.Create(options =>
         {
@@ -90,10 +98,25 @@ CoconaApp.Run(
 
             ConsoleTable
                 .From(
+                    new[]
+                    {
+                        new { Legend = "✅", Meaning = "successful" },
+                        new { Legend = "❌", Meaning = "failed" },
+                        new { Legend = "❕", Meaning = "failed but allowed to fail" }
+                    }
+                )
+                .Write(Format.Alternative);
+
+            ConsoleTable
+                .From(
                     testSummaries.Select(x => new
                     {
                         x.Name,
-                        Result = x.Outcome ? "✅" : "❌",
+                        Result = x.Outcome
+                            ? "✅"
+                            : x.AllowFail
+                                ? "❕"
+                                : "❌",
                         Duration = string.Format("{0}s", x.Elapsed),
                         x.Retries,
                         Error = string.IsNullOrEmpty(x.ErrorMessage) ? "/" : x.ErrorMessage,
@@ -103,7 +126,7 @@ CoconaApp.Run(
                 .Write(Format.Alternative);
 
             var succeeded = testSummaries.Count(x => x.Outcome);
-            var succeededProcentage = Math.Round(100 * (double)succeeded / testSummaries.Count);
+            var succeededProcentage = Math.Round(100 * (double)succeeded / testSummaries.Count, 2);
 
             ConsoleTable
                 .From(
@@ -125,7 +148,9 @@ CoconaApp.Run(
                 )
                 .Write(Format.Alternative);
 
-            Environment.Exit(succeeded == testSummaries.Count ? 0 : 1);
+            Environment.Exit(
+                succeeded >= testSummaries.Count(x => x.Outcome && !x.AllowFail) ? 0 : 1
+            );
         }
     }
 );
