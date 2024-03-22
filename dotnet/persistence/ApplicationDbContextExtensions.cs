@@ -26,6 +26,7 @@ public static class ApplicationDbContextExtensions
 
         services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<IAdRepository, AdRepository>();
+        services.AddScoped<IDeviceRepository, DeviceRepository>();
     }
 
     public static Result<ApplicationDbContext, RepositoryError> Migrate(this WebApplication app)

@@ -19,7 +19,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddEventCoordinator();
 
-builder.Logging.AddJsonConsole(options =>
+builder.Logging.AddSimpleConsole(options =>
 {
     options.IncludeScopes = true;
     options.TimestampFormat = "O";

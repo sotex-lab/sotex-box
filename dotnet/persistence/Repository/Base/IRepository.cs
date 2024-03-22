@@ -31,6 +31,7 @@ public enum RepositoryError
     NotFound,
     FailedToInit,
     Duplicate,
+    InvalidIpAddress,
     General
 }
 
@@ -44,6 +45,7 @@ public static class RepositoryErrorExtensions
             RepositoryError.FailedToInit => "Failed to initialize database\n",
             RepositoryError.General => "Database persistence failed\n",
             RepositoryError.Duplicate => "Duplicate key found\n",
+            RepositoryError.InvalidIpAddress => "Invalid ip address\n",
             RepositoryError => "Catch-all error, shouldn't happen\n"
         };
 }

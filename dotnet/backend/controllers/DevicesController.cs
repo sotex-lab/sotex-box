@@ -1,3 +1,4 @@
+using System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using model.Core;
@@ -47,24 +48,5 @@ public class DevicesController(IDeviceRepository deviceRepository, IMapper mappe
         return maybeDevice.IsSuccessful
             ? CreatedAtAction(nameof(Post), mapper.Map<DeviceContract>(maybeDevice.Value))
             : BadRequest(maybeDevice.Error.Stringify());
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Put(Guid id, DeviceContract contract, CancellationToken token)
-    {
-        if (contract.Ip == null)
-            return BadRequest(RepositoryError.ArgumentNull.ToString());
-
-        var maybeDevice = await deviceRepository.GetSingle(id, token);
-        if (maybeDevice.IsSuccessful)
-            return BadRequest(maybeDevice.Error.Stringify());
-
-        var device = maybeDevice.Value;
-        device.Ip = contract.Ip;
-
-        maybeDevice = await deviceRepository.Update(device, token);
-        return maybeDevice.IsSuccessful
-            ? Ok(mapper.Map<DeviceContract>(maybeDevice.Value))
-            : BadRequest(maybeDevice.Error.ToString());
     }
 }
