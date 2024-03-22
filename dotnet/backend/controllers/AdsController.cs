@@ -1,10 +1,8 @@
-using Amazon.S3.Util;
 using AutoMapper;
 using backend.Services.Aws;
 using Microsoft.AspNetCore.Mvc;
 using model.Contracts;
 using model.Core;
-using Newtonsoft.Json;
 using persistence.Repository;
 using persistence.Repository.Base;
 using Tag = model.Core.Tag;
@@ -32,9 +30,9 @@ public class AdsController(
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> Get(Guid id)
+    public async Task<IActionResult> Get(Guid id, CancellationToken token)
     {
-        var maybeResource = await adRepository.GetSingle(id);
+        var maybeResource = await adRepository.GetSingle(id, token);
 
         return maybeResource.IsSuccessful
             ? Ok(mapper.Map<AdContract>(maybeResource.Value))
@@ -42,7 +40,7 @@ public class AdsController(
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post(AdContract contract)
+    public async Task<IActionResult> Post(AdContract contract, CancellationToken token)
     {
         var mapped = mapper.Map<Ad>(contract);
         if (mapped == null)
@@ -63,7 +61,7 @@ public class AdsController(
 
         mapped.Tags = foundTags;
 
-        var maybeAd = await adRepository.Add(mapped);
+        var maybeAd = await adRepository.Add(mapped, token);
         if (!maybeAd.IsSuccessful)
             BadRequest(maybeAd.Error.Stringify());
 

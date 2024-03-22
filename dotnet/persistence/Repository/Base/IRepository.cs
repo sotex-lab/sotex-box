@@ -8,12 +8,21 @@ public interface IRepository<TEntity, T>
     where TEntity : Entity<T>, new()
     where T : IComparable, IEquatable<T>
 {
-    Task<Result<TEntity, RepositoryError>> GetSingle(T id);
-    Task<Result<TEntity, RepositoryError>> GetSingle(Expression<Func<TEntity, bool>> condition);
+    Task<Result<TEntity, RepositoryError>> GetSingle(T id, CancellationToken token = default);
+    Task<Result<TEntity, RepositoryError>> GetSingle(
+        Expression<Func<TEntity, bool>> condition,
+        CancellationToken token = default
+    );
     IAsyncEnumerable<TEntity> Fetch(Expression<Func<TEntity, bool>>? condition = null);
-    Task<Result<TEntity, RepositoryError>> Add(TEntity entity);
-    Task<Result<TEntity, RepositoryError>> Update(TEntity entity);
-    Task<Result<TEntity, RepositoryError>> Delete(TEntity entity);
+    Task<Result<TEntity, RepositoryError>> Add(TEntity entity, CancellationToken token = default);
+    Task<Result<TEntity, RepositoryError>> Update(
+        TEntity entity,
+        CancellationToken token = default
+    );
+    Task<Result<TEntity, RepositoryError>> Delete(
+        TEntity entity,
+        CancellationToken token = default
+    );
 }
 
 public enum RepositoryError
@@ -21,6 +30,7 @@ public enum RepositoryError
     ArgumentNull,
     NotFound,
     FailedToInit,
+    Duplicate,
     General
 }
 
@@ -33,6 +43,7 @@ public static class RepositoryErrorExtensions
             RepositoryError.NotFound => "Entity not found\n",
             RepositoryError.FailedToInit => "Failed to initialize database\n",
             RepositoryError.General => "Database persistence failed\n",
+            RepositoryError.Duplicate => "Duplicate key found\n",
             RepositoryError => "Catch-all error, shouldn't happen\n"
         };
 }

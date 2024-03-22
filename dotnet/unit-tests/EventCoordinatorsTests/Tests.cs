@@ -15,14 +15,14 @@ public class EventCoordinatorsTests
 {
     public static IEnumerable<object[]> GetObjects()
     {
-        var testConnection = new Connection(Guid.NewGuid().ToString(), new MemoryStream());
-        var otherConnection = new Connection(Guid.NewGuid().ToString(), new MemoryStream());
+        var testConnection = new Connection(Guid.NewGuid(), new MemoryStream());
+        var otherConnection = new Connection(Guid.NewGuid(), new MemoryStream());
 
-        var concurrentDictionary = new ConcurrentDictionary<string, Connection>();
+        var concurrentDictionary = new ConcurrentDictionary<Guid, Connection>();
         concurrentDictionary.TryAdd(testConnection.Id, testConnection);
         concurrentDictionary.TryAdd(otherConnection.Id, otherConnection);
 
-        var dictionary = new Dictionary<string, Connection>();
+        var dictionary = new Dictionary<Guid, Connection>();
         dictionary[testConnection.Id] = testConnection;
         dictionary[otherConnection.Id] = otherConnection;
 
@@ -49,10 +49,10 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public void Should_AddConnection(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
-        var result = eventCoordinator.Add(Guid.NewGuid().ToString(), new MemoryStream());
+        var result = eventCoordinator.Add(Guid.NewGuid(), new MemoryStream());
 
         result.IsSuccessful.ShouldBeTrue();
     }
@@ -61,7 +61,7 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public void Should_Not_AddConnection_KeyExists(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
         var existingConnection = connections.First().Value;
@@ -76,7 +76,7 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public void Should_RemoveConnection(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
         var beginningCount = connections.Count;
@@ -92,11 +92,11 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public void Should_Not_RemoveConnection(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
         var beginningCount = connections.Count;
-        var result = eventCoordinator.Remove(Guid.NewGuid().ToString());
+        var result = eventCoordinator.Remove(Guid.NewGuid());
 
         result.IsSuccessful.ShouldBeFalse();
         connections.Count.ShouldBe(beginningCount);
@@ -107,7 +107,7 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public void Should_RemoveAll(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
         eventCoordinator.RemoveAll();
@@ -123,7 +123,7 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public void Should_GetAll(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connetions
+        IDictionary<Guid, Connection> connetions
     )
     {
         var keys = eventCoordinator.GetConnectionIds();
@@ -140,7 +140,7 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public async Task Should_WriteToStream(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
         var firstConnection = connections.First().Value;
@@ -163,11 +163,11 @@ public class EventCoordinatorsTests
     [DynamicData(nameof(GetObjects), DynamicDataSourceType.Method)]
     public async Task Should_Not_WriteToStream(
         IEventCoordinator eventCoordinator,
-        IDictionary<string, Connection> connections
+        IDictionary<Guid, Connection> connections
     )
     {
         var message = new TestMessage { Message = "test" };
-        var result = await eventCoordinator.SendMessage(Guid.NewGuid().ToString(), message);
+        var result = await eventCoordinator.SendMessage(Guid.NewGuid(), message);
 
         result.IsSuccessful.ShouldBeFalse();
         result.Error.ShouldBe(EventCoordinatorError.KeyNotFound);

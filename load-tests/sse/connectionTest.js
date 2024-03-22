@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { setTimeout } from 'k6/experimental/timers';
 import { check } from 'k6';
+import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 export const options = {
   vus: 10,
@@ -9,7 +10,7 @@ export const options = {
 }
 
 export default async function() {
-  const id = __VU
+  const id = uuidv4();
   const url = __ENV.BACKEND_URL
   const noopInterval = __ENV.NOOP_INTERVAL
   const second = 1000

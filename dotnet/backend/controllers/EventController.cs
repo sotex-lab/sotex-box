@@ -16,7 +16,7 @@ public class EventController : ControllerBase
     }
 
     [HttpGet]
-    public async Task Connect(string id, CancellationToken token)
+    public async Task Connect(Guid id, CancellationToken token)
     {
         var result = _eventCoordinator.Add(id, HttpContext.Response.Body);
 
@@ -43,14 +43,14 @@ public class EventController : ControllerBase
     }
 
     [HttpDelete]
-    public IActionResult ForceDisconnect(string id)
+    public IActionResult ForceDisconnect(Guid id)
     {
         var result = _eventCoordinator.Remove(id);
         return result.IsSuccessful ? Ok("removed\n") : BadRequest(result.Error.Stringify());
     }
 
     [HttpGet]
-    public async Task<IActionResult> WriteData(string id, string message)
+    public async Task<IActionResult> WriteData(Guid id, string message)
     {
         var result = await _eventCoordinator.SendMessage(id, message);
         return result.IsSuccessful ? Ok("sent\n") : BadRequest(result.Error.Stringify());

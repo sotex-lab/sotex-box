@@ -14,7 +14,7 @@ namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorReaderWriterLock : IEventCoordinator
 {
-    private readonly Dictionary<string, Connection> _connections;
+    private readonly Dictionary<Guid, Connection> _connections;
     private readonly ReaderWriterSpinLock _lock;
     private readonly IEventSerializer _eventSerializer;
     private readonly IDeviceMetrics _deviceMetrics;
@@ -30,14 +30,14 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
 
     public EventCoordinatorReaderWriterLock()
         : this(
-            new Dictionary<string, Connection>(),
+            new Dictionary<Guid, Connection>(),
             new JsonEventSerializer(),
             new DeviceMetrics(),
             GetLogger()
         ) { }
 
     public EventCoordinatorReaderWriterLock(
-        Dictionary<string, Connection> connections,
+        Dictionary<Guid, Connection> connections,
         IDeviceMetrics metrics
     )
         : this(connections, new JsonEventSerializer(), metrics, GetLogger()) { }
@@ -47,10 +47,10 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         IDeviceMetrics deviceMetrics,
         ILogger<EventCoordinatorReaderWriterLock> logger
     )
-        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics, logger) { }
+        : this(new Dictionary<Guid, Connection>(), eventSerializer, deviceMetrics, logger) { }
 
     public EventCoordinatorReaderWriterLock(
-        Dictionary<string, Connection> connections,
+        Dictionary<Guid, Connection> connections,
         IEventSerializer eventSerializer,
         IDeviceMetrics deviceMetrics,
         ILogger<EventCoordinatorReaderWriterLock> logger
@@ -63,9 +63,9 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         _logger = logger;
     }
 
-    public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
+    public Result<CancellationTokenSource, EventCoordinatorError> Add(Guid id, Stream stream)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.InvalidKey
@@ -103,14 +103,14 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         return result;
     }
 
-    public IEnumerable<string> GetConnectionIds()
+    public IEnumerable<Guid> GetConnectionIds()
     {
         return _connections.Keys;
     }
 
-    public Result<bool, EventCoordinatorError> Remove(string id)
+    public Result<bool, EventCoordinatorError> Remove(Guid id)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
@@ -153,9 +153,9 @@ public class EventCoordinatorReaderWriterLock : IEventCoordinator
         _lock.EnterReadLock();
     }
 
-    public async Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message)
+    public async Task<Result<bool, EventCoordinatorError>> SendMessage(Guid id, object message)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }

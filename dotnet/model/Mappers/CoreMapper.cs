@@ -19,5 +19,9 @@ public class CoreMapper : Profile
                 dest => dest.Tags,
                 opt => opt.MapFrom(src => src.Tags.Select(tagName => new Tag { Name = tagName }))
             );
+
+        CreateMap<Device, DeviceContract>();
+        CreateMap<DeviceContract, Device>()
+            .ForMember(dest => dest.UtilityName, opt => opt.MapFrom(src => src.UtilityName));
     }
 }

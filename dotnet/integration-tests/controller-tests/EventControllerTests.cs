@@ -21,9 +21,10 @@ public class EventControllerTests
     {
         var client = _factory.CreateClient();
         var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        var id = Guid.NewGuid();
 
         var response = await client.GetAsync(
-            "/event/connect?id=1",
+            $"/event/connect?id={id}",
             HttpCompletionOption.ResponseHeadersRead,
             tokenSource.Token
         );
@@ -40,7 +41,7 @@ public class EventControllerTests
     [Fact]
     public async Task Should_NotConnect()
     {
-        var connection = new Connection(1.ToString(), new MemoryStream());
+        var connection = new Connection(Guid.NewGuid(), new MemoryStream());
         _factory.Connections[connection.Id] = connection;
 
         var client = _factory.CreateClient();
@@ -59,7 +60,7 @@ public class EventControllerTests
     [Fact]
     public async Task Should_Remove()
     {
-        var id = 1.ToString();
+        var id = Guid.NewGuid();
 
         var client = _factory.CreateClient();
         var task = Task.Run(async () => await client.GetAsync($"/event/connect?id={id}"));
@@ -78,7 +79,7 @@ public class EventControllerTests
     public async Task Should_WriteData()
     {
         var stream = new MemoryStream();
-        var connection = new Connection(1.ToString(), stream);
+        var connection = new Connection(Guid.NewGuid(), stream);
         var testMessage = "test";
         _factory.Connections[connection.Id] = connection;
 

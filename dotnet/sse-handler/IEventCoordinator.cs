@@ -5,11 +5,11 @@ namespace SseHandler;
 
 public interface IEventCoordinator
 {
-    Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream);
-    Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message);
-    Result<bool, EventCoordinatorError> Remove(string id);
+    Result<CancellationTokenSource, EventCoordinatorError> Add(Guid id, Stream stream);
+    Task<Result<bool, EventCoordinatorError>> SendMessage(Guid id, object message);
+    Result<bool, EventCoordinatorError> Remove(Guid id);
     void RemoveAll();
-    IEnumerable<string> GetConnectionIds();
+    IEnumerable<Guid> GetConnectionIds();
 }
 
 public enum EventCoordinatorError

@@ -15,8 +15,8 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
 {
     public const string IntegrationCollection = "integration collection";
     public const int IntegrationCronIntervalSeconds = 15;
-    public Dictionary<string, Connection> Connections { get; set; } =
-        new Dictionary<string, Connection>();
+    public Dictionary<Guid, Connection> Connections { get; set; } =
+        new Dictionary<Guid, Connection>();
 
     private Respawner? respawner;
     private DbConnection? connection;

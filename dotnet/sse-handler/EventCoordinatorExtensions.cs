@@ -10,12 +10,12 @@ public static class EventCoordinatorExtensions
 {
     public static void AddEventCoordinator(this IServiceCollection services)
     {
-        services.AddEventCoordinator(new Dictionary<string, Connection>());
+        services.AddEventCoordinator(new Dictionary<Guid, Connection>());
     }
 
     public static void AddEventCoordinator(
         this IServiceCollection services,
-        Dictionary<string, Connection> connections
+        Dictionary<Guid, Connection> connections
     )
     {
         var serializer = new JsonEventSerializer();

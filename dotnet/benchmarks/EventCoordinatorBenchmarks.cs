@@ -23,28 +23,29 @@ public class Benchmarks
     )]
     public Type Implementation { get; set; }
 
-    private static Dictionary<Type, IDictionary<string, Connection>> ConnectionsMapping =
-        new Dictionary<Type, IDictionary<string, Connection>>
+    private static Dictionary<Type, IDictionary<Guid, Connection>> ConnectionsMapping =
+        new Dictionary<Type, IDictionary<Guid, Connection>>
         {
             [typeof(EventCoordinatorConcurrentDictionary)] =
-                new ConcurrentDictionary<string, Connection>(),
-            [typeof(EventCoordinatorMutex)] = new Dictionary<string, Connection>(),
-            [typeof(EventCoordinatorReaderWriterLock)] = new Dictionary<string, Connection>()
+                new ConcurrentDictionary<Guid, Connection>(),
+            [typeof(EventCoordinatorMutex)] = new Dictionary<Guid, Connection>(),
+            [typeof(EventCoordinatorReaderWriterLock)] = new Dictionary<Guid, Connection>()
         };
 
     private IEventCoordinator eventCoordinator;
+    private List<Guid> guids = Enumerable.Range(0, 1000).Select(_ => Guid.NewGuid()).ToList();
 
     [GlobalSetup]
     public void GlobalSetup()
     {
-        IDictionary<string, Connection> connections = ConnectionsMapping[Implementation];
+        IDictionary<Guid, Connection> connections = ConnectionsMapping[Implementation];
         if (connections.Count > 0)
         {
             connections.Clear();
         }
         for (int i = 0; i < InitialSize; i++)
         {
-            var connection = new Connection(i.ToString(), new MemoryStream());
+            var connection = new Connection(Guid.NewGuid(), new MemoryStream());
             connections.TryAdd(connection.Id, connection);
         }
         eventCoordinator = (IEventCoordinator)Activator.CreateInstance(Implementation, connections);
@@ -53,7 +54,7 @@ public class Benchmarks
     [Benchmark]
     public void Add_One()
     {
-        eventCoordinator.Add(InitialSize.ToString(), new MemoryStream());
+        eventCoordinator.Add(Guid.NewGuid(), new MemoryStream());
     }
 
     [Benchmark]
@@ -66,7 +67,7 @@ public class Benchmarks
             Enumerable.Range(0, amount),
             (i) =>
             {
-                eventCoordinator.Add((InitialSize + i).ToString(), new MemoryStream());
+                eventCoordinator.Add(guids[i], new MemoryStream());
             }
         );
     }
