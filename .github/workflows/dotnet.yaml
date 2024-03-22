@@ -37,6 +37,7 @@ jobs:
 
     - name: Test the solution
       run: |
+        cp .env.template .env
         make dotnet-tests
 
     - name: Build the container for backend
