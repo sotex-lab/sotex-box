@@ -24,7 +24,7 @@ public class EventController(IEventCoordinator eventCoordinator, IDeviceReposito
 
         if (!result.IsSuccessful)
         {
-            await ErrorOut(result.Error.Stringify());
+            await ErrorOut(result.Error.Stringify(), HttpStatusCode.BadRequest);
             return;
         }
 
@@ -57,9 +57,9 @@ public class EventController(IEventCoordinator eventCoordinator, IDeviceReposito
         return result.IsSuccessful ? Ok("sent\n") : BadRequest(result.Error.Stringify());
     }
 
-    private async Task ErrorOut(string message)
+    private async Task ErrorOut(string message, HttpStatusCode statusCode)
     {
-        HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+        HttpContext.Response.StatusCode = (int)statusCode;
         await HttpContext.Response.WriteAsync(message);
     }
 
@@ -69,10 +69,9 @@ public class EventController(IEventCoordinator eventCoordinator, IDeviceReposito
 
         if (!maybeDevice.IsSuccessful)
         {
-            await ErrorOut(RepositoryError.NotFound.Stringify());
+            await ErrorOut(RepositoryError.NotFound.Stringify(), HttpStatusCode.Forbidden);
             return false;
         }
-        ;
 
         var ip = HttpContext.Connection.RemoteIpAddress;
         var device = maybeDevice.Value;
@@ -81,7 +80,7 @@ public class EventController(IEventCoordinator eventCoordinator, IDeviceReposito
         maybeDevice = await deviceRepository.Update(device, token);
         if (!maybeDevice.IsSuccessful)
         {
-            await ErrorOut(RepositoryError.General.Stringify());
+            await ErrorOut(RepositoryError.General.Stringify(), HttpStatusCode.BadRequest);
             return false;
         }
 
