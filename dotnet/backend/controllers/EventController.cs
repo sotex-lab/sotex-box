@@ -1,29 +1,30 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using persistence.Repository;
+using persistence.Repository.Base;
 using SseHandler;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("/[controller]/[action]")]
-public class EventController : ControllerBase
+public class EventController(IEventCoordinator eventCoordinator, IDeviceRepository deviceRepository)
+    : ControllerBase
 {
-    private readonly IEventCoordinator _eventCoordinator;
-
-    public EventController(IEventCoordinator eventCoordinator)
-    {
-        _eventCoordinator = eventCoordinator;
-    }
-
     [HttpGet]
     public async Task Connect(Guid id, CancellationToken token)
     {
-        var result = _eventCoordinator.Add(id, HttpContext.Response.Body);
+        if (
+            Environment.GetEnvironmentVariable("REQUIRE_KNOWN_DEVICES")!.Equals("true")
+            && !await CheckIfDeviceExistsAndUpdateIp(id, token)
+        )
+            return;
+
+        var result = eventCoordinator.Add(id, HttpContext.Response.Body);
 
         if (!result.IsSuccessful)
         {
-            HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await HttpContext.Response.WriteAsync(result.Error.Stringify());
+            await ErrorOut(result.Error.Stringify());
             return;
         }
 
@@ -39,20 +40,51 @@ public class EventController : ControllerBase
             await semaphore.WaitAsync();
         }
 
-        _eventCoordinator.Remove(id);
+        eventCoordinator.Remove(id);
     }
 
     [HttpDelete]
     public IActionResult ForceDisconnect(Guid id)
     {
-        var result = _eventCoordinator.Remove(id);
+        var result = eventCoordinator.Remove(id);
         return result.IsSuccessful ? Ok("removed\n") : BadRequest(result.Error.Stringify());
     }
 
     [HttpGet]
     public async Task<IActionResult> WriteData(Guid id, string message)
     {
-        var result = await _eventCoordinator.SendMessage(id, message);
+        var result = await eventCoordinator.SendMessage(id, message);
         return result.IsSuccessful ? Ok("sent\n") : BadRequest(result.Error.Stringify());
+    }
+
+    private async Task ErrorOut(string message)
+    {
+        HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+        await HttpContext.Response.WriteAsync(message);
+    }
+
+    private async Task<bool> CheckIfDeviceExistsAndUpdateIp(Guid id, CancellationToken token)
+    {
+        var maybeDevice = await deviceRepository.GetSingle(id, token);
+
+        if (!maybeDevice.IsSuccessful)
+        {
+            await ErrorOut(RepositoryError.NotFound.Stringify());
+            return false;
+        }
+        ;
+
+        var ip = HttpContext.Connection.RemoteIpAddress;
+        var device = maybeDevice.Value;
+        device.Ip = ip;
+
+        maybeDevice = await deviceRepository.Update(device, token);
+        if (!maybeDevice.IsSuccessful)
+        {
+            await ErrorOut(RepositoryError.General.Stringify());
+            return false;
+        }
+
+        return true;
     }
 }

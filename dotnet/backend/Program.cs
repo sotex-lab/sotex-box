@@ -75,6 +75,7 @@ var connections = app.Services.GetRequiredService<IEventCoordinator>();
 host.ApplicationStopping.Register(connections.RemoveAll);
 
 app.EnqueueJobs();
+app.UseForwardedHeaders();
 
 // TODO: Setup custom authorization once we have roles
 app.UseHangfireDashboard(

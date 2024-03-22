@@ -81,6 +81,7 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["AWS_SQS_ACCESS_KEY"] = "x",
             ["AWS_SQS_SECRET_KEY"] = "x",
             ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = "/000000000000/nonprocessed",
+            ["REQUIRE_KNOWN_DEVICES"] = "false",
         };
 
         foreach (var kvp in backendEnvVars)
