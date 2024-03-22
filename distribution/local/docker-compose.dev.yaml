@@ -34,7 +34,7 @@ services:
       timeout: 3s
 
   configureminio:
-    image: quay.io/minio/mc
+    image: quay.io/minio/mc:RELEASE.2024-03-13T23-51-57Z
     links:
       - minio
     restart: no
@@ -88,7 +88,7 @@ services:
 
   sqs:
     container_name: sqs
-    image: softwaremill/elasticmq-native
+    image: softwaremill/elasticmq-native:1.5.7
     ports:
       - 9324:9324
       - 9325:9325

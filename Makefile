@@ -92,6 +92,7 @@ endif
 dotnet-e2e-tests: container-build-backend
 dotnet-e2e-tests: container-build-local-pusher
 dotnet-e2e-tests: ## Run dotnet e2e tests, excluded from dotnet-test
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml pull --policy missing
 	$(CONTAINER_TOOL) build -t e2e -f distribution/docker/e2e.dockerfile .
 	dotnet run --project dotnet/e2e-tester --parallelism $(PARALLELISM) --absolute-path $(ABSOLUTE_PATH)
 
