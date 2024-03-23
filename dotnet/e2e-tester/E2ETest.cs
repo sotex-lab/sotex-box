@@ -48,7 +48,7 @@ public abstract class E2ETest
         {
             var message = Regex.Replace(string.Join(' ', e.Message.Split()), @"\s+", " ");
             var lenght = message.Length;
-            var cap = 70;
+            var cap = 150;
             message = message.Substring(0, Math.Min(cap, lenght));
             if (lenght > cap)
             {
@@ -77,12 +77,12 @@ public abstract class E2ETest
     protected void Error(string message, params object[] args) =>
         ctx.Logger.LogError("Test {0}: {1}", Name(), string.Format(message, args));
 
-    protected HttpClient GetClient()
+    protected HttpClient GetClient(TimeSpan timeout = default)
     {
         return new HttpClient
         {
             BaseAddress = new Uri($"http://localhost:{ctx.BackendPort}"),
-            Timeout = TimeSpan.FromSeconds(15)
+            Timeout = timeout == default ? TimeSpan.FromSeconds(15) : timeout
         };
     }
 

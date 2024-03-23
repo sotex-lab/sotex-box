@@ -71,7 +71,7 @@ CoconaApp.Run(
                 );
 
             var testTasks = types
-                .Select((item, index) => new { Item = item, BatchIndex = index / executors.Count })
+                .Select((item, index) => new { Item = item, BatchIndex = index % executors.Count })
                 .GroupBy(x => x.BatchIndex, x => x.Item)
                 .Select(index => executors[index.Key].TestBatch(index.ToArray()));
 
@@ -120,7 +120,6 @@ CoconaApp.Run(
                         Duration = string.Format("{0}s", x.Elapsed),
                         x.Retries,
                         Error = string.IsNullOrEmpty(x.ErrorMessage) ? "/" : x.ErrorMessage,
-                        x.Description
                     })
                 )
                 .Write(Format.Alternative);

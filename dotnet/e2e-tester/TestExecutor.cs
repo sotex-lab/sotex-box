@@ -281,7 +281,7 @@ public class TestExecutor
                 $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g",
                 ".env"
             },
-            ["sed", "-i", $"s/:8000/:{testEnvironment.GetMappedPublicPort(BACKEND_PORT)}/g", ".env"]
+            ["sed", "-i", $"s/REQUIRE_KNOWN_DEVICES=false/REQUIRE_KNOWN_DEVICES=true/g", ".env"]
         };
 
         Info("Overriding environment variables");
