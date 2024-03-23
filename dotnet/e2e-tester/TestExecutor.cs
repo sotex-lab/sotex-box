@@ -188,7 +188,7 @@ public class TestExecutor
                 summaries.Add(badSummary);
                 continue;
             }
-
+            Info("Running test: {0}", instance.Name());
             summaries.Add(await instance.Test());
         }
 

@@ -61,7 +61,7 @@ public abstract class E2ETest
         return summary;
     }
 
-    protected abstract string Name();
+    public abstract string Name();
     protected abstract string Description();
 
     protected virtual bool AllowFail() => false;

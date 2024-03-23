@@ -1,5 +1,7 @@
 using System.Text;
+using model.Core;
 using Newtonsoft.Json;
+using persistence.Repository;
 using Shouldly;
 
 namespace e2e_tester.DeviceTests;
@@ -12,7 +14,7 @@ public class CreateDeviceTest : E2ETest
     protected override string Description() =>
         "Test tries to create a device via an API and connects as that device and connects as that device immediately";
 
-    protected override string Name() => "Create device and connect";
+    public override string Name() => "Create device and connect";
 
     protected override async Task Run(CancellationToken token)
     {
@@ -33,19 +35,34 @@ public class CreateDeviceTest : E2ETest
         contract.ShouldNotBeNull();
         contract.Id.ShouldNotBe(Guid.Empty);
 
-        var cancelToken = new CancellationTokenSource(DefaultJobInterval() * 2).Token;
-        try
-        {
-            response = await client.GetAsync($"/event/connect?id={contract.Id}", cancelToken);
-        }
-        catch (OperationCanceledException) { }
+        var deviceRepo = GetRepository<Device, Guid>();
+        var maybeDevice = await deviceRepo.GetSingle(contract.Id, token);
 
-        Info("Testing to see if {0} finished successfully", Name());
+        maybeDevice.IsSuccessful.ShouldBeTrue();
+        var device = maybeDevice.Value;
+        device.UtilityName.ShouldBe("e2e-test");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
-        var data = await response.Content.ReadAsStringAsync();
+        _ = Task.Run(
+            async () =>
+            {
+                Info("Setting callback to disconnect the device");
+                await Task.Delay(DefaultJobInterval() * 2);
+                var disconnectResponse = await GetClient()
+                    .DeleteAsync($"/event/forcedisconnect?id={contract.Id}");
+                disconnectResponse.IsSuccessStatusCode.ShouldBeTrue();
+                Info("Disconnected the device");
+            },
+            token
+        );
+
+        var eventConnection = await client.GetAsync($"/event/connect?id={contract.Id}", token);
+
+        eventConnection.IsSuccessStatusCode.ShouldBeTrue();
+        var data = await eventConnection.Content.ReadAsStringAsync();
         foreach (var line in data.Split("\n\n"))
         {
+            if (string.IsNullOrEmpty(line))
+                continue;
             line.ShouldContain("noop");
         }
     }

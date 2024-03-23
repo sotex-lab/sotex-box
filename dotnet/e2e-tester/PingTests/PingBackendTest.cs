@@ -9,7 +9,7 @@ public class PingBackendTest : E2ETest
 
     protected override string Description() => "When the stack is up, backend should be available";
 
-    protected override string Name() => "Ping backend";
+    public override string Name() => "Ping backend";
 
     protected override async Task Run(CancellationToken token)
     {

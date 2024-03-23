@@ -11,7 +11,7 @@ public class PingGrafanaTest : E2ETest
 
     protected override string Description() => "When the stack is up, Grafana should be reachable";
 
-    protected override string Name() => "Ping Grafana";
+    public override string Name() => "Ping Grafana";
 
     protected override async Task Run(CancellationToken token)
     {
