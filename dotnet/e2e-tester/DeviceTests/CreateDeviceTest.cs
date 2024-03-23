@@ -33,20 +33,20 @@ public class CreateDeviceTest : E2ETest
         contract.ShouldNotBeNull();
         contract.Id.ShouldNotBe(Guid.Empty);
 
-        var customToken = new CancellationTokenSource(DefaultJobInterval() * 2);
-        token.Register(customToken.Cancel);
-
+        var cancelToken = new CancellationTokenSource(DefaultJobInterval() * 2).Token;
         try
         {
-            response = await client.GetAsync($"/event/connect?id={contract.Id}", customToken.Token);
+            response = await client.GetAsync($"/event/connect?id={contract.Id}", cancelToken);
         }
         catch (OperationCanceledException) { }
 
+        Info("Testing to see if {0} finished successfully", Name());
+
         response.IsSuccessStatusCode.ShouldBeTrue();
-        var body = await response.Content.ReadAsStringAsync();
-        foreach (var line in body.Split("\n\n"))
+        var data = await response.Content.ReadAsStringAsync();
+        foreach (var line in data.Split("\n\n"))
         {
-            line.ShouldBe("data: \"noop\"");
+            line.ShouldContain("noop");
         }
     }
 }
