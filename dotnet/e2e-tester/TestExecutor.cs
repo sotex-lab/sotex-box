@@ -1,4 +1,6 @@
 using System.Data.Common;
+using System.Net;
+using System.Net.Sockets;
 using Amazon.Runtime;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -11,7 +13,7 @@ using Respawn;
 
 public class TestExecutor
 {
-    private static int BACKEND_PORT = 8000;
+    private readonly int BACKEND_PORT;
     private static int DATABASE_PORT = 5432;
     private static int MINIO_PORT = 9000;
     private readonly IContainer testEnvironment;
@@ -30,6 +32,7 @@ public class TestExecutor
     public TestExecutor(
         ILoggerFactory logFactory,
         string path,
+        int backendPort,
         string friendlyName = "",
         CancellationToken cancelToken = default
     )
@@ -45,6 +48,9 @@ public class TestExecutor
             DbAdapter = DbAdapter.Postgres
         };
         Info("Creating test environment");
+
+        BACKEND_PORT = backendPort;
+        Info("Picked port {0} for this executor's backend", BACKEND_PORT);
 
         testEnvironment = new ContainerBuilder()
             .WithAutoRemove(true)
@@ -67,7 +73,7 @@ public class TestExecutor
             .WithBindMount($"{absolutePath}/pyproject.toml", "/sotex/pyproject.toml")
             .WithBindMount($"{absolutePath}/requirements.txt", "/sotex/requirements.txt")
             .WithBindMount($"{absolutePath}/docker-compose.yaml", "/sotex/docker-compose.yaml")
-            .WithPortBinding(BACKEND_PORT, true)
+            .WithPortBinding(BACKEND_PORT)
             .WithPortBinding(DATABASE_PORT, true)
             .WithPortBinding(MINIO_PORT, true)
             .Build();
@@ -281,7 +287,21 @@ public class TestExecutor
                 $"s/:9000/:{testEnvironment.GetMappedPublicPort(MINIO_PORT)}/g",
                 ".env"
             },
-            ["sed", "-i", $"s/REQUIRE_KNOWN_DEVICES=false/REQUIRE_KNOWN_DEVICES=true/g", ".env"]
+            ["sed", "-i", $"s/REQUIRE_KNOWN_DEVICES=false/REQUIRE_KNOWN_DEVICES=true/g", ".env"],
+
+            [
+                "sed",
+                "-i",
+                $"s/DOMAIN_NAME=localhost:8000/DOMAIN_NAME=localhost:{testEnvironment.GetMappedPublicPort(BACKEND_PORT)}/g",
+                ".env"
+            ],
+
+            [
+                "sed",
+                "-i",
+                $"s/NGINX_PORT=8000/NGINX_PORT={testEnvironment.GetMappedPublicPort(BACKEND_PORT)}/g",
+                ".env"
+            ],
         };
 
         Info("Overriding environment variables");

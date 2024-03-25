@@ -56,9 +56,9 @@ public class CreateDeviceTest : E2ETest
         );
 
         var eventConnection = await client.GetAsync($"/event/connect?id={contract.Id}", token);
+        var data = await eventConnection.Content.ReadAsStringAsync();
 
         eventConnection.IsSuccessStatusCode.ShouldBeTrue();
-        var data = await eventConnection.Content.ReadAsStringAsync();
         foreach (var line in data.Split("\n\n"))
         {
             if (string.IsNullOrEmpty(line))

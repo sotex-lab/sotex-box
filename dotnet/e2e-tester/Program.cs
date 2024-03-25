@@ -1,4 +1,6 @@
 ﻿using System.Data;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using Cocona;
 using ConsoleTables;
@@ -33,13 +35,27 @@ CoconaApp.Run(
         var globalLogger = loggerFactory.CreateLogger("global");
 
         var executors = new List<TestExecutor>();
+        var servers = new List<TcpListener>();
 
         for (int i = 0; i < parallelism; i++)
         {
+            var server = new TcpListener(IPAddress.Loopback, 0);
+            server.Start();
+            servers.Add(server);
+            var port = ((IPEndPoint)server.LocalEndpoint).Port;
+
             executors.Add(
-                new TestExecutor(loggerFactory, absolutePath, i.ToString(), ctx.CancellationToken)
+                new TestExecutor(
+                    loggerFactory,
+                    absolutePath,
+                    port,
+                    i.ToString(),
+                    ctx.CancellationToken
+                )
             );
         }
+
+        servers.ForEach(x => x.Stop());
 
         try
         {
