@@ -99,12 +99,13 @@ run-backend: ## Shorthand for running backend from cli
 
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
-	emulator -avd "android_tv" 
+	emulator -avd "android_tv" -skin 1280x720
 	(cd android/launcher && flutter run -d emulator-5554)
+	(sleep 15 && adb shell content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1)
 
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
-	emulator -avd "android_tv" -skin 1920x1080 
+	emulator -avd "android_tv" -skin 1920x1080
 	(cd android/sotex_box && flutter run -d emulator-5554)
 
 ##@ Benchmarking
