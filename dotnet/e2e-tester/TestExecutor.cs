@@ -199,7 +199,7 @@ public class TestExecutor
             summaries.Add(await instance.Test());
         }
 
-        Info("Executor finishing with processed {0} tests...", summaries.Count);
+        Info("Executor finished processing having processed {0} tests...", summaries.Count);
 
         return summaries;
     }
