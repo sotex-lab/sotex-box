@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net;
 using System.Net.Sockets;
@@ -148,7 +149,7 @@ public class TestExecutor
         }
     }
 
-    public async Task<IEnumerable<TestSummary>> TestBatch(Type[] tests)
+    public async Task<IEnumerable<TestSummary>> TestBatch(ConcurrentStack<Type> tests)
     {
         var summaries = new List<TestSummary>();
 
@@ -165,17 +166,17 @@ public class TestExecutor
         var pipeline = new ResiliencePipelineBuilder().AddRetry(options).Build();
         var logger = loggerFactory.CreateLogger<E2ETest>();
         var testContext = new E2ECtx(
-            logger,
             pipeline,
             testEnvironment.GetMappedPublicPort(BACKEND_PORT),
             $"{absolutePath}/dotnet/e2e-tester/Resources",
             applicationDbContext!,
+            Info,
+            Warn,
+            Error,
             token
         );
 
-        Info("Batch contains {0} tests. Running...", tests.Length);
-
-        foreach (var test in tests)
+        while (tests.TryPop(out var test))
         {
             E2ETest instance;
             try
@@ -198,7 +199,7 @@ public class TestExecutor
             summaries.Add(await instance.Test());
         }
 
-        Info("Batch finished");
+        Info("Executor finishing with processed {0} tests...", summaries.Count);
 
         return summaries;
     }

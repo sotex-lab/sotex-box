@@ -1,10 +1,12 @@
-﻿using System.Data;
+﻿using System.Collections.Concurrent;
+using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Cocona;
 using ConsoleTables;
 using DotNet.Testcontainers.Configurations;
+using DotNext.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
@@ -86,15 +88,16 @@ CoconaApp.Run(
                     && type.Namespace.StartsWith("e2e_tester")
                 );
 
-            var testTasks = types
-                .Select((item, index) => new { Item = item, BatchIndex = index % executors.Count })
-                .GroupBy(x => x.BatchIndex, x => x.Item)
-                .Select(index => executors[index.Key].TestBatch(index.ToArray()));
+            var concurrentStack = new ConcurrentStack<Type>();
+            concurrentStack.PushRange(types.ToArray());
 
-            await Task.WhenAll(testTasks);
-            foreach (var task in testTasks)
+            var testTasks = executors.Select(x =>
+                Task.Run(async () => await x.TestBatch(concurrentStack), ctx.CancellationToken)
+            );
+
+            foreach (var summaries in await Task.WhenAll(testTasks))
             {
-                testSummaries.AddRange(await task);
+                testSummaries.AddRange(summaries);
             }
 
             globalLogger.LogInformation("Received {0} tests", testSummaries.Count());
