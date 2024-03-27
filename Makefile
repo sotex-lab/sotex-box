@@ -50,8 +50,8 @@ edit-docs: ## Run mkdocs local server for development
 
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;google-tv;x86"
-	avdmanager create avd -n "android_tv" -k "system-images;android-31;google-tv;x86" --force
+	sdkmanager "system-images;android-31;android-tv;x86"
+	avdmanager create avd -n "android_tv" -k "system-images;android-31;android-tv;x86" --force
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
@@ -97,15 +97,21 @@ flutter-test: ## Shorthand for running all flutter tests
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
 
+.PHONY: run-emu
+run-emulator: ## Shorthand for running the android emulator
+	emulator -avd "android_tv" -skin 1920x1080
+
+.PHONY: rotate-emu
+rotate-emulator: ## Shorthand for rotating the android emulator
+	adb emu rotate
+
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
-	emulator -avd "android_tv" -skin 1280x720
 	(cd android/launcher && flutter run -d emulator-5554)
-	(sleep 15 && adb shell content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1)
 
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
-	emulator -avd "android_tv" -skin 1920x1080
+	emulator -avd "android_tv" -skin 1280x720
 	(cd android/sotex_box && flutter run -d emulator-5554)
 
 ##@ Benchmarking

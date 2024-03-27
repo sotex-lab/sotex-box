@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  await DeviceOrientation.landscapeLeftOnly.lock();
-
   runApp(const MyApp());
 }
 
