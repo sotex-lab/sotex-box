@@ -27,6 +27,11 @@ make rotate-emu
 Emulator runs in 1080p resolution however to have it in full-screen you can extend the window
 by dragging out the upper left corner.
 
+Emulator might not support back and home buttons. To remedy these go to: ```~/.android/avd/android_tv.avd/config.ini```.
+
+Set ```hw.dpad = yes```
+Set ```hw.keyboard = yes```
+
 In order to run a particular part of the frontend you can use make:
 
 ```bash
