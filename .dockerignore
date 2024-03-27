@@ -3,7 +3,6 @@
 .github
 BenchmarkDotNet.Artifacts
 docs
-infra
 
 bin/
 obj/

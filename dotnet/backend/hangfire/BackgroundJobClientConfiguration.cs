@@ -1,6 +1,4 @@
 using Hangfire;
-using Hangfire.Common;
-using SseHandler;
 
 namespace backend.Hangfire;
 
@@ -10,6 +8,11 @@ public static class BackgroundJobClientConfiguration
     {
         var client = webApplication.Services.GetRequiredService<IRecurringJobManager>();
 
-        client.AddOrUpdate<NoopJob>("noop", noopJob => noopJob.SendNoop(), NoopJob.Cron());
+        client.AddOrUpdate<NoopJob>("noop", noopJob => noopJob.Run(), NoopJob.Cron());
+        client.AddOrUpdate<SqsProcessorJob>(
+            "sqs",
+            sqsProcessorJob => sqsProcessorJob.Run(),
+            SqsProcessorJob.Cron()
+        );
     }
 }

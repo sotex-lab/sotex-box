@@ -1,50 +1,28 @@
-using NCrontab;
 using SseHandler;
 
 namespace backend.Hangfire;
 
-public class NoopJob
+public class NoopJob : GenericCronJob<NoopJob>, IGenericCronJob
 {
-    private static string defaultCron = "0/15 * * ? * *";
-
-    public static string Cron()
-    {
-        var value = Environment.GetEnvironmentVariable("NOOP_CRON");
-        if (value == null)
-            return defaultCron;
-
-        try
-        {
-            var parsed = CrontabSchedule.Parse(
-                value,
-                new CrontabSchedule.ParseOptions { IncludingSeconds = true }
-            );
-            return value;
-        }
-        catch (CrontabException)
-        {
-            return defaultCron;
-        }
-    }
-
-    private readonly ILogger<NoopJob> _logger;
     private readonly IEventCoordinator _eventCoordinator;
 
     public NoopJob(ILogger<NoopJob> logger, IEventCoordinator eventCoordinator)
+        : base(logger)
     {
-        _logger = logger;
         _eventCoordinator = eventCoordinator;
     }
 
-    public async Task SendNoop()
+    public static string EnvironmentVariableName => "NOOP_CRON";
+
+    public override async Task Run()
     {
-        _logger.LogInformation("Sending noop signal to all connections");
+        _logger.LogDebug("Sending noop signal to all connections");
 
         foreach (var device in _eventCoordinator.GetConnectionIds())
         {
             await _eventCoordinator.SendMessage(device, "noop");
         }
 
-        _logger.LogInformation("Sending noop signal finished");
+        _logger.LogDebug("Sending noop signal finished");
     }
 }

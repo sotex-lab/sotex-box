@@ -60,10 +60,12 @@ repos:
         name: Flutter launcher tests
         entry: make flutter-test-launcher
         language: system
+        files: '\.(dart)$'
       - id: flutter-sotex_box-tests
         name: Flutter sotex_box tests
         entry: make flutter-test-box
         language: system
+        files: '\.(dart)$'
 
       ## Pulumi checks
       - id: pulumi-preview

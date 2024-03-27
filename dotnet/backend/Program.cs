@@ -1,5 +1,6 @@
 ﻿using backend.Aws;
 using backend.Hangfire;
+using backend.Hangfire.Dashboard;
 using backend.Services;
 using Hangfire;
 using Hangfire.Dashboard;
@@ -49,7 +50,7 @@ builder.Services.AddHangfireServer();
 builder.Services.AddSotexBoxDatabase();
 builder.Services.AddAutoMapper(typeof(CoreMapper).Assembly);
 
-builder.Services.ConfigureAwsClient();
+builder.Services.ConfigureAwsClients();
 builder.Services.RegisterOurServices();
 
 var app = builder.Build();
@@ -78,7 +79,13 @@ app.EnqueueJobs();
 // TODO: Setup custom authorization once we have roles
 app.UseHangfireDashboard(
     "/hangfire",
-    new DashboardOptions { IsReadOnlyFunc = (DashboardContext ctx) => true }
+    new DashboardOptions
+    {
+        IsReadOnlyFunc = (DashboardContext ctx) => true,
+        AsyncAuthorization = app.Environment.IsEnvironment("test")
+            ? new List<IDashboardAsyncAuthorizationFilter> { new TestAuthFilter() }
+            : new List<IDashboardAsyncAuthorizationFilter>()
+    }
 );
 
 app.MapControllers();

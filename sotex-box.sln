@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -24,6 +24,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "model", "dotnet\model\model.csproj", "{D1C04601-B464-404B-9603-FB814E109C9F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "persistence", "dotnet\persistence\persistence.csproj", "{491DF35D-8D54-4344-A595-C5D6FEC70E3F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "e2e-tester", "dotnet\e2e-tester\e2e-tester.csproj", "{AF9C824E-D1B7-42D2-929F-B5D70D40DB25}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,10 @@ Global
 		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{491DF35D-8D54-4344-A595-C5D6FEC70E3F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF9C824E-D1B7-42D2-929F-B5D70D40DB25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF9C824E-D1B7-42D2-929F-B5D70D40DB25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF9C824E-D1B7-42D2-929F-B5D70D40DB25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF9C824E-D1B7-42D2-929F-B5D70D40DB25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -81,5 +87,6 @@ Global
 		{4FFAD64F-98C7-4B98-BA66-C55CCB6760BA} = {36FD6E2B-AFA6-4A17-8429-3AF1F36F13E1}
 		{D1C04601-B464-404B-9603-FB814E109C9F} = {F021D060-BCA2-4D32-B722-C6196A158C81}
 		{491DF35D-8D54-4344-A595-C5D6FEC70E3F} = {F021D060-BCA2-4D32-B722-C6196A158C81}
+		{AF9C824E-D1B7-42D2-929F-B5D70D40DB25} = {F021D060-BCA2-4D32-B722-C6196A158C81}
 	EndGlobalSection
 EndGlobal

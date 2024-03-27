@@ -75,10 +75,28 @@ dotnet-tests: ## Run all dotnet tests
 dotnet-unit-tests: ## Run dotnet unit tests
 	cd dotnet/unit-tests && dotnet test
 
+TOP_LEVEL := $(shell git rev-parse --show-toplevel)
 .PHONY: dotnet-integration-tests
 dotnet-integration-tests: compose-down
 dotnet-integration-tests: ## Run dotnet unit tests
-	cd dotnet/integration-tests && dotnet test
+	cd dotnet/integration-tests && TOP_LEVEL=$(TOP_LEVEL) dotnet test
+
+# Override the container tool. Tries docker first and then tries podman.
+export PARALLELISM ?= auto
+ifeq ($(PARALLELISM),auto)
+	override PARALLELISM = 3
+endif
+export ABSOLUTE_PATH ?= auto
+ifeq ($(ABSOLUTE_PATH),auto)
+	override ABSOLUTE_PATH = $(shell git rev-parse --show-toplevel)
+endif
+.PHONY: dotnet-e2e-tests
+dotnet-e2e-tests: container-build-backend
+dotnet-e2e-tests: container-build-local-pusher
+dotnet-e2e-tests: ## Run dotnet e2e tests, excluded from dotnet-test
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml pull --policy missing
+	$(CONTAINER_TOOL) build -t e2e -f distribution/docker/e2e.dockerfile .
+	dotnet run --project dotnet/e2e-tester --parallelism $(PARALLELISM) --absolute-path $(ABSOLUTE_PATH)
 
 ##@ Flutter testing
 .PHONY: flutter-test-launcher
@@ -140,19 +158,19 @@ pulumi-preview: ## Command to preview the staging infra
 container-build-backend: ## Command to build the container for backend
 	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA) . -f distribution/docker/backend.dockerfile
 
+.PHONY: container-build-local-pusher
+container-build-local-pusher: ## Command to build the local pusher
+	$(CONTAINER_TOOL) build -t ghcr.io/sotex-lab/sotex-box/local-pusher:$(COMMIT_SHA) . -f distribution/docker/local-pusher.dockerfile
+
 .PHONY: container-push-backend
 container-push-backend: ## Command to push the container for backend
 	$(CONTAINER_TOOL) push ghcr.io/sotex-lab/sotex-box/backend:$(COMMIT_SHA)
 
 ##@ Compose actions
 
-LEFTOVER_PORTS = $(shell pidof containers-rootlessport)
 ENV_FILE := .env
 
-.PHONY: compose-up
-compose-up: container-build-backend
-compose-up: compose-down
-compose-up: ## Run local stack
+ensure-setup:
 	@if [ -z "$(wildcard $(ENV_FILE))" ]; then \
         echo "$(ENV_FILE) does not exist. To run the stack you should create $(ENV_FILE). Use $(ENV_FILE).template to start"; \
         exit 1; \
@@ -161,9 +179,21 @@ compose-up: ## Run local stack
     fi
 
 	mkdir -p volumes.local/minio
+
+.PHONY: compose-up
+compose-up: container-build-backend
+compose-up: container-build-local-pusher
+compose-up: compose-down
+compose-up: ensure-setup
+compose-up: ## Run local stack
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up
+
+.PHONY: compose-up-d
+compose-up-d: compose-down
+compose-up-d: ensure-setup
+compose-up-d: ## Run local stack detached. Used for e2e tests
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up -d
 
 .PHONY: compose-down
 compose-down: ## Remove local stack
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down
-	kill -9 $(LEFTOVER_PORTS) || true
