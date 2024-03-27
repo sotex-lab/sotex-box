@@ -98,11 +98,11 @@ run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
 
 .PHONY: run-emu
-run-emulator: ## Shorthand for running the android emulator
+run-emu: ## Shorthand for running the android emulator
 	emulator -avd "android_tv" -skin 1920x1080
 
 .PHONY: rotate-emu
-rotate-emulator: ## Shorthand for rotating the android emulator
+rotate-emu: ## Shorthand for rotating the android emulator
 	adb emu rotate
 
 .PHONY: run-launcher
