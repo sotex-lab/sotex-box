@@ -202,10 +202,10 @@ public class SqsProcessorJobTests
 
         var adRepo = new Mock<IAdRepository>();
         adRepo
-            .Setup(x => x.GetSingle(It.IsAny<Guid>()))
+            .Setup(x => x.GetSingle(It.IsAny<Guid>(), default))
             .ReturnsAsync(() => new Result<Ad, RepositoryError>(ad));
         adRepo
-            .Setup(x => x.Update(It.IsAny<Ad>()))
+            .Setup(x => x.Update(It.IsAny<Ad>(), default))
             .ReturnsAsync(() => new Result<Ad, RepositoryError>(ad));
 
         SetEnvironmentVariable();

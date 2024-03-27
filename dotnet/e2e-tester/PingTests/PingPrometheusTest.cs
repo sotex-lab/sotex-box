@@ -10,7 +10,7 @@ public class PingPrometheusTest : E2ETest
     protected override string Description() =>
         "When the stack is up, Prometheus should be pingable";
 
-    protected override string Name() => "Ping Prometheus";
+    public override string Name() => "Ping Prometheus";
 
     protected override async Task Run(CancellationToken token)
     {

@@ -19,7 +19,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddEventCoordinator();
 
-builder.Logging.AddJsonConsole(options =>
+builder.Logging.AddSimpleConsole(options =>
 {
     options.IncludeScopes = true;
     options.TimestampFormat = "O";
@@ -75,6 +75,7 @@ var connections = app.Services.GetRequiredService<IEventCoordinator>();
 host.ApplicationStopping.Register(connections.RemoveAll);
 
 app.EnqueueJobs();
+app.UseForwardedHeaders();
 
 // TODO: Setup custom authorization once we have roles
 app.UseHangfireDashboard(

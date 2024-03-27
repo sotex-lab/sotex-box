@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text;
+using model.Core;
+using persistence.Repository;
 using Shouldly;
 using SseHandler;
 
@@ -9,11 +11,16 @@ namespace IntegrationTests.ControllerTests;
 public class EventControllerTests
 {
     private readonly ConfigurableBackendFactory _factory;
+    private readonly IDeviceRepository _deviceRepository;
 
     public EventControllerTests(ConfigurableBackendFactory factory)
     {
         _factory = factory;
         _factory.Connections.Clear();
+        // Needed to reset if in any test it is changed
+        Environment.SetEnvironmentVariable("REQUIRE_KNOWN_DEVICES", "false");
+        var serviceProvider = _factory.Services.CreateScope().ServiceProvider;
+        _deviceRepository = serviceProvider.GetRequiredService<IDeviceRepository>();
     }
 
     [Fact]
@@ -21,9 +28,10 @@ public class EventControllerTests
     {
         var client = _factory.CreateClient();
         var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        var id = Guid.NewGuid();
 
         var response = await client.GetAsync(
-            "/event/connect?id=1",
+            $"/event/connect?id={id}",
             HttpCompletionOption.ResponseHeadersRead,
             tokenSource.Token
         );
@@ -40,7 +48,7 @@ public class EventControllerTests
     [Fact]
     public async Task Should_NotConnect()
     {
-        var connection = new Connection(1.ToString(), new MemoryStream());
+        var connection = new Connection(Guid.NewGuid(), new MemoryStream());
         _factory.Connections[connection.Id] = connection;
 
         var client = _factory.CreateClient();
@@ -59,7 +67,7 @@ public class EventControllerTests
     [Fact]
     public async Task Should_Remove()
     {
-        var id = 1.ToString();
+        var id = Guid.NewGuid();
 
         var client = _factory.CreateClient();
         var task = Task.Run(async () => await client.GetAsync($"/event/connect?id={id}"));
@@ -78,7 +86,7 @@ public class EventControllerTests
     public async Task Should_WriteData()
     {
         var stream = new MemoryStream();
-        var connection = new Connection(1.ToString(), stream);
+        var connection = new Connection(Guid.NewGuid(), stream);
         var testMessage = "test";
         _factory.Connections[connection.Id] = connection;
 
@@ -93,5 +101,45 @@ public class EventControllerTests
         content.ShouldContain("data:");
         content.ShouldContain(testMessage);
         content.ShouldEndWith("\n\n");
+    }
+
+    [Fact]
+    public async Task Should_NotAllowToConnect()
+    {
+        var client = _factory.CreateClient();
+        Environment.SetEnvironmentVariable("REQUIRE_KNOWN_DEVICES", "true");
+
+        var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        var id = Guid.NewGuid();
+
+        var response = await client.GetAsync(
+            $"/event/connect?id={id}",
+            HttpCompletionOption.ResponseHeadersRead,
+            tokenSource.Token
+        );
+
+        response.IsSuccessStatusCode.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Should_AllowToConnect()
+    {
+        var device = new Device() { UtilityName = "test" };
+        var maybeDevice = await _deviceRepository.Add(device);
+        maybeDevice.IsSuccessful.ShouldBeTrue();
+        var client = _factory.CreateClient();
+        Environment.SetEnvironmentVariable("REQUIRE_KNOWN_DEVICES", "true");
+        var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        device = maybeDevice.Value;
+        var response = await client.GetAsync(
+            $"/event/connect?id={device.Id}",
+            HttpCompletionOption.ResponseHeadersRead,
+            tokenSource.Token
+        );
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        maybeDevice = await _deviceRepository.GetSingle(device.Id);
+        maybeDevice.IsSuccessful.ShouldBeTrue();
     }
 }

@@ -14,7 +14,7 @@ public class CreateAdTest : E2ETest
     protected override string Description() =>
         "Create a new ad and fully process it with a background job";
 
-    protected override string Name() => "Create ad";
+    public override string Name() => "Create ad";
 
     protected override async Task Run(CancellationToken token)
     {

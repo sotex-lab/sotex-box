@@ -48,7 +48,7 @@ public abstract class E2ETest
         {
             var message = Regex.Replace(string.Join(' ', e.Message.Split()), @"\s+", " ");
             var lenght = message.Length;
-            var cap = 70;
+            var cap = 150;
             message = message.Substring(0, Math.Min(cap, lenght));
             if (lenght > cap)
             {
@@ -61,7 +61,7 @@ public abstract class E2ETest
         return summary;
     }
 
-    protected abstract string Name();
+    public abstract string Name();
     protected abstract string Description();
 
     protected virtual bool AllowFail() => false;
@@ -69,20 +69,20 @@ public abstract class E2ETest
     protected abstract Task Run(CancellationToken token);
 
     protected void Info(string message, params object[] args) =>
-        ctx.Logger.LogInformation("Test {0}: {1}", Name(), string.Format(message, args));
+        ctx.Info("Test {0}: {1}", [Name(), string.Format(message, args)]);
 
     protected void Warn(string message, params object[] args) =>
-        ctx.Logger.LogWarning("Test {0}: {1}", Name(), string.Format(message, args));
+        ctx.Warn("Test {0}: {1}", [Name(), string.Format(message, args)]);
 
     protected void Error(string message, params object[] args) =>
-        ctx.Logger.LogError("Test {0}: {1}", Name(), string.Format(message, args));
+        ctx.Error("Test {0}: {1}", [Name(), string.Format(message, args)]);
 
-    protected HttpClient GetClient()
+    protected HttpClient GetClient(TimeSpan timeout = default)
     {
         return new HttpClient
         {
             BaseAddress = new Uri($"http://localhost:{ctx.BackendPort}"),
-            Timeout = TimeSpan.FromSeconds(15)
+            Timeout = timeout == default ? TimeSpan.FromSeconds(15) : timeout
         };
     }
 
@@ -119,24 +119,30 @@ public abstract class E2ETest
 
 public class E2ECtx
 {
-    public ILogger<E2ETest> Logger { get; }
     public CancellationToken Token { get; }
     public ResiliencePipeline Pipeline { get; }
     public int BackendPort { get; }
     public string ResourcesDir { get; }
     public ApplicationDbContext ApplicationDbContext { get; }
+    public Action<string, object[]> Info { get; }
+    public Action<string, object[]> Warn { get; }
+    public Action<string, object[]> Error { get; }
 
     public E2ECtx(
-        ILogger<E2ETest> logger,
         ResiliencePipeline pipeline,
         int backendPort,
         string resourcesDir,
         ApplicationDbContext applicationDbContext,
+        Action<string, object[]> info,
+        Action<string, object[]> warn,
+        Action<string, object[]> error,
         CancellationToken token = default
     )
     {
+        Info = info;
+        Warn = warn;
+        Error = error;
         ResourcesDir = resourcesDir;
-        Logger = logger;
         Pipeline = pipeline;
         Token = token;
         BackendPort = backendPort;

@@ -22,9 +22,9 @@ public interface IDeviceMetrics
 {
     public static string MeterName { get; } = "Sotex.Web";
 
-    void Connected(string key);
-    void Disconnected(string key);
-    void Sent(string key, object message);
+    void Connected(Guid key);
+    void Disconnected(Guid key);
+    void Sent(Guid key, object message);
 }
 
 public class DeviceMetrics : IDeviceMetrics
@@ -42,7 +42,7 @@ public class DeviceMetrics : IDeviceMetrics
         public Measurement<long> SentBytes { get; set; }
     }
 
-    private readonly Dictionary<string, MetricBag> _measurements;
+    private readonly Dictionary<Guid, MetricBag> _measurements;
     private readonly EventSerializer _eventSerializer;
     private readonly Mutex _mutex = new();
 
@@ -52,7 +52,7 @@ public class DeviceMetrics : IDeviceMetrics
     public DeviceMetrics(IMeterFactory meterFactory, EventSerializer eventSerializer)
     {
         _eventSerializer = eventSerializer;
-        _measurements = new Dictionary<string, MetricBag>();
+        _measurements = new Dictionary<Guid, MetricBag>();
         var meter = meterFactory.Create("Sotex.Web");
         meter.CreateObservableCounter(
             "sotex.web.devices",
@@ -69,10 +69,10 @@ public class DeviceMetrics : IDeviceMetrics
         );
     }
 
-    private KeyValuePair<string, object?> Tag(string key) =>
+    private KeyValuePair<string, object?> Tag(Guid key) =>
         new KeyValuePair<string, object?>("id", key);
 
-    public void Connected(string key)
+    public void Connected(Guid key)
     {
         _mutex.WaitOne();
         if (!_measurements.ContainsKey(key))
@@ -82,16 +82,20 @@ public class DeviceMetrics : IDeviceMetrics
         _mutex.ReleaseMutex();
     }
 
-    public void Disconnected(string key)
+    public void Disconnected(Guid key)
     {
+        if (!_measurements.ContainsKey(key))
+            return;
         _mutex.WaitOne();
         _measurements[key].IsConnected = new Measurement<int>(0, Tag(key));
         _measurements[key].SentBytes = new Measurement<long>(0, Tag(key));
         _mutex.ReleaseMutex();
     }
 
-    public void Sent(string key, object message)
+    public void Sent(Guid key, object message)
     {
+        if (!_measurements.ContainsKey(key))
+            return;
         var serialized = _eventSerializer.SerializeData(message);
         long bytes = serialized.Length * sizeof(char);
         _mutex.WaitOne();

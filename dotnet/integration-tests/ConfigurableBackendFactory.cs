@@ -15,8 +15,8 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
 {
     public const string IntegrationCollection = "integration collection";
     public const int IntegrationCronIntervalSeconds = 15;
-    public Dictionary<string, Connection> Connections { get; set; } =
-        new Dictionary<string, Connection>();
+    public Dictionary<Guid, Connection> Connections { get; set; } =
+        new Dictionary<Guid, Connection>();
 
     private Respawner? respawner;
     private DbConnection? connection;
@@ -81,6 +81,7 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["AWS_SQS_ACCESS_KEY"] = "x",
             ["AWS_SQS_SECRET_KEY"] = "x",
             ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = "/000000000000/nonprocessed",
+            ["REQUIRE_KNOWN_DEVICES"] = "false",
         };
 
         foreach (var kvp in backendEnvVars)

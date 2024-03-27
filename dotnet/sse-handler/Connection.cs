@@ -2,11 +2,11 @@
 
 public class Connection
 {
-    public string Id { get; }
+    public Guid Id { get; }
     public Stream Stream { get; }
     public CancellationTokenSource CancellationTokenSource { get; }
 
-    public Connection(string id, Stream stream)
+    public Connection(Guid id, Stream stream)
     {
         Id = id;
         Stream = stream;

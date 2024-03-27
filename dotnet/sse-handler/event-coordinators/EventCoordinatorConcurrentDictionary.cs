@@ -10,7 +10,7 @@ namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 {
-    private readonly ConcurrentDictionary<string, Connection> _connections;
+    private readonly ConcurrentDictionary<Guid, Connection> _connections;
     private readonly IDeviceMetrics _deviceMetrics;
     private readonly IEventSerializer _eventSerializer;
     private readonly ILogger<EventCoordinatorConcurrentDictionary> _logger;
@@ -25,14 +25,14 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
 
     public EventCoordinatorConcurrentDictionary()
         : this(
-            new ConcurrentDictionary<string, Connection>(),
+            new ConcurrentDictionary<Guid, Connection>(),
             new JsonEventSerializer(),
             new DeviceMetrics(),
             GetLogger()
         ) { }
 
     public EventCoordinatorConcurrentDictionary(
-        ConcurrentDictionary<string, Connection> connections,
+        ConcurrentDictionary<Guid, Connection> connections,
         IDeviceMetrics metrics
     )
         : this(connections, new JsonEventSerializer(), metrics, GetLogger()) { }
@@ -42,15 +42,11 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         IDeviceMetrics deviceMetrics,
         ILogger<EventCoordinatorConcurrentDictionary> logger
     )
-        : this(
-            new ConcurrentDictionary<string, Connection>(),
-            eventSerializer,
-            deviceMetrics,
-            logger
-        ) { }
+        : this(new ConcurrentDictionary<Guid, Connection>(), eventSerializer, deviceMetrics, logger)
+    { }
 
     public EventCoordinatorConcurrentDictionary(
-        ConcurrentDictionary<string, Connection> connections,
+        ConcurrentDictionary<Guid, Connection> connections,
         IEventSerializer eventSerializer,
         IDeviceMetrics deviceMetrics,
         ILogger<EventCoordinatorConcurrentDictionary> logger
@@ -62,9 +58,9 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         _logger = logger;
     }
 
-    public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
+    public Result<CancellationTokenSource, EventCoordinatorError> Add(Guid id, Stream stream)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.InvalidKey
@@ -95,14 +91,14 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         );
     }
 
-    public IEnumerable<string> GetConnectionIds()
+    public IEnumerable<Guid> GetConnectionIds()
     {
         return _connections.Keys;
     }
 
-    public Result<bool, EventCoordinatorError> Remove(string id)
+    public Result<bool, EventCoordinatorError> Remove(Guid id)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
@@ -132,9 +128,9 @@ public class EventCoordinatorConcurrentDictionary : IEventCoordinator
         }
     }
 
-    public async Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message)
+    public async Task<Result<bool, EventCoordinatorError>> SendMessage(Guid id, object message)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }

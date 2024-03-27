@@ -1,8 +1,13 @@
-﻿using System.Data;
+using System.Collections.Concurrent;
+using System.Data;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
+using Alba.CsConsoleFormat;
+using Alba.CsConsoleFormat.Fluent;
 using Cocona;
-using ConsoleTables;
 using DotNet.Testcontainers.Configurations;
+using DotNext.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 CoconaApp.Run(
@@ -14,7 +19,6 @@ CoconaApp.Run(
                 options.SetMinimumLevel(LogLevel.Critical);
             })
             .CreateLogger("testcontainers");
-
         var testSummaries = new List<TestSummary>();
         var loggerFactory = LoggerFactory.Create(options =>
         {
@@ -33,13 +37,27 @@ CoconaApp.Run(
         var globalLogger = loggerFactory.CreateLogger("global");
 
         var executors = new List<TestExecutor>();
+        var servers = new List<TcpListener>();
 
         for (int i = 0; i < parallelism; i++)
         {
+            var server = new TcpListener(IPAddress.Loopback, 0);
+            server.Start();
+            servers.Add(server);
+            var port = ((IPEndPoint)server.LocalEndpoint).Port;
+
             executors.Add(
-                new TestExecutor(loggerFactory, absolutePath, i.ToString(), ctx.CancellationToken)
+                new TestExecutor(
+                    loggerFactory,
+                    absolutePath,
+                    port,
+                    i.ToString(),
+                    ctx.CancellationToken
+                )
             );
         }
+
+        servers.ForEach(x => x.Stop());
 
         try
         {
@@ -70,15 +88,16 @@ CoconaApp.Run(
                     && type.Namespace.StartsWith("e2e_tester")
                 );
 
-            var testTasks = types
-                .Select((item, index) => new { Item = item, BatchIndex = index / executors.Count })
-                .GroupBy(x => x.BatchIndex, x => x.Item)
-                .Select(index => executors[index.Key].TestBatch(index.ToArray()));
+            var concurrentStack = new ConcurrentStack<Type>();
+            concurrentStack.PushRange(types.ToArray());
 
-            await Task.WhenAll(testTasks);
-            foreach (var task in testTasks)
+            var testTasks = executors.Select(x =>
+                Task.Run(async () => await x.TestBatch(concurrentStack), ctx.CancellationToken)
+            );
+
+            foreach (var summaries in await Task.WhenAll(testTasks))
             {
-                testSummaries.AddRange(await task);
+                testSummaries.AddRange(summaries);
             }
 
             globalLogger.LogInformation("Received {0} tests", testSummaries.Count());
@@ -96,57 +115,128 @@ CoconaApp.Run(
             if (!testSummaries.Any())
                 Environment.Exit(0);
 
-            ConsoleTable
-                .From(
-                    new[]
+            var legend = new Document()
+            {
+                Children =
+                {
+                    new Grid
                     {
-                        new { Legend = "✅", Meaning = "successful" },
-                        new { Legend = "❌", Meaning = "failed" },
-                        new { Legend = "❕", Meaning = "failed but allowed to fail" }
+                        Columns = { GridLength.Auto, GridLength.Auto },
+                        Children =
+                        {
+                            new Cell("Symbol"),
+                            new Cell("Meaning"),
+                            new[]
+                            {
+                                new { Legend = "✓".Green(), Meaning = "successful" },
+                                new { Legend = "X".Red(), Meaning = "failed" },
+                                new
+                                {
+                                    Legend = "!".Yellow(),
+                                    Meaning = "failed but allowed to fail"
+                                }
+                            }.Select(x =>
+                                new[]
+                                {
+                                    new Cell(x.Legend) { Align = Align.Center },
+                                    new Cell(x.Meaning)
+                                }
+                            )
+                        },
+                        AutoPosition = true
                     }
-                )
-                .Write(Format.Alternative);
+                }
+            };
+            ConsoleRenderer.RenderDocument(legend);
 
-            ConsoleTable
-                .From(
-                    testSummaries.Select(x => new
+            var summaries = new Document(
+                new Grid
+                {
+                    Columns =
                     {
-                        x.Name,
-                        Result = x.Outcome
-                            ? "✅"
-                            : x.AllowFail
-                                ? "❕"
-                                : "❌",
-                        Duration = string.Format("{0}s", x.Elapsed),
-                        x.Retries,
-                        Error = string.IsNullOrEmpty(x.ErrorMessage) ? "/" : x.ErrorMessage,
-                        x.Description
-                    })
-                )
-                .Write(Format.Alternative);
+                        GridLength.Auto,
+                        GridLength.Auto,
+                        GridLength.Auto,
+                        GridLength.Auto,
+                        GridLength.Auto,
+                        GridLength.Auto
+                    },
+                    Children =
+                    {
+                        new Cell("Name") { Align = Align.Center },
+                        new Cell("Result") { Align = Align.Center },
+                        new Cell("Duration") { Align = Align.Center },
+                        new Cell("Retries") { Align = Align.Center },
+                        new Cell("Error") { Align = Align.Center },
+                        new Cell("Description") { Align = Align.Center },
+                        testSummaries
+                            .Select(x => new
+                            {
+                                x.Name,
+                                Result = x.Outcome
+                                    ? "✓".Green()
+                                    : x.AllowFail
+                                        ? "!".Yellow()
+                                        : "X".Red(),
+                                Duration = string.Format("{0}s", x.Elapsed),
+                                x.Retries,
+                                Error = string.IsNullOrEmpty(x.ErrorMessage) ? "/" : x.ErrorMessage,
+                                x.Description,
+                            })
+                            .Select(x =>
+                                new[]
+                                {
+                                    new Cell(x.Name),
+                                    new Cell(x.Result) { Align = Align.Center },
+                                    new Cell(x.Duration),
+                                    new Cell(x.Retries) { Align = Align.Center },
+                                    new Cell(x.Error) { TextWrap = TextWrap.WordWrap },
+                                    new Cell(x.Description) { TextWrap = TextWrap.WordWrap },
+                                }
+                            )
+                    }
+                }
+            );
+            ConsoleRenderer.RenderDocument(summaries);
 
             var succeeded = testSummaries.Count(x => x.Outcome);
             var succeededProcentage = Math.Round(100 * (double)succeeded / testSummaries.Count, 2);
 
-            ConsoleTable
-                .From(
-                    new[]
+            var overview = new Document(
+                new Grid
+                {
+                    Columns = { GridLength.Auto, GridLength.Auto, GridLength.Auto },
+                    Children =
                     {
-                        new
+                        new Cell("Result"),
+                        new Cell("Count"),
+                        new Cell("Percentage"),
+                        new[]
                         {
-                            Result = "Succeeded",
-                            Count = succeeded,
-                            Procentage = string.Format("{0}%", succeededProcentage)
-                        },
-                        new
-                        {
-                            Result = "Failed",
-                            Count = testSummaries.Count - succeeded,
-                            Procentage = string.Format("{0}%", 100 - succeededProcentage)
-                        },
+                            new
+                            {
+                                Result = "Succeeded".Green(),
+                                Count = succeeded.ToString().Green(),
+                                Percentage = string.Format("{0}%", succeededProcentage).Green()
+                            },
+                            new
+                            {
+                                Result = "Failed".Red(),
+                                Count = (testSummaries.Count - succeeded).ToString().Red(),
+                                Percentage = string.Format("{0}%", 100 - succeededProcentage).Red()
+                            },
+                        }.Select(x =>
+                            new[]
+                            {
+                                new Cell(x.Result),
+                                new Cell(x.Count) { Align = Align.Center },
+                                new Cell(x.Percentage) { Align = Align.Center },
+                            }
+                        )
                     }
-                )
-                .Write(Format.Alternative);
+                }
+            );
+            ConsoleRenderer.RenderDocument(overview);
 
             Environment.Exit(
                 succeeded >= testSummaries.Count(x => x.Outcome && !x.AllowFail) ? 0 : 1

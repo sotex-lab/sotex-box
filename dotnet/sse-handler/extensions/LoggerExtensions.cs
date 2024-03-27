@@ -6,7 +6,7 @@ internal static class LoggerExtensions
 {
     public static void LogEventCoordinator(
         this ILogger<IEventCoordinator> logger,
-        string deviceId,
+        Guid deviceId,
         string message,
         LogLevel level = LogLevel.Debug
     )

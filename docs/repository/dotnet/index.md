@@ -120,37 +120,10 @@ fe8eccc6fb95   e2e-tester-1                                               20.01%
 31dce92219b1   testcontainers-ryuk-2cc9deca-ab4e-46a3-a8eb-2792f0b0cb73   0.00%     9.723MiB / 31.06GiB   0.03%     10.6kB / 4.62kB   6.51MB / 0B     9
 ```
 At the end of the run there will be an output that present the overview of the run:
-```bash
-+ ------ + -------                    +
-| Legend | Meaning                    |
-+ ------ + -------                    +
-| ✅     | successful                 |
-+ ------ + -------                    +
-| ❌     | failed                     |
-+ ------ + -------                    +
-| ❕     | failed but allowed to fail |
-+ ------ + -------                    +
-
-+ ----            + ------ + --------          + ------- + -----                                                     + -----------                                                +
-| Name            | Result | Duration          | Retries | Error                                                     | Description                                                |
-+ ----            + ------ + --------          + ------- + -----                                                     + -----------                                                +
-| Ping backend    | ✅     | 00:00:00.0027491s | 0       | /                                                         | When the stack is up, backend should be available          |
-+ ----            + ------ + --------          + ------- + -----                                                     + -----------                                                +
-| Ping Grafana    | ❕     | 00:00:00s         | 3       | response.IsSuccessStatusCode should be True but was False | When the stack is up, Grafana should be reachable          |
-+ ----            + ------ + --------          + ------- + -----                                                     + -----------                                                +
-| Ping Prometheus | ✅     | 00:00:00.0046954s | 0       | /                                                         | When the stack is up, Prometheus should be pingable        |
-+ ----            + ------ + --------          + ------- + -----                                                     + -----------                                                +
-| Create ad       | ✅     | 00:00:15.0352998s | 0       | /                                                         | Create a new ad and fully process it with a background job |
-+ ----            + ------ + --------          + ------- + -----                                                     + -----------                                                +
-
-+ ------    + ----- + ---------- +
-| Result    | Count | Procentage |
-+ ------    + ----- + ---------- +
-| Succeeded | 3     | 75%        |
-+ ------    + ----- + ---------- +
-| Failed    | 1     | 25%        |
-+ ------    + ----- + ---------- +
-```
+<figure markdown="span">
+  ![E2E test output](/sotex-box/assets/e2etestoutput.png)
+  <figcaption>E2E test output in console</figcaption>
+</figure>
 Some of the tests are allowed to fail, here there is a grafana ping that is failing due to misconfiguration for development testing purposes which is not needed for this environment. Tests marked as allowed to fail won't result in _overall_ outcome of the test run. Usually these will be [flaky tests](https://www.datadoghq.com/knowledge-center/flaky-tests/).
 
 There isn't a general rule on when to write an e2e test and when not to. There are some things that are mission critical and should be covered with an e2e test but it really depends what is being tested. If the logic is being tested usually it is okay to write just a unit test. If there is a lot of services talking it is better to have an integration test. If there is a business goal that needs to be fulfilled and there is are timings that need to be tested (for e.g. cron firing) there is a need for an e2e test.

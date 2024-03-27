@@ -10,7 +10,7 @@ namespace SseHandler.EventCoordinators;
 
 public class EventCoordinatorMutex : IEventCoordinator
 {
-    private readonly Dictionary<string, Connection> _connections;
+    private readonly Dictionary<Guid, Connection> _connections;
     private readonly Mutex _lock;
     private readonly IEventSerializer _eventSerializer;
     private readonly IDeviceMetrics _deviceMetrics;
@@ -26,13 +26,13 @@ public class EventCoordinatorMutex : IEventCoordinator
 
     public EventCoordinatorMutex()
         : this(
-            new Dictionary<string, Connection>(),
+            new Dictionary<Guid, Connection>(),
             new JsonEventSerializer(),
             new DeviceMetrics(),
             GetLogger()
         ) { }
 
-    public EventCoordinatorMutex(Dictionary<string, Connection> connections, IDeviceMetrics metrics)
+    public EventCoordinatorMutex(Dictionary<Guid, Connection> connections, IDeviceMetrics metrics)
         : this(connections, new JsonEventSerializer(), metrics, GetLogger()) { }
 
     public EventCoordinatorMutex(
@@ -40,10 +40,10 @@ public class EventCoordinatorMutex : IEventCoordinator
         IDeviceMetrics deviceMetrics,
         ILogger<EventCoordinatorMutex> logger
     )
-        : this(new Dictionary<string, Connection>(), eventSerializer, deviceMetrics, logger) { }
+        : this(new Dictionary<Guid, Connection>(), eventSerializer, deviceMetrics, logger) { }
 
     public EventCoordinatorMutex(
-        Dictionary<string, Connection> connections,
+        Dictionary<Guid, Connection> connections,
         IEventSerializer eventSerializer,
         IDeviceMetrics deviceMetrics,
         ILogger<EventCoordinatorMutex> logger
@@ -56,9 +56,9 @@ public class EventCoordinatorMutex : IEventCoordinator
         _logger = logger;
     }
 
-    public Result<CancellationTokenSource, EventCoordinatorError> Add(string id, Stream stream)
+    public Result<CancellationTokenSource, EventCoordinatorError> Add(Guid id, Stream stream)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<CancellationTokenSource, EventCoordinatorError>(
                 EventCoordinatorError.InvalidKey
@@ -92,14 +92,14 @@ public class EventCoordinatorMutex : IEventCoordinator
         );
     }
 
-    public IEnumerable<string> GetConnectionIds()
+    public IEnumerable<Guid> GetConnectionIds()
     {
         return _connections.Keys;
     }
 
-    public Result<bool, EventCoordinatorError> Remove(string id)
+    public Result<bool, EventCoordinatorError> Remove(Guid id)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
@@ -134,9 +134,9 @@ public class EventCoordinatorMutex : IEventCoordinator
         }
     }
 
-    public async Task<Result<bool, EventCoordinatorError>> SendMessage(string id, object message)
+    public async Task<Result<bool, EventCoordinatorError>> SendMessage(Guid id, object message)
     {
-        if (string.IsNullOrEmpty(id))
+        if (Guid.Empty.Equals(id))
         {
             return new Result<bool, EventCoordinatorError>(EventCoordinatorError.InvalidKey);
         }
