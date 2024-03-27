@@ -48,10 +48,12 @@ edit-docs: ## Run mkdocs local server for development
 	poetry install
 	poetry run mkdocs serve
 
+ANDROID_IMAGE := "system-images;android-31;android-tv;x86"
+
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;android-tv;x86"
-	avdmanager create avd -n "android_tv" -k "system-images;android-31;android-tv;x86" --force
+	sdkmanager $(ANDROID_IMAGE)
+	avdmanager create avd -n "android_tv" -k $(ANDROID_IMAGE) --force
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
