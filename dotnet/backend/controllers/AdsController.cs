@@ -1,8 +1,10 @@
+using Amazon.S3.Util;
 using AutoMapper;
 using backend.Services.Aws;
 using Microsoft.AspNetCore.Mvc;
 using model.Contracts;
 using model.Core;
+using Newtonsoft.Json;
 using persistence.Repository;
 using persistence.Repository.Base;
 using Tag = model.Core.Tag;
@@ -16,7 +18,6 @@ public class AdsController(
     ITagRepository tagRepository,
     IMapper mapper,
     IGetOrCreateBucketService getOrCreateBucketService,
-    IPutObjectService putObjectService,
     IPreSignObjectService preSignObjectService,
     ILogger<AdsController> logger
 ) : ControllerBase
@@ -71,16 +72,6 @@ public class AdsController(
         var bucketResponse = await getOrCreateBucketService.GetNonProcessed();
         if (!bucketResponse.IsSuccessful)
             return await RemoveAdAndReturn(ad, "bucket");
-
-        var objectResponse = await putObjectService.PutEmpty(
-            bucketResponse.Value,
-            ad.Id.ToString()
-        );
-        if (!objectResponse.IsSuccessful)
-            return await RemoveAdAndReturn(ad, "creating");
-
-        ad.ObjectId = objectResponse.Value;
-        maybeAd = await adRepository.Update(ad);
 
         var presignedResponse = await preSignObjectService.Put(
             bucketResponse.Value,

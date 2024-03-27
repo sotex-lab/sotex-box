@@ -1,16 +1,17 @@
 using Amazon.S3;
+using Amazon.SQS;
 
 namespace backend.Aws;
 
 public static class AwsClientRegistrator
 {
-    public static void ConfigureAwsClient(this IServiceCollection services)
+    public static void ConfigureAwsClients(this IServiceCollection services)
     {
         services.AddSingleton<IAmazonS3>(sp =>
         {
             var clientConfig = new AmazonS3Config
             {
-                ServiceURL = Environment.GetEnvironmentVariable("AWS_URL")!,
+                ServiceURL = Environment.GetEnvironmentVariable("AWS_S3_URL")!,
                 AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")!,
                 ForcePathStyle = true,
             };
@@ -25,8 +26,23 @@ public static class AwsClientRegistrator
             }
 
             return new AmazonS3Client(
-                Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!,
-                Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!,
+                Environment.GetEnvironmentVariable("AWS_S3_ACCESS_KEY")!,
+                Environment.GetEnvironmentVariable("AWS_S3_SECRET_KEY")!,
+                clientConfig
+            );
+        });
+
+        services.AddSingleton<IAmazonSQS>(sp =>
+        {
+            var clientConfig = new AmazonSQSConfig
+            {
+                ServiceURL = Environment.GetEnvironmentVariable("AWS_SQS_URL")!,
+                AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")!,
+            };
+
+            return new AmazonSQSClient(
+                Environment.GetEnvironmentVariable("AWS_SQS_ACCESS_KEY")!,
+                Environment.GetEnvironmentVariable("AWS_SQS_SECRET_KEY")!,
                 clientConfig
             );
         });
