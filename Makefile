@@ -48,10 +48,12 @@ edit-docs: ## Run mkdocs local server for development
 	poetry install
 	poetry run mkdocs serve
 
+ANDROID_IMAGE := "system-images;android-31;android-tv;x86"
+
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager "system-images;android-31;android-tv;arm64-v8a"
-	flutter emulators --create --name "local-emulator"
+	sdkmanager $(ANDROID_IMAGE)
+	avdmanager create avd -n "android_tv" -k $(ANDROID_IMAGE) --force
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
@@ -115,14 +117,21 @@ flutter-test: ## Shorthand for running all flutter tests
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
 
+.PHONY: run-emu
+run-emu: ## Shorthand for running the android emulator
+	emulator -avd "android_tv" -skin 1920x1080
+
+.PHONY: rotate-emu
+rotate-emu: ## Shorthand for rotating the android emulator
+	adb emu rotate
+
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
-	flutter emulators --launch local-emulator
 	(cd android/launcher && flutter run -d emulator-5554)
 
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
-	flutter emulators --launch local-emulator
+	emulator -avd "android_tv" -skin 1280x720
 	(cd android/sotex_box && flutter run -d emulator-5554)
 
 ##@ Benchmarking

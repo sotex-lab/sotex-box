@@ -630,3 +630,5 @@ app.*.map.json
 /android/sotex_box/android/app/debug
 /android/sotex_box/android/app/profile
 /android/sotex_box/android/app/release
+
+/.gradle
