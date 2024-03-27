@@ -14,11 +14,29 @@ make flutter-create-emulator
 ```
 **You only have to do this once**, but for the sake of simplicity and possibility of platform version changes it is added as a command.
 
+Before running any other part of the frontend you have to spin up the emulator.
+```bash
+make run-emu
+```
+
+Emulator might not be in the optimal orientation, so you can rotate it using:
+```bash
+make rotate-emu
+```
+
+Emulator runs in 1080p resolution however to have it in full-screen you can extend the window
+by dragging out the upper left corner.
+
+Emulator might not support back and home buttons. To remedy these go to: ```~/.android/avd/android_tv.avd/config.ini```.
+
+Set ```hw.dpad = yes```
+Set ```hw.keyboard = yes```
+
 In order to run a particular part of the frontend you can use make:
 
 ```bash
-make flutter-run-launcher # or
-make flutter-run-box
+make run-launcher # or
+make run-box
 ```
 
 ## Testing
