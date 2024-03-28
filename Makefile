@@ -138,7 +138,7 @@ run-box: ## Shorthand for running the sotex_box app locally
 .PHONY: dotnet-benchmark
 dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	dotnet run -c Release --project dotnet/benchmarks
-	cp BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md docs/benchmark-EventCoordinator.md
+	cat BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md >> docs/benchmark-EventCoordinator.md
 
 ##@ Infrastructure actions
 .PHONY: pulumi-up-staging

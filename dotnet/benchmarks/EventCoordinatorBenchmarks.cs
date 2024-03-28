@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using SseHandler;
 using SseHandler.EventCoordinators;
+using SseHandler.Metrics;
 
 [MemoryDiagnoser]
 public class Benchmarks
@@ -48,7 +49,8 @@ public class Benchmarks
             var connection = new Connection(Guid.NewGuid(), new MemoryStream());
             connections.TryAdd(connection.Id, connection);
         }
-        eventCoordinator = (IEventCoordinator)Activator.CreateInstance(Implementation, connections);
+        eventCoordinator = (IEventCoordinator)
+            Activator.CreateInstance(Implementation, connections, new DeviceMetrics());
     }
 
     [Benchmark]
