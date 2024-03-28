@@ -119,7 +119,7 @@ run-backend: ## Shorthand for running backend from cli
 
 .PHONY: run-emu
 run-emu: ## Shorthand for running the android emulator
-	emulator -avd "android_tv" -skin 1920x1080
+	emulator -avd "android_tv" -skin 1920x1080 # -no-snapshot-load
 
 .PHONY: rotate-emu
 rotate-emu: ## Shorthand for rotating the android emulator
