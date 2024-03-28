@@ -70,6 +70,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  flutter_splash_screen:
+    dependency: "direct main"
+    description:
+      name: flutter_splash_screen
+      sha256: fb3627363ecdaba4704bd7338d04da11797c8edc88258ed33e682b6100f93e2b
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -210,3 +218,4 @@ packages:
     version: "13.0.0"
 sdks:
   dart: ">=3.2.6 <4.0.0"
+  flutter: ">=3.0.0"
