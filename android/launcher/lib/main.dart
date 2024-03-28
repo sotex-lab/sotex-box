@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
+import 'package:launcher/src/channels/views/channel_page.dart';
+import 'package:launcher/src/common/network/cubits/network_cubit.dart';
+import 'package:launcher/src/common/network/network.dart';
 
 void main() {
   runApp(const SotexBox());
@@ -27,16 +31,19 @@ class SotexBoxState extends State<SotexBox> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Sotex Box'),
-        ),
-        body: const Center(
-          child: Text(
-            'Sotex Solutions',
-            style: TextStyle(fontSize: 20),
-          ),
+    return BlocProvider<NetworkCubit>(
+      create: (context) => NetworkCubit(),
+      child: BlocListener<NetworkCubit, NetworkState>(
+        listener: (context, state) {
+          if (state == NetworkState.offline) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const WifiPickerPage()),
+              (Route<dynamic> route) => false,
+            );
+          }
+        },
+        child: const MaterialApp(
+          home: WifiPickerPage(),
         ),
       ),
     );
