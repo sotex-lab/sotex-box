@@ -8,7 +8,6 @@ using BenchmarkDotNet.Attributes;
 using SseHandler;
 using SseHandler.EventCoordinators;
 using SseHandler.Metrics;
-using SseHandler.Serializers;
 
 [MemoryDiagnoser]
 public class Benchmarks

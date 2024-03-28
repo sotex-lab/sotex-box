@@ -114,4 +114,3 @@ Benchmarks with issues:
   Benchmarks.Add_N: DefaultJob [InitialSize=10000, Implementation=EventCoordinatorReaderWriterLock, amount=100]
   Benchmarks.Add_N: DefaultJob [InitialSize=10000, Implementation=EventCoordinatorReaderWriterLock, amount=1000]
   Benchmarks.Add_N: DefaultJob [InitialSize=100000, Implementation=EventCoordinatorReaderWriterLock, amount=1000]
-BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md
