@@ -3,6 +3,7 @@ using model.Core;
 using Newtonsoft.Json;
 using persistence.Repository;
 using Shouldly;
+using SseHandler.Commands;
 
 namespace e2e_tester.DeviceTests;
 
@@ -63,7 +64,7 @@ public class CreateDeviceTest : E2ETest
         {
             if (string.IsNullOrEmpty(line))
                 continue;
-            line.ShouldContain("noop");
+            line.ShouldContain(Command.Noop.AsString());
         }
     }
 }
