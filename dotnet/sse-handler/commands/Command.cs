@@ -2,7 +2,8 @@ namespace SseHandler.Commands;
 
 public enum Command
 {
-    Noop
+    Noop,
+    CallForSchedule
 }
 
 public static class CommandExtensions
