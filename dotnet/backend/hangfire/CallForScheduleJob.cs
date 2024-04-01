@@ -55,6 +55,24 @@ public class CallForScheduleJob
             : (new Configuration { Id = pageKey, Value = 0.ToString() }, true);
         var pageNumber = uint.TryParse(currentPage.Value, out var parsed) ? parsed : 0;
         List<Device> devices;
+
+        _logger.LogInformation(
+            "Calling for schedule page {0} and page size {1}",
+            pageNumber,
+            pageSize
+        );
+
+        var total = await _deviceRepository.Count();
+        if (total == 0)
+        {
+            _logger.LogInformation("No devices. Skipping...");
+            _backgroundJobClient.Schedule<CallForScheduleJob>(
+                nameof(CallForScheduleJob).ToLowerInvariant(),
+                job => job.Run(),
+                maxSpan
+            );
+            return;
+        }
         while (true)
         {
             devices = _deviceRepository.GetPage(pageNumber, pageSize).ToList();
@@ -64,7 +82,6 @@ public class CallForScheduleJob
                 pageNumber += 1;
                 break;
             }
-            ;
 
             pageNumber = 0;
         }
@@ -86,8 +103,7 @@ public class CallForScheduleJob
             _logger.LogError("Couldn't save config: {0}", response.Error.Stringify());
         }
 
-        var batches = await _deviceRepository.Count();
-        batches /= (int)pageSize;
+        var batches = total / (int)pageSize;
         batches = batches <= 0 ? 1 : batches;
 
         var next = maxSpan.Divide(batches);
