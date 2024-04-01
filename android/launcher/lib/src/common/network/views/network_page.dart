@@ -1,14 +1,16 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:launcher/src/channels/views/channel_page.dart';
 import 'package:launcher/src/common/network/cubits/network_cubit.dart';
+import 'package:launcher/src/common/settings/settings.dart';
 
 class WifiPickerPage extends StatelessWidget {
   const WifiPickerPage({super.key});
 
-  void _navigateToHelloWorld(BuildContext context) {
+  void _navigateToChannelPage(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const ChannelPage()),
+      MaterialPageRoute(builder: (context) => const ChannelPickerPage()),
     );
   }
 
@@ -16,22 +18,50 @@ class WifiPickerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wi-Fi Picker'),
+        title: SizedBox(
+          height: kToolbarHeight - 8.0,
+          child: Image.asset(
+            'assets/images/sotex_solutions.png',
+            fit: BoxFit.contain,
+          ),
+        ),
       ),
       body: BlocListener<NetworkCubit, NetworkState>(
         listener: (context, state) {
           if (state == NetworkState.online) {
-            _navigateToHelloWorld(context);
+            _navigateToChannelPage(context);
           }
         },
         child: Center(
           child: BlocBuilder<NetworkCubit, NetworkState>(
             builder: (context, state) {
               if (state == NetworkState.offline) {
-                return const Text(
-                    'No network connection. Please connect to Wi-Fi.');
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Ne postoji konekcija ka internetu. Molimo Vas da se povežete na Wi-Fi.",
+                      style: TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(
+                      height: 28,
+                    ),
+                    ElevatedButton(
+                        onPressed: () {
+                          AppSettings.openAppSettings(
+                              type: AppSettingsType.wifi);
+                        },
+                        child: const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              "Wi-Fi podešavanja.",
+                              style: TextStyle(fontSize: 32),
+                            )))
+                  ],
+                );
               } else {
-                return const CircularProgressIndicator();
+                return const ChannelPickerPage();
               }
             },
           ),

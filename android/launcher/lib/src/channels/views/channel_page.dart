@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ChannelPage extends StatelessWidget {
-  const ChannelPage({super.key});
+class ChannelPickerPage extends StatelessWidget {
+  const ChannelPickerPage({super.key});
 
   @override
   Widget build(BuildContext context) {
