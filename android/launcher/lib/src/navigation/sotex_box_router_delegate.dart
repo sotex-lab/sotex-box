@@ -8,18 +8,23 @@ class SotexBoxRouterDelegate extends RouterDelegate<NavigationState>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<NavigationState> {
   final GlobalKey<NavigatorState> navigatorKey;
   final NavigationCubit navigationCubit;
+  final NetworkCubit networkCubit;
 
-  SotexBoxRouterDelegate(this.navigationCubit)
+  SotexBoxRouterDelegate(this.navigationCubit, this.networkCubit)
       : navigatorKey = GlobalKey<NavigatorState>() {
     navigationCubit.stream.listen((event) {
+      notifyListeners();
+    });
+
+    networkCubit.stream.listen((event) {
       notifyListeners();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NavigationCubit, NavigationState>(
-      bloc: navigationCubit,
+    return BlocBuilder<NetworkCubit, NetworkState>(
+      bloc: networkCubit,
       builder: (context, state) {
         return Navigator(
           key: navigatorKey,

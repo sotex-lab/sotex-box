@@ -33,15 +33,22 @@ class SotexBoxState extends State<SotexBox> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerDelegate: SotexBoxRouterDelegate(navigationCubit),
-      routeInformationParser: SotexBoxInformationParser(),
-      theme:
-          ThemeData(brightness: Brightness.dark, primaryColor: Colors.blueGrey),
-      darkTheme:
-          ThemeData(brightness: Brightness.dark, primaryColor: Colors.blueGrey),
-      themeMode: ThemeMode.system,
-    );
+    return MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => NavigationCubit()),
+          BlocProvider(create: (context) => NetworkCubit())
+        ],
+        child: MaterialApp.router(
+          routerDelegate: SotexBoxRouterDelegate(
+              BlocProvider.of<NavigationCubit>(context),
+              BlocProvider.of<NetworkCubit>(context)),
+          routeInformationParser: SotexBoxInformationParser(),
+          theme: ThemeData(
+              brightness: Brightness.dark, primaryColor: Colors.blueGrey),
+          darkTheme: ThemeData(
+              brightness: Brightness.dark, primaryColor: Colors.blueGrey),
+          themeMode: ThemeMode.system,
+        ));
   }
 }
 
