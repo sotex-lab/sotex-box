@@ -14,5 +14,10 @@ public static class BackgroundJobClientConfiguration
             sqsProcessorJob => sqsProcessorJob.Run(),
             SqsProcessorJob.Cron()
         );
+        client.AddOrUpdate<CallForScheduleJob>(
+            "callForSchedule",
+            callForSchedulejob => callForSchedulejob.Run(),
+            CallForScheduleJob.Cron()
+        );
     }
 }

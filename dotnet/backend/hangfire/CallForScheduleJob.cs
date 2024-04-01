@@ -13,6 +13,9 @@ public class CallForScheduleJob : GenericCronJob<CallForScheduleJob>, IGenericCr
     private uint threashold =>
         uint.Parse(Environment.GetEnvironmentVariable("CALLFORSCHEDULE_DEVICE_THRESHOLD")!);
 
+    private static readonly string nextKey = "CALL_FOR_SCHEDULE_NEXT_KEY";
+    private static readonly string maxChars = "CALL_FOR_SCHEDULE_MAX_CHARS";
+
     public CallForScheduleJob(
         ILogger<GenericCronJob<CallForScheduleJob>> logger,
         IEventCoordinator eventCoordinator,
@@ -30,14 +33,17 @@ public class CallForScheduleJob : GenericCronJob<CallForScheduleJob>, IGenericCr
 
     public override async Task Run()
     {
-        var maybeCurrentKey = await _configRepository.GetSingle("CALL_FOR_SCHEDULE_NEXT_KEY");
-        var key = maybeCurrentKey.IsSuccessful ? maybeCurrentKey.Value.Value![0] : 'A';
-        var maybeCurrentMaxChars = await _configRepository.GetSingle("CALL_FOR_SCHEDULE_MAX_CHARS");
-        var maxChars = maybeCurrentMaxChars.IsSuccessful
-            ? uint.TryParse(maybeCurrentMaxChars.Value.Value, out uint chars)
-                ? chars
-                : 36
-            : 36;
+        var maybeCurrentKey = await _configRepository.GetSingle(nextKey);
+        var (currentKey, newKey) = maybeCurrentKey.IsSuccessful
+            ? (maybeCurrentKey.Value, false)
+            : (new model.Core.Configuration() { Id = nextKey, Value = 'A'.ToString() }, true);
+        var key = currentKey.Value![0];
+
+        var maybeCurrentMaxChars = await _configRepository.GetSingle(maxChars);
+        var (currentMaxChars, newChars) = maybeCurrentMaxChars.IsSuccessful
+            ? (maybeCurrentMaxChars.Value, false)
+            : (new model.Core.Configuration() { Id = maxChars, Value = 36.ToString() }, true);
+        var chars = uint.TryParse(currentMaxChars.Value, out uint outChars) ? outChars : 36;
 
         IEnumerable<Guid> batch;
 
@@ -46,14 +52,10 @@ public class CallForScheduleJob : GenericCronJob<CallForScheduleJob>, IGenericCr
             _logger.LogInformation(
                 "Running calculating of batch to call starting from {0} and taking {1} chars",
                 key,
-                maxChars
+                chars
             );
 
-            var result = _deviceBatcher.NextBatch(
-                _eventCoordinator.GetConnectionIds(),
-                key,
-                maxChars
-            );
+            var result = _deviceBatcher.NextBatch(_eventCoordinator.GetConnectionIds(), key, chars);
 
             if (!result.IsSuccessful)
             {
@@ -71,7 +73,7 @@ public class CallForScheduleJob : GenericCronJob<CallForScheduleJob>, IGenericCr
                 batch.Count(),
                 threashold
             );
-            maxChars -= 1;
+            chars -= 1;
         }
 
         var jobs = batch
@@ -79,15 +81,22 @@ public class CallForScheduleJob : GenericCronJob<CallForScheduleJob>, IGenericCr
             .ToList();
         await Task.WhenAll(jobs);
 
-        maybeCurrentKey.Value.Value = _deviceBatcher.NextKey(key, maxChars).ToString();
-        maybeCurrentMaxChars.Value.Value = maxChars.ToString();
+        currentKey.Value = _deviceBatcher.NextKey(key, chars).ToString();
+        currentMaxChars.Value = chars.ToString();
 
-        var tasks = new[]
+        var configs = new[] { (currentKey, newKey), (currentMaxChars, newChars) };
+        foreach (var (config, newConfig) in configs)
         {
-            _configRepository.Update(maybeCurrentKey.Value),
-            _configRepository.Update(maybeCurrentMaxChars.Value)
-        };
-        await Task.WhenAll(tasks);
+            var result = newConfig switch
+            {
+                true => await _configRepository.Add(config),
+                false => await _configRepository.Update(config)
+            };
+            if (result.IsSuccessful)
+                continue;
+
+            _logger.LogError("Failed to save config '{0}' due to: {1}", config.Id, result.Error);
+        }
 
         _logger.LogInformation("Finished calling devices for schedule");
     }
