@@ -154,10 +154,51 @@ public class CallForScheduleJobTests
 
         called.Count.ShouldBe(devices.Count);
         calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(10));
+        page.Value.ShouldBe("1".ToString());
     }
 
-    // Test what happens when there is more than threshold but it cannot be split anymore because maxChars is 1
-    // Test what happens when there is just one letter and is more than threshold
+    [TestMethod]
+    public async Task Should_SplitBecauseMoreThanMaxBatch()
+    {
+        Setup(3, 2, "00:10:00");
+        await job.Run();
+
+        called.Count.ShouldBe(2);
+        calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(1.25));
+        page.Value.ShouldBe("4".ToString());
+    }
+
+    [TestMethod]
+    public async Task Should_Rollover()
+    {
+        Setup((uint)(devices.Count / 2 + 1), 2, "00:10:00");
+        await job.Run();
+
+        called.Count.ShouldBe(2);
+        calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(1.25));
+        page.Value.ShouldBe("1".ToString());
+    }
+
+    [TestMethod]
+    public async Task Should_WorkInProd()
+    {
+        var prodDevices = new List<Guid>();
+        foreach (var device in devices)
+        {
+            for (int i = 0; i < 1200 / devices.Count; i++)
+            {
+                prodDevices.Add(device);
+            }
+        }
+        devices = prodDevices;
+        Setup(2, 100, "04:00:00");
+
+        await job.Run();
+
+        called.Count.ShouldBe(100);
+        calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(20));
+        page.Value.ShouldBe("3".ToString());
+    }
 }
 
 internal static class TimespanShouldly
