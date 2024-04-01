@@ -1,8 +1,9 @@
 using backend.Hangfire;
-using backend.Services.Batching;
 using DotNext;
 using Hangfire;
 using Hangfire.Common;
+using Hangfire.States;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using model.Core;
 using Moq;
@@ -16,16 +17,13 @@ namespace unit_tests;
 public class CallForScheduleJobTests
 {
     private CallForScheduleJob job;
-    private Mock<ILogger<CallForScheduleJob>> loggerMock = new Mock<ILogger<CallForScheduleJob>>();
     private Mock<IEventCoordinator> coordinatorMock = new Mock<IEventCoordinator>();
     private Mock<IConfigurationRepository> configRepoMock;
-    private IDeviceBatcher<Guid> deviceBatcher = new DeviceBatcher<Guid>();
+    private Mock<IDeviceRepository> deviceRepoMock;
     private Mock<IBackgroundJobClientV2> backroundSchedulerMock =
         new Mock<IBackgroundJobClientV2>();
-    private Configuration nextKey;
-    private const string nextKeyId = "CALL_FOR_SCHEDULE_NEXT_KEY";
-    private Configuration maxChars;
-    private const string maxCharsId = "CALL_FOR_SCHEDULE_MAX_CHARS";
+    private Configuration page;
+    private const string pageId = "CALL_FOR_SCHEDULE_PAGE";
     private List<Guid> devices = new List<Guid>
     {
         Guid.Parse("A6A94D36-DDEE-452D-BAEF-3CEF9F573D82"),
@@ -45,24 +43,22 @@ public class CallForScheduleJobTests
         Guid.Parse("86A94D36-DDEE-452D-BAEF-3CEF9F573D82"),
         Guid.Parse("96A94D36-DDEE-452D-BAEF-3CEF9F573D82"),
     };
-
+    private TimeSpan calledTimespan = new TimeSpan();
     private readonly List<Guid> called = new List<Guid>();
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public CallForScheduleJobTests()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    {
-        Setup('A', 16, 100, "00:10:00");
-    }
+    { }
 
-    private void Setup(char startChar, uint totalChars, int threshold, string maxDelay)
+    private void Setup(uint pageNumber, int threshold, string maxDelay)
     {
         coordinatorMock = new Mock<IEventCoordinator>();
         configRepoMock = new Mock<IConfigurationRepository>();
         backroundSchedulerMock = new Mock<IBackgroundJobClientV2>();
+        deviceRepoMock = new Mock<IDeviceRepository>();
 
-        nextKey = new Configuration { Id = nextKeyId, Value = startChar.ToString() };
-        maxChars = new Configuration { Id = maxCharsId, Value = totalChars.ToString() };
+        page = new Configuration { Id = pageId, Value = pageNumber.ToString() };
 
         Environment.SetEnvironmentVariable(
             "CALLFORSCHEDULE_DEVICE_THRESHOLD",
@@ -70,8 +66,7 @@ public class CallForScheduleJobTests
         );
         Environment.SetEnvironmentVariable("CALLFORSCHEDULE_MAX_DELAY", maxDelay);
 
-        configRepoMock.Setup(x => x.GetSingle(nextKey.Id, default)).ReturnsAsync(nextKey);
-        configRepoMock.Setup(x => x.GetSingle(maxChars.Id, default)).ReturnsAsync(maxChars);
+        configRepoMock.Setup(x => x.GetSingle(page.Id, default)).ReturnsAsync(page);
         configRepoMock
             .Setup(x => x.Update(It.IsAny<Configuration>(), default))
             .Callback<Configuration, CancellationToken>(
@@ -79,11 +74,8 @@ public class CallForScheduleJobTests
                 {
                     switch (config.Id)
                     {
-                        case nextKeyId:
-                            nextKey = config;
-                            break;
-                        case maxCharsId:
-                            maxChars = config;
+                        case pageId:
+                            page = config;
                             break;
                         default:
                             throw new Exception("Unexpected config key: " + config.Id);
@@ -97,32 +89,82 @@ public class CallForScheduleJobTests
             .Callback<Guid, object>(
                 (key, _) =>
                 {
-                    Console.WriteLine("Called: " + key);
                     called.Add(key);
                 }
             )
             .ReturnsAsync(new Result<bool, EventCoordinatorError>(true));
 
+        deviceRepoMock
+            .Setup(x => x.GetPage(It.IsAny<uint>(), It.IsAny<uint>()))
+            .Returns<uint, uint>(
+                (page, pageSize) =>
+                    devices
+                        .Skip((int)(page * pageSize))
+                        .Take((int)pageSize)
+                        .Select(x => new Device { Id = x })
+            );
+        deviceRepoMock.Setup(x => x.Count()).ReturnsAsync(() => devices.Count);
+
+        var factory = new ServiceCollection()
+            .AddLogging(opts => opts.AddConsole())
+            .BuildServiceProvider()
+            .GetService<ILoggerFactory>()!;
+
+        backroundSchedulerMock
+            .Setup(x => x.Create(It.IsAny<Job>(), It.IsAny<IState>()))
+            .Callback<Job, IState>(
+                (job, state) =>
+                {
+                    var scheduledState = (ScheduledState)state;
+                    calledTimespan = scheduledState.EnqueueAt.Subtract(DateTime.UtcNow);
+                    Console.WriteLine("Setting callback: " + calledTimespan);
+                }
+            );
+        backroundSchedulerMock
+            .Setup(x =>
+                x.Create(
+                    It.IsAny<Job>(),
+                    It.IsAny<IState>(),
+                    It.IsAny<IDictionary<string, object>>()
+                )
+            )
+            .Callback<Job, IState, IDictionary<string, object>>(
+                (job, state, dict) =>
+                {
+                    var scheduledState = (ScheduledState)state;
+                    calledTimespan = scheduledState.EnqueueAt.Subtract(DateTime.UtcNow);
+                    Console.WriteLine("Setting callback: " + calledTimespan);
+                }
+            );
+
         job = new CallForScheduleJob(
-            loggerMock.Object,
+            factory.CreateLogger<CallForScheduleJob>(),
             coordinatorMock.Object,
             configRepoMock.Object,
-            deviceBatcher,
-            backroundSchedulerMock.Object
+            backroundSchedulerMock.Object,
+            deviceRepoMock.Object
         );
     }
 
     [TestMethod]
     public async Task Should_CallAllDevices()
     {
+        Setup(0, 100, "00:10:00");
         await job.Run();
 
-        // called.Count.ShouldBe(16);
-        foreach (var device in called)
-        {
-            devices.ShouldContain(device);
-        }
+        called.Count.ShouldBe(devices.Count);
+        calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(10));
     }
 
-    //Test what happens when there is more than threshold but it cannot be split anymore because maxChars is 1
+    // Test what happens when there is more than threshold but it cannot be split anymore because maxChars is 1
+    // Test what happens when there is just one letter and is more than threshold
+}
+
+internal static class TimespanShouldly
+{
+    public static void ShouldBeAround(this TimeSpan timeSpan, TimeSpan other)
+    {
+        timeSpan.ShouldBeGreaterThanOrEqualTo(other.Subtract(TimeSpan.FromSeconds(2)));
+        timeSpan.ShouldBeLessThanOrEqualTo(other.Add(TimeSpan.FromSeconds(2)));
+    }
 }

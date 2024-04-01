@@ -1,6 +1,7 @@
-using backend.Services.Batching;
 using Hangfire;
+using model.Core;
 using persistence.Repository;
+using persistence.Repository.Base;
 using SseHandler;
 using SseHandler.Commands;
 
@@ -11,27 +12,26 @@ public class CallForScheduleJob
     private readonly ILogger<CallForScheduleJob> _logger;
     private readonly IEventCoordinator _eventCoordinator;
     private readonly IConfigurationRepository _configRepository;
-    private readonly IDeviceBatcher<Guid> _deviceBatcher;
     private readonly IBackgroundJobClientV2 _backgroundJobClient;
-    private uint threashold =>
+    private readonly IDeviceRepository _deviceRepository;
+    private uint pageSize =>
         uint.Parse(Environment.GetEnvironmentVariable("CALLFORSCHEDULE_DEVICE_THRESHOLD")!);
 
-    private static readonly string nextKey = "CALL_FOR_SCHEDULE_NEXT_KEY";
-    private static readonly string maxChars = "CALL_FOR_SCHEDULE_MAX_CHARS";
+    private static readonly string pageKey = "CALL_FOR_SCHEDULE_PAGE";
 
     public CallForScheduleJob(
         ILogger<CallForScheduleJob> logger,
         IEventCoordinator eventCoordinator,
         IConfigurationRepository configRepo,
-        IDeviceBatcher<Guid> deviceBatcher,
-        IBackgroundJobClientV2 backgroundJobClient
+        IBackgroundJobClientV2 backgroundJobClient,
+        IDeviceRepository deviceRepository
     )
     {
         _logger = logger;
         _eventCoordinator = eventCoordinator;
         _configRepository = configRepo;
-        _deviceBatcher = deviceBatcher;
         _backgroundJobClient = backgroundJobClient;
+        _deviceRepository = deviceRepository;
     }
 
     public static string EnvironmentVariableName => "CALLFORSCHEDULE_MAX_DELAY";
@@ -49,81 +49,54 @@ public class CallForScheduleJob
             return;
         }
 
-        var maybeCurrentKey = await _configRepository.GetSingle(nextKey);
-        var (currentKey, newKey) = maybeCurrentKey.IsSuccessful
-            ? (maybeCurrentKey.Value, false)
-            : (new model.Core.Configuration() { Id = nextKey, Value = 'A'.ToString() }, true);
-        var key = currentKey.Value![0];
-
-        var maybeCurrentMaxChars = await _configRepository.GetSingle(maxChars);
-        var (currentMaxChars, newChars) = maybeCurrentMaxChars.IsSuccessful
-            ? (maybeCurrentMaxChars.Value, false)
-            : (new model.Core.Configuration() { Id = maxChars, Value = 36.ToString() }, true);
-        var chars = uint.TryParse(currentMaxChars.Value, out uint outChars) ? outChars : 36;
-
-        IEnumerable<Guid> batch;
-
+        var maybeCurrentPage = await _configRepository.GetSingle(pageKey);
+        var (currentPage, shouldAdd) = maybeCurrentPage.IsSuccessful
+            ? (maybeCurrentPage.Value, false)
+            : (new Configuration { Id = pageKey, Value = 0.ToString() }, true);
+        var pageNumber = uint.TryParse(currentPage.Value, out var parsed) ? parsed : 0;
+        List<Device> devices;
         while (true)
         {
-            _logger.LogInformation(
-                "Running calculating of batch to call starting from {0} and taking {1} chars",
-                key,
-                chars
-            );
+            devices = _deviceRepository.GetPage(pageNumber, pageSize).ToList();
 
-            var result = _deviceBatcher.NextBatch(_eventCoordinator.GetConnectionIds(), key, chars);
-
-            if (!result.IsSuccessful)
+            if (devices.Count != 0)
             {
-                var formatted = string.Format("Unexpected result: {0}", result.Error);
-                _logger.LogError(formatted);
-                throw new Exception(formatted);
-            }
-
-            batch = result.Value;
-            if (batch.Count() <= threashold)
+                pageNumber += 1;
                 break;
+            }
+            ;
 
-            _logger.LogInformation(
-                "Device count '{0}' is greater than threshold '{1}', reducing...",
-                batch.Count(),
-                threashold
-            );
-            chars /= 2;
+            pageNumber = 0;
         }
 
-        var jobs = batch
-            .Select(x => _eventCoordinator.SendMessage(x, Command.CallForSchedule))
-            .ToList();
-        await Task.WhenAll(jobs);
+        _logger.LogInformation("Calling {0} devices for schedule", devices.Count);
 
-        currentKey.Value = _deviceBatcher.NextKey(key, chars).ToString();
-        currentMaxChars.Value = chars.ToString();
+        await Task.WhenAll(
+            devices.Select(x => _eventCoordinator.SendMessage(x.Id, Command.CallForSchedule))
+        );
 
-        var configs = new[] { (currentKey, newKey), (currentMaxChars, newChars) };
-        foreach (var (config, newConfig) in configs)
+        currentPage.Value = pageNumber.ToString();
+        var response = shouldAdd switch
         {
-            var result = newConfig switch
-            {
-                true => await _configRepository.Add(config),
-                false => await _configRepository.Update(config)
-            };
-            if (result.IsSuccessful)
-                continue;
-
-            _logger.LogError("Failed to save config '{0}' due to: {1}", config.Id, result.Error);
+            true => await _configRepository.Add(currentPage),
+            false => await _configRepository.Update(currentPage)
+        };
+        if (!response.IsSuccessful)
+        {
+            _logger.LogError("Couldn't save config: {0}", response.Error.Stringify());
         }
 
-        _logger.LogInformation("Finished calling devices for schedule");
+        var batches = await _deviceRepository.Count();
+        batches /= (int)pageSize;
+        batches = batches <= 0 ? 1 : batches;
 
-        var factor = 36 / chars;
-        var actual = maxSpan.Divide(factor);
+        var next = maxSpan.Divide(batches);
 
-        _logger.LogInformation("Queueing next execution in {0}", actual);
+        _logger.LogInformation("Scheduling next execution in {0}", next);
         _backgroundJobClient.Schedule<CallForScheduleJob>(
             nameof(CallForScheduleJob).ToLowerInvariant(),
             job => job.Run(),
-            actual
+            next
         );
     }
 }

@@ -1,6 +1,5 @@
 using Amazon.S3;
 using backend.Services.Aws;
-using backend.Services.Batching;
 
 namespace backend.Services;
 
@@ -16,7 +15,5 @@ public static class RegisterOurServicesExtensions
             sp.GetService<ILogger<PreSignObjectServiceImpl>>()!,
             Environment.GetEnvironmentVariable("AWS_PROTOCOL")!
         ));
-
-        services.AddSingleton<IDeviceBatcher<Guid>>(new DeviceBatcher<Guid>());
     }
 }
