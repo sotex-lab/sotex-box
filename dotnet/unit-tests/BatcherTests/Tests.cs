@@ -43,10 +43,10 @@ public class DeviceBatcherTests
             "AAAA",
             "BBB",
             "DDD",
-            "ZZZZZ",
+            "EEEEE",
             "0124",
             "1111",
-            "HHFAFS",
+            "FFFFF",
             "99"
         };
 
@@ -62,19 +62,19 @@ public class DeviceBatcherTests
             {
                 Starting = 'A',
                 Max = 5,
-                Want = new[] { "AAAA", "BBB", "DDD" }
+                Want = new[] { "AAAA", "BBB", "DDD", "EEEEE" }
             },
             new
             {
                 Starting = 'E',
-                Max = 36,
-                Want = new[] { "ZZZZZ", "0124", "1111", "HHFAFS", "99" }
+                Max = 16,
+                Want = new[] { "EEEEE", "0124", "1111", "FFFFF", "99" }
             },
             new
             {
                 Starting = 'A',
-                Max = 35,
-                Want = new[] { "AAAA", "BBB", "DDD", "ZZZZZ", "0124", "1111", "HHFAFS" }
+                Max = 15,
+                Want = new[] { "AAAA", "BBB", "DDD", "EEEEE", "0124", "1111", "FFFFF" }
             }
         };
 
@@ -88,8 +88,8 @@ public class DeviceBatcherTests
 
     [DataTestMethod]
     [DataRow('A', 1, 'B')]
-    [DataRow('A', 37, 'A')]
-    [DataRow('Z', 1, '0')]
+    [DataRow('A', 17, 'A')]
+    [DataRow('F', 1, '0')]
     [DataRow('0', 6, '6')]
     [DataRow('9', 1, 'A')]
     public void Should_CalculateCorrectlyNextKey(char start, int maxChars, char expected)

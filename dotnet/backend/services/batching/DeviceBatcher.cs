@@ -22,7 +22,7 @@ public enum BatchingError
 
 public class DeviceBatcher<T> : IDeviceBatcher<T>
 {
-    private static List<char> chars = new[] { Enumerable.Range('A', 26), Enumerable.Range('0', 10) }
+    private static List<char> chars = new[] { Enumerable.Range('A', 6), Enumerable.Range('0', 10) }
         .SelectMany(x => x)
         .Select(x => (char)x)
         .ToList();
@@ -41,7 +41,7 @@ public class DeviceBatcher<T> : IDeviceBatcher<T>
         if (!chars.Contains(starting))
             return new Result<IEnumerable<T>, BatchingError>(BatchingError.BadStartingChar);
 
-        if (maxChars == 0 || maxChars > 36)
+        if (maxChars == 0 || maxChars > 16)
             return new Result<IEnumerable<T>, BatchingError>(BatchingError.InvalidMaxChars);
 
         var indexOfStarting = chars.IndexOf(starting);
@@ -59,6 +59,6 @@ public class DeviceBatcher<T> : IDeviceBatcher<T>
     public char NextKey(char starting, uint maxChars)
     {
         var index = chars.IndexOf(starting) + maxChars;
-        return index >= 36 ? chars[0] : chars[(int)index];
+        return index >= 16 ? chars[0] : chars[(int)index];
     }
 }
