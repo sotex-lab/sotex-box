@@ -66,11 +66,7 @@ public class CallForScheduleJob
         if (total == 0)
         {
             _logger.LogInformation("No devices. Skipping...");
-            _backgroundJobClient.Schedule<CallForScheduleJob>(
-                nameof(CallForScheduleJob).ToLowerInvariant(),
-                job => job.Run(),
-                maxSpan
-            );
+            _backgroundJobClient.Schedule<CallForScheduleJob>(job => job.Run(), maxSpan);
             return;
         }
         while (true)
@@ -109,10 +105,6 @@ public class CallForScheduleJob
         var next = maxSpan.Divide(batches);
 
         _logger.LogInformation("Scheduling next execution in {0}", next);
-        _backgroundJobClient.Schedule<CallForScheduleJob>(
-            nameof(CallForScheduleJob).ToLowerInvariant(),
-            job => job.Run(),
-            next
-        );
+        _backgroundJobClient.Schedule<CallForScheduleJob>(job => job.Run(), next);
     }
 }

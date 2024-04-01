@@ -16,9 +16,6 @@ public static class BackgroundJobClientConfiguration
         );
 
         var standardClient = webApplication.Services.GetRequiredService<IBackgroundJobClientV2>();
-        standardClient.Enqueue<CallForScheduleJob>(
-            nameof(CallForScheduleJob).ToLowerInvariant(),
-            job => job.Run()
-        );
+        standardClient.Enqueue<CallForScheduleJob>(job => job.Run());
     }
 }
