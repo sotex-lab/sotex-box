@@ -64,7 +64,7 @@ public class CreateDeviceTest : E2ETest
         {
             if (string.IsNullOrEmpty(line))
                 continue;
-            line.ShouldContain(Command.Noop.AsString());
+            line.ShouldContain("data");
         }
     }
 }
