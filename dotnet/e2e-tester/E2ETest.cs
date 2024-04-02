@@ -116,8 +116,17 @@ public abstract class E2ETest
             Activator.CreateInstance(repoType, ctx.ApplicationDbContext)!;
     }
 
-    protected string GetEnvironmentVariable(string key) =>
-        ctx.EnvBag.ContainsKey(key) ? ctx.EnvBag[key] : string.Empty;
+    protected string GetEnvironmentVariable(string key)
+    {
+        if (!ctx.EnvBag.ContainsKey(key))
+            return string.Empty;
+
+        var value = ctx.EnvBag[key];
+
+        return value.StartsWith("\"") && value.EndsWith("\"")
+            ? value.Substring(1, value.Length - 2)
+            : value;
+    }
 }
 
 public class E2ECtx

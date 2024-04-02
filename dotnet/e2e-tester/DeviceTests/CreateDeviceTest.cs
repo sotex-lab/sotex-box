@@ -46,12 +46,12 @@ public class CreateDeviceTest : E2ETest
         _ = Task.Run(
             async () =>
             {
-                Info("Setting callback to disconnect the device");
+                Info("Setting callback to disconnect the device {0}", contract.Id);
                 await Task.Delay(DefaultJobInterval() * 2);
                 var disconnectResponse = await GetClient()
                     .DeleteAsync($"/event/forcedisconnect?id={contract.Id}");
                 disconnectResponse.IsSuccessStatusCode.ShouldBeTrue();
-                Info("Disconnected the device");
+                Info("Disconnected device {0}", contract.Id);
             },
             token
         );
