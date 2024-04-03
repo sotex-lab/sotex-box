@@ -99,8 +99,7 @@ public class CallForScheduleJob
             _logger.LogError("Couldn't save config: {0}", response.Error.Stringify());
         }
 
-        var batches = total / (int)pageSize;
-        batches = batches <= 0 ? 1 : batches;
+        var batches = (int)Math.Ceiling((double)total / pageSize);
 
         var next = maxSpan.Divide(batches);
 
