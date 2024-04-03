@@ -115,6 +115,18 @@ public abstract class E2ETest
         return (IRepository<TEntity, T>)
             Activator.CreateInstance(repoType, ctx.ApplicationDbContext)!;
     }
+
+    protected string GetEnvironmentVariable(string key)
+    {
+        if (!ctx.EnvBag.ContainsKey(key))
+            return string.Empty;
+
+        var value = ctx.EnvBag[key];
+
+        return value.StartsWith("\"") && value.EndsWith("\"")
+            ? value.Substring(1, value.Length - 2)
+            : value;
+    }
 }
 
 public class E2ECtx
@@ -127,6 +139,7 @@ public class E2ECtx
     public Action<string, object[]> Info { get; }
     public Action<string, object[]> Warn { get; }
     public Action<string, object[]> Error { get; }
+    public IDictionary<string, string> EnvBag { get; set; }
 
     public E2ECtx(
         ResiliencePipeline pipeline,
@@ -136,6 +149,7 @@ public class E2ECtx
         Action<string, object[]> info,
         Action<string, object[]> warn,
         Action<string, object[]> error,
+        IDictionary<string, string> envBag,
         CancellationToken token = default
     )
     {
@@ -147,6 +161,7 @@ public class E2ECtx
         Token = token;
         BackendPort = backendPort;
         ApplicationDbContext = applicationDbContext;
+        EnvBag = envBag;
     }
 }
 

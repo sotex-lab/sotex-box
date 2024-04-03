@@ -91,16 +91,8 @@ k6 run load-tests/sse/connectionTest.js --vus 30 --iterations 30 --env BACKEND_U
 
 **Important notes**:
 
-Keep in mind that this test can be quite heavy. The test runs the threads in parallel and keeps them open for `SECONDS` amount of time. Since the server sends the `noop` signal at fixed rates you can easily calculate how much data will the test create. The noop signal looks like `data: "noop"\n\n` and by default the server sends 1 noop each 15 seconds.
-```bash
-noop = "data: \"noop\"\\n\\n"                       # 14 bytes
-NOOP_INTERVAL = 15                                  # 1 noop per 15 seconds
-SECONDS = 600                                       # 10 minutes
-vus = 10                                            # 10 virtual users
-iterations = 10                                     # 10 iterations
-bytes_per_user = SECONDS * noop / NOOP_INTERVAL     # 560 bytes
-total_bytes = bytes_per_user * vus                  # 5600 bytes ~ 5.46 kB
-```
+Keep in mind that this test can be quite heavy. The test runs the threads in parallel and keeps them open for `SECONDS` amount of time. Since the server sends the `noop` signal at fixed rates you can easily calculate how much data will the test create. The noop signal looks like `data: 0\n\n` and by default the server sends 1 noop each 15 seconds. For a detailed math that one should keep in math visit [this page](/sotex-box/load-tests/load-test-results-connections.html#math).
+
 What this means is that one should be careful on how many users he spins and how long does the test last since it can be heavy on the machine running the test itself.
 
 ### E2E testing

@@ -1,4 +1,5 @@
 using SseHandler;
+using SseHandler.Commands;
 
 namespace backend.Hangfire;
 
@@ -20,7 +21,7 @@ public class NoopJob : GenericCronJob<NoopJob>, IGenericCronJob
 
         foreach (var device in _eventCoordinator.GetConnectionIds())
         {
-            await _eventCoordinator.SendMessage(device, "noop");
+            await _eventCoordinator.SendMessage(device, Command.Noop);
         }
 
         _logger.LogDebug("Sending noop signal finished");

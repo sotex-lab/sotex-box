@@ -61,11 +61,11 @@ CoconaApp.Run(
 
         try
         {
-            var tasks = executors.Select((x, i) => (x.Start(), i));
+            var tasks = executors.Select((x, i) => (x.Start(), i)).ToList();
             await Task.WhenAll(tasks.Select(x => x.Item1));
             foreach (var task in tasks)
             {
-                var outcome = await task.Item1;
+                var outcome = task.Item1.Result;
 
                 if (!outcome)
                 {
@@ -107,6 +107,10 @@ CoconaApp.Run(
         catch (OperationCanceledException)
         {
             globalLogger.LogInformation("Received shutdown");
+        }
+        catch (Exception e)
+        {
+            globalLogger.LogError("Received error: {0}", e);
         }
         finally
         {

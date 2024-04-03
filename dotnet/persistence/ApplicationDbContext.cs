@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Ad> Ads { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<Device> Devices { get; set; }
+    public DbSet<Configuration> Configurations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
