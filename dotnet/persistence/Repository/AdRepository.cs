@@ -18,8 +18,13 @@ public class AdRepository(ApplicationDbContext context)
     {
         IQueryable<Ad> adsQuery = DbSet;
 
-        if (id == Guid.Empty)
-            adsQuery = adsQuery.SkipWhile(x => x.Id != id);
+        if (id != Guid.Empty)
+        {
+            var firstMatching = await DbSet
+                .Select((x, i) => new Tuple<Ad, int>(x, i))
+                .SingleAsync(t => t.Item1.Id == id);
+            adsQuery = adsQuery.Skip(firstMatching.Item2);
+        }
 
         var takenAds = await adsQuery.Take((int)take).ToListAsync();
         if (takenAds.Count < take && takenAds.Count < await DbSet.CountAsync())

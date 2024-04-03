@@ -91,6 +91,7 @@ ifeq ($(ABSOLUTE_PATH),auto)
 	override ABSOLUTE_PATH = $(shell git rev-parse --show-toplevel)
 endif
 .PHONY: dotnet-e2e-tests
+dotnet-e2e-tests: ensure-setup
 dotnet-e2e-tests: container-build-backend
 dotnet-e2e-tests: container-build-local-pusher
 dotnet-e2e-tests: ## Run dotnet e2e tests, excluded from dotnet-test
@@ -179,6 +180,7 @@ ensure-setup:
     fi
 
 	mkdir -p volumes.local/minio volumes.local/backend
+	chmod o+w volumes.local/backend
 
 .PHONY: compose-up
 compose-up: container-build-backend

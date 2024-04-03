@@ -45,6 +45,7 @@ public class CallForScheduleJobTests
     };
     private TimeSpan calledTimespan = new TimeSpan();
     private readonly List<Guid> called = new List<Guid>();
+    private int enqueueCall = 0;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public CallForScheduleJobTests()
@@ -115,9 +116,15 @@ public class CallForScheduleJobTests
             .Callback<Job, IState>(
                 (job, state) =>
                 {
-                    var scheduledState = (ScheduledState)state;
-                    calledTimespan = scheduledState.EnqueueAt.Subtract(DateTime.UtcNow);
-                    Console.WriteLine("Setting callback: " + calledTimespan);
+                    if (state is ScheduledState scheduledState)
+                    {
+                        calledTimespan = scheduledState.EnqueueAt.Subtract(DateTime.UtcNow);
+                        Console.WriteLine("Setting callback: " + calledTimespan);
+                    }
+                    else if (state is EnqueuedState enqueuedState)
+                    {
+                        enqueueCall++;
+                    }
                 }
             );
         backroundSchedulerMock
@@ -155,6 +162,7 @@ public class CallForScheduleJobTests
         called.Count.ShouldBe(devices.Count);
         calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(10));
         page.Value.ShouldBe("1".ToString());
+        enqueueCall.ShouldBe(devices.Count);
     }
 
     [TestMethod]
@@ -166,6 +174,7 @@ public class CallForScheduleJobTests
         called.Count.ShouldBe(2);
         calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(1.25));
         page.Value.ShouldBe("4".ToString());
+        enqueueCall.ShouldBe(2);
     }
 
     [TestMethod]
@@ -177,6 +186,7 @@ public class CallForScheduleJobTests
         called.Count.ShouldBe(2);
         calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(1.25));
         page.Value.ShouldBe("1".ToString());
+        enqueueCall.ShouldBe(2);
     }
 
     [TestMethod]
@@ -198,6 +208,7 @@ public class CallForScheduleJobTests
         called.Count.ShouldBe(100);
         calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(20));
         page.Value.ShouldBe("3".ToString());
+        enqueueCall.ShouldBe(100);
     }
 }
 

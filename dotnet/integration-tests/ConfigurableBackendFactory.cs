@@ -82,6 +82,11 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["AWS_SQS_SECRET_KEY"] = "x",
             ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = "/000000000000/nonprocessed",
             ["REQUIRE_KNOWN_DEVICES"] = "false",
+            ["CALLFORSCHEDULE_MAX_DELAY"] = "00:01:00",
+            ["CALLFORSCHEDULE_DEVICE_THRESHOLD"] = "100",
+            ["CALCULATESCHEDULEFOR_DEVICE_THRESHOLD"] = "10",
+            ["CALCULATESCHEDULEFOR_DEVICE_LOCALPATH"] =
+                $"{topLevel}/volumes.local/backend/schedules"
         };
 
         foreach (var kvp in backendEnvVars)

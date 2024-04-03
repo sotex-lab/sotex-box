@@ -5,7 +5,7 @@ services:
     environment:
       - DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
     volumes:
-      - ./volumes.local/backend/:/backend
+      - ./volumes.local/backend/:/backend/mounted
     env_file:
       - .env
 

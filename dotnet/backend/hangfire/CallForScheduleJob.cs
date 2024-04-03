@@ -1,3 +1,4 @@
+using DotNext.Collections.Generic;
 using Hangfire;
 using model.Core;
 using persistence.Repository;
@@ -54,7 +55,6 @@ public class CallForScheduleJob
             ? (maybeCurrentPage.Value, false)
             : (new Configuration { Id = pageKey, Value = 0.ToString() }, true);
         var pageNumber = uint.TryParse(currentPage.Value, out var parsed) ? parsed : 0;
-        List<Device> devices;
 
         _logger.LogInformation(
             "Calling for schedule page {0} and page size {1}",
@@ -69,18 +69,7 @@ public class CallForScheduleJob
             _backgroundJobClient.Schedule<CallForScheduleJob>(job => job.Run(), maxSpan);
             return;
         }
-        while (true)
-        {
-            devices = _deviceRepository.GetPage(pageNumber, pageSize).ToList();
-
-            if (devices.Count != 0)
-            {
-                pageNumber += 1;
-                break;
-            }
-
-            pageNumber = 0;
-        }
+        var devices = GetBatch(ref pageNumber, pageSize);
 
         _logger.LogInformation("Calling {0} devices for schedule", devices.Count);
 
@@ -105,5 +94,30 @@ public class CallForScheduleJob
 
         _logger.LogInformation("Scheduling next execution in {0}", next);
         _backgroundJobClient.Schedule<CallForScheduleJob>(job => job.Run(), next);
+
+        _logger.LogInformation("Scheduling calulation of schedule for next batch");
+        devices = GetBatch(ref pageNumber, pageSize);
+
+        devices.ForEach(x =>
+            _backgroundJobClient.Enqueue<CalculateScheduleForDeviceJob>(job =>
+                job.Calculate(x.Id.ToString())
+            )
+        );
+    }
+
+    private List<Device> GetBatch(ref uint pageNumber, uint pageSize)
+    {
+        while (true)
+        {
+            var devices = _deviceRepository.GetPage(pageNumber, pageSize).ToList();
+
+            if (devices.Count != 0)
+            {
+                pageNumber += 1;
+                return devices;
+            }
+
+            pageNumber = 0;
+        }
     }
 }

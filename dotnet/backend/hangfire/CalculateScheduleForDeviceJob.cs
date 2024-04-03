@@ -44,8 +44,13 @@ public class CalculateScheduleForDeviceJob
         _fileUtil = fileUtil;
     }
 
-    public async Task Calculate(Guid deviceId)
+    public async Task Calculate(string deviceIdString)
     {
+        if (!Guid.TryParse(deviceIdString, out var deviceId))
+        {
+            _logger.LogError("Couldn't parse string {0} as a valid Guid", deviceIdString);
+            return;
+        }
         var maybeBucket = await _bucketService.GetProcessed();
         if (!maybeBucket.IsSuccessful)
         {

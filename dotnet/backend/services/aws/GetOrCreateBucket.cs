@@ -25,7 +25,9 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
     private readonly ILogger<GetOrCreateBucketServiceImpl> _logger;
 
     private static string nonProcessed = "non-processed";
+#pragma warning disable CS0414 // Add readonly modifier
     private static string processed = "processed";
+#pragma warning restore CS0414 // Add readonly modifier
 
     public GetOrCreateBucketServiceImpl(IAmazonS3 s3, ILogger<GetOrCreateBucketServiceImpl> logger)
     {
@@ -34,7 +36,7 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
     }
 
     //TODO: should be changed to processed once we implement the way of transfering from
-    //      one bucket to another
+    //      one bucket to another. Also should remove the queting of warning above
     public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetProcessed() =>
         await EnsureCreated(nonProcessed);
 

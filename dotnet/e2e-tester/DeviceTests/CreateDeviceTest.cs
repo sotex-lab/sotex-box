@@ -1,9 +1,8 @@
 using System.Text;
+using model.Contracts;
 using model.Core;
 using Newtonsoft.Json;
-using persistence.Repository;
 using Shouldly;
-using SseHandler.Commands;
 
 namespace e2e_tester.DeviceTests;
 
