@@ -4,6 +4,8 @@ services:
     image: ghcr.io/sotex-lab/sotex-box/backend:${COMMIT_SHA}
     environment:
       - DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
+    volumes:
+      - ./volumes.local/backend/:/backend
     env_file:
       - .env
 

@@ -1,5 +1,6 @@
 using Amazon.S3;
 using backend.Services.Aws;
+using backend.Services.Files;
 
 namespace backend.Services;
 
@@ -15,5 +16,7 @@ public static class RegisterOurServicesExtensions
             sp.GetService<ILogger<PreSignObjectServiceImpl>>()!,
             Environment.GetEnvironmentVariable("AWS_PROTOCOL")!
         ));
+
+        services.AddTransient<IFileUtil, FileUtil>();
     }
 }

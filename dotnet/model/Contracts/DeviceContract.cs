@@ -1,5 +1,7 @@
 using System.Net;
 
+namespace model.Contracts;
+
 public class DeviceContract
 {
     public Guid Id { get; set; }

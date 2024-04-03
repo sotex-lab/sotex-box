@@ -33,8 +33,10 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
         _logger = logger;
     }
 
+    //TODO: should be changed to processed once we implement the way of transfering from
+    //      one bucket to another
     public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetProcessed() =>
-        await EnsureCreated(processed);
+        await EnsureCreated(nonProcessed);
 
     public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetNonProcessed() =>
         await EnsureCreated(nonProcessed);
