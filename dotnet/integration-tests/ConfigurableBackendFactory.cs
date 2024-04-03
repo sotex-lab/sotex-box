@@ -86,7 +86,8 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["CALLFORSCHEDULE_DEVICE_THRESHOLD"] = "100",
             ["CALCULATESCHEDULEFOR_DEVICE_THRESHOLD"] = "10",
             ["CALCULATESCHEDULEFOR_DEVICE_LOCALPATH"] =
-                $"{topLevel}/volumes.local/backend/schedules"
+                $"{topLevel}/volumes.local/backend/schedules",
+            ["CALCULATESCHEDULEFOR_URL_EXPIRE"] = "01:00:00"
         };
 
         foreach (var kvp in backendEnvVars)
