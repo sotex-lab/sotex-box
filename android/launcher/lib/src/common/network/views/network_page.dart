@@ -16,56 +16,38 @@ class WifiPickerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: SizedBox(
-          height: kToolbarHeight - 8.0,
-          child: Image.asset(
-            'assets/images/sotex_solutions.png',
-            fit: BoxFit.contain,
+        appBar: AppBar(
+          title: SizedBox(
+            height: kToolbarHeight - 8.0,
+            child: Image.asset(
+              'assets/images/sotex_solutions.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
-      ),
-      body: BlocListener<NetworkCubit, NetworkState>(
-        listener: (context, state) {
-          if (state == NetworkState.online) {
-            _navigateToChannelPage(context);
-          }
-        },
-        child: Center(
-          child: BlocBuilder<NetworkCubit, NetworkState>(
-            builder: (context, state) {
-              if (state == NetworkState.offline) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Ne postoji konekcija ka internetu. Molimo Vas da se povežete na Wi-Fi.",
+        body: Center(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text(
+              "Ne postoji konekcija ka internetu. Molimo Vas da se povežete na Wi-Fi.",
+              style: TextStyle(fontSize: 32),
+            ),
+            const SizedBox(
+              height: 28,
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  AppSettings.openAppSettings(type: AppSettingsType.wifi);
+                },
+                child: const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      "Wi-Fi podešavanja.",
                       style: TextStyle(fontSize: 32),
-                    ),
-                    const SizedBox(
-                      height: 28,
-                    ),
-                    ElevatedButton(
-                        onPressed: () {
-                          AppSettings.openAppSettings(
-                              type: AppSettingsType.wifi);
-                        },
-                        child: const Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text(
-                              "Wi-Fi podešavanja.",
-                              style: TextStyle(fontSize: 32),
-                            )))
-                  ],
-                );
-              } else {
-                return const ChannelPickerPage();
-              }
-            },
-          ),
-        ),
-      ),
-    );
+                    )))
+          ],
+        )));
   }
 }

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
 import 'package:launcher/src/common/network/network.dart';
+import 'package:launcher/src/navigation/app_navigator.dart';
+import 'package:launcher/src/navigation/app_router_delegate.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
-import 'package:launcher/src/navigation/sotex_box_information_parser.dart';
-import 'package:launcher/src/navigation/sotex_box_router_delegate.dart';
 
 void main() {
   runApp(const SotexBox());
@@ -33,38 +33,19 @@ class SotexBoxState extends State<SotexBox> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-        providers: [
+    return MaterialApp(
+        home: MultiBlocProvider(
+            providers: [
           BlocProvider(create: (context) => NavigationCubit()),
-          BlocProvider(create: (context) => NetworkCubit())
+          BlocProvider(create: (context) => NetworkCubit()),
         ],
-        child: MaterialApp.router(
-          routerDelegate: SotexBoxRouterDelegate(
-              BlocProvider.of<NavigationCubit>(context),
-              BlocProvider.of<NetworkCubit>(context)),
-          routeInformationParser: SotexBoxInformationParser(),
-          theme: ThemeData(
-              brightness: Brightness.dark, primaryColor: Colors.blueGrey),
-          darkTheme: ThemeData(
-              brightness: Brightness.dark, primaryColor: Colors.blueGrey),
-          themeMode: ThemeMode.system,
-        ));
+            child: MaterialApp.router(
+              theme: ThemeData(
+                  brightness: Brightness.dark, primaryColor: Colors.blueGrey),
+              darkTheme: ThemeData(
+                  brightness: Brightness.dark, primaryColor: Colors.blueGrey),
+              themeMode: ThemeMode.system,
+              routerDelegate: AppRouterDelegate(),
+            )));
   }
 }
-
-    // return BlocProvider<NetworkCubit>(
-    //   create: (context) => NetworkCubit(),
-    //   child: BlocListener<NetworkCubit, NetworkState>(
-    //     listener: (context, state) {
-    //       if (state == NetworkState.offline) {
-    //         Navigator.of(context).pushAndRemoveUntil(
-    //           MaterialPageRoute(builder: (context) => const WifiPickerPage()),
-    //           (Route<dynamic> route) => false,
-    //         );
-    //       }
-    //     },
-    //     child: MaterialApp(
-    //       home: const WifiPickerPage(),
-    //     ),
-    //   ),
-    // );
