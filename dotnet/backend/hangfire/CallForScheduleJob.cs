@@ -96,13 +96,25 @@ public class CallForScheduleJob
         _backgroundJobClient.Schedule<CallForScheduleJob>(job => job.Run(), next);
 
         _logger.LogInformation("Scheduling calulation of schedule for next batch");
-        devices = GetBatch(ref pageNumber, pageSize);
+        var nextDevices = GetBatch(ref pageNumber, pageSize);
 
-        devices.ForEach(x =>
+        foreach (var device in nextDevices)
+        {
+            if (devices.FirstOrDefault(x => x.Id == device.Id) != null)
+            {
+                // If any device from the next batch is in also in the current batch
+                // we should delay calculation of its new schedule since its possible
+                // that the schedule is recalculated before its fetched by the device
+                _backgroundJobClient.Schedule<CalculateScheduleForDeviceJob>(
+                    job => job.Calculate(device.Id.ToString()),
+                    next.Divide(2)
+                );
+                continue;
+            }
             _backgroundJobClient.Enqueue<CalculateScheduleForDeviceJob>(job =>
-                job.Calculate(x.Id.ToString())
-            )
-        );
+                job.Calculate(device.Id.ToString())
+            );
+        }
     }
 
     private List<Device> GetBatch(ref uint pageNumber, uint pageSize)
