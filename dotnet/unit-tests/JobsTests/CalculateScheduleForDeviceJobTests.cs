@@ -71,7 +71,7 @@ public class CalculateScheduleForDeviceJobTests
         );
     }
 
-    private void Setup(uint pageSize, string localStoragePath)
+    private void Setup(uint pageSize, string localStoragePath, ScheduleContract? contract = null)
     {
         Environment.SetEnvironmentVariable(
             "CALCULATESCHEDULEFOR_DEVICE_THRESHOLD",
@@ -111,7 +111,7 @@ public class CalculateScheduleForDeviceJobTests
         fileUtilMock.Setup(x => x.FileExists(It.IsAny<string>())).Returns(true);
         fileUtilMock
             .Setup(x => x.ReadAllTextAsync(It.IsAny<string>()))
-            .ReturnsAsync(JsonConvert.SerializeObject(new ScheduleContract()));
+            .ReturnsAsync(JsonConvert.SerializeObject(contract ?? new ScheduleContract()));
         fileUtilMock
             .Setup(x => x.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
             .Callback<string, string>(
@@ -126,12 +126,12 @@ public class CalculateScheduleForDeviceJobTests
             .Returns<Guid, uint>(
                 (id, take) =>
                 {
-                    IQueryable adsQuery = ads.AsQueryable();
+                    IQueryable<Ad> adsQuery = ads.AsQueryable();
                     if (id != Guid.Empty)
                     {
-                        ads.TakeWhile(x => x.Id != id);
+                        adsQuery = adsQuery.SkipWhile(x => x.Id != id).Skip(1);
                     }
-                    return Task.FromResult(ads.Take((int)take));
+                    return Task.FromResult(adsQuery.Take((int)take).AsEnumerable());
                 }
             );
 
@@ -224,5 +224,59 @@ public class CalculateScheduleForDeviceJobTests
             x.DownloadLink.ShouldNotBeNullOrEmpty();
             adIds.ShouldContain(x.Ad!.Id);
         });
+    }
+
+    [TestMethod]
+    public async Task Should_CreateScheduleIfNotStartingFromNothing()
+    {
+        Enumerable
+            .Range(0, 1000)
+            .Select(_ => new Ad { AdScope = AdScope.Global, Id = Guid.NewGuid(), })
+            .ForEach(ads.Add);
+        var randomAd = new Random().Next(0, ads.Count);
+
+        var schedule = new ScheduleContract
+        {
+            CreatedAt = DateTime.Now,
+            DeviceId = devices[0],
+            Schedule =
+            [
+                new ScheduleItemContract
+                {
+                    Ad = new AdContract { Id = ads[randomAd].Id, Scope = ads[randomAd++].AdScope }
+                }
+            ]
+        };
+
+        GetOrCreateReturns("test");
+        uint pageSize = 10;
+        Setup(pageSize, "/", schedule);
+
+        await job.Calculate(devices[0].ToString());
+
+        fileUtilMock.Verify(
+            x => x.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Once()
+        );
+        var deserialized = Deserialize();
+        deserialized.Schedule.Count().ShouldBe(10);
+        var expectedAds = new List<Ad>();
+        while (expectedAds.Count != pageSize)
+        {
+            if (randomAd == ads.Count)
+            {
+                randomAd = 0;
+            }
+            expectedAds.Add(ads[randomAd++]);
+        }
+        var outcome = true;
+        for (int i = 0; i < expectedAds.Count; i++)
+        {
+            var expected = expectedAds[i].Id;
+            var got = deserialized.Schedule.ElementAt(i).Ad!.Id;
+            Console.WriteLine("Got {0}, Expected {1}", got, expected);
+            outcome &= got == expected;
+        }
+        outcome.ShouldBeTrue();
     }
 }
