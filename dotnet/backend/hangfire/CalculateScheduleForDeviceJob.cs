@@ -84,7 +84,7 @@ public class CalculateScheduleForDeviceJob
         {
             _logger.LogInformation("Found previous schedule for device {0}", deviceId);
             oldSchedule = JsonConvert.DeserializeObject<ScheduleContract>(
-                await File.ReadAllTextAsync(filePath)
+                await _fileUtil.ReadAllTextAsync(filePath)
             );
         }
 
