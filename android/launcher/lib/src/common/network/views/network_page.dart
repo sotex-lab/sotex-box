@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:launcher/src/channels/views/channel_page.dart';
 import 'package:launcher/src/common/network/cubits/network_cubit.dart';
-import 'package:launcher/src/common/settings/settings.dart';
 
 class WifiPickerPage extends StatelessWidget {
   const WifiPickerPage({super.key});

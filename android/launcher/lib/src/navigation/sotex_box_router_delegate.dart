@@ -6,6 +6,7 @@ import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
 
 class SotexBoxRouterDelegate extends RouterDelegate<NavigationState>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<NavigationState> {
+  @override
   final GlobalKey<NavigatorState> navigatorKey;
   final NavigationCubit navigationCubit;
   final NetworkCubit networkCubit;

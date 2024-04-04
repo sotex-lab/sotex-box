@@ -7,11 +7,11 @@ import 'package:launcher/src/navigation/sotex_box_information_parser.dart';
 import 'package:launcher/src/navigation/sotex_box_router_delegate.dart';
 
 void main() {
-  runApp(SotexBox());
+  runApp(const SotexBox());
 }
 
 class SotexBox extends StatefulWidget {
-  SotexBox({super.key});
+  const SotexBox({super.key});
 
   @override
   State<StatefulWidget> createState() => SotexBoxState();
