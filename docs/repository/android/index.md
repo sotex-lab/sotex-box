@@ -55,3 +55,5 @@ To run a particular set of tests you can use `make`:
 make flutter-test-launcher # or
 make flutter-test-box
 ```
+
+If you have problems setting it up, look at this [troubleshooting guide](troubleshoot.md).
