@@ -54,6 +54,7 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.ConfigureAwsClients();
 builder.Services.RegisterOurServices();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
