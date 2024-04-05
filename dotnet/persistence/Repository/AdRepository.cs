@@ -20,10 +20,9 @@ public class AdRepository(ApplicationDbContext context)
 
         if (id != Guid.Empty)
         {
-            var firstMatching = await DbSet
-                .Select((x, i) => new Tuple<Ad, int>(x, i))
-                .SingleAsync(t => t.Item1.Id == id);
-            adsQuery = adsQuery.Skip(firstMatching.Item2);
+            var ids = await DbSet.Select(x => x.Id).ToListAsync();
+            var firstMatching = ids.Select((x, i) => (x, i)).Single(t => t.x == id);
+            adsQuery = adsQuery.Skip(firstMatching.i);
         }
 
         var takenAds = await adsQuery.Take((int)take).ToListAsync();

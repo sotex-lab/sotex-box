@@ -34,10 +34,16 @@ public class GetObjectService : IGetObjectService
         string key
     )
     {
-        var response = await _s3Client.GetObjectAsync(bucket.BucketName, key);
-        if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+        GetObjectResponse response;
+        try
         {
-            _logger.LogWarning("Unexpected status code: {0}", response.HttpStatusCode);
+            response = await _s3Client.GetObjectAsync(bucket.BucketName, key);
+            if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                throw new Exception(response.HttpStatusCode.ToString());
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning("Unexpected status code: {0}", e.Message);
             return new Result<ScheduleContract, GetObjectError>(GetObjectError.KeyNotFound);
         }
 
