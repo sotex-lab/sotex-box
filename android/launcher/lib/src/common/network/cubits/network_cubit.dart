@@ -5,16 +5,23 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 enum NetworkState { online, offline }
 
 class NetworkCubit extends Cubit<NetworkState> {
-  final Connectivity _connectivity = Connectivity();
+  late Connectivity _connectivity;
+
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   NetworkCubit() : super(NetworkState.offline) {
-    _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen(_updateState);
-    _checkCurrentConnectivity();
+    _connectivity = Connectivity();
+    _connectivity.onConnectivityChanged.listen(updateState);
   }
 
-  void _updateState(List<ConnectivityResult> result) {
+  NetworkCubit.params(Stream<List<ConnectivityResult>> connectivityStream,
+      Connectivity connectivity)
+      : super(NetworkState.offline) {
+    _connectivitySubscription = connectivityStream.listen(updateState);
+    _connectivity = connectivity;
+  }
+
+  void updateState(List<ConnectivityResult> result) {
     if (result.contains(ConnectivityResult.ethernet) ||
         result.contains(ConnectivityResult.wifi) ||
         result.contains(ConnectivityResult.mobile)) {
@@ -24,9 +31,8 @@ class NetworkCubit extends Cubit<NetworkState> {
     }
   }
 
-  Future<void> _checkCurrentConnectivity() async {
-    var result = await _connectivity.checkConnectivity();
-    _updateState(result);
+  Future<List<ConnectivityResult>> checkConnectivity() async {
+    return await _connectivity.checkConnectivity();
   }
 
   @override

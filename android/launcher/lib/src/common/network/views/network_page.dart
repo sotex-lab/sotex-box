@@ -1,17 +1,8 @@
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:launcher/src/channels/views/channel_page.dart';
-import 'package:launcher/src/common/network/cubits/network_cubit.dart';
 
 class WifiPickerPage extends StatelessWidget {
   const WifiPickerPage({super.key});
-
-  void _navigateToChannelPage(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const ChannelPickerPage()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
