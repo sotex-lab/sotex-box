@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
+import 'package:launcher/safe_casting.dart';
 
 void main() {
   runApp(const SotexBox());
@@ -13,6 +14,9 @@ class SotexBox extends StatefulWidget {
 }
 
 class SotexBoxState extends State<SotexBox> {
+  int get splashScreenDuration => tryCastInt(
+      const String.fromEnvironment("splash_screen_duration", defaultValue: ""),
+      fallback: 3600);
   @override
   void initState() {
     super.initState();
@@ -20,7 +24,7 @@ class SotexBoxState extends State<SotexBox> {
   }
 
   Future<void> hideScreen() async {
-    Future.delayed(const Duration(milliseconds: 3600), () {
+    Future.delayed(Duration(milliseconds: splashScreenDuration), () {
       FlutterSplashScreen.hide();
     });
   }
