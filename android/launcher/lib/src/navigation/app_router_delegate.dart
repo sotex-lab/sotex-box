@@ -9,18 +9,8 @@ class AppRouterDelegate extends RouterDelegate<NavigationState>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<NavigationState> {
   @override
   final GlobalKey<NavigatorState> navigatorKey;
-  // final NavigationCubit navigationCubit;
-  // final NetworkCubit networkCubit;
 
-  AppRouterDelegate() : navigatorKey = GlobalKey<NavigatorState>() {
-    // navigationCubit.stream.listen((event) {
-    //   notifyListeners();
-    // });
-
-    // networkCubit.stream.listen((event) {
-    //   notifyListeners();
-    // });
-  }
+  AppRouterDelegate() : navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +21,14 @@ class AppRouterDelegate extends RouterDelegate<NavigationState>
                 return Navigator(
                   key: navigatorKey,
                   pages: [
-                    if (navigationState is WiFiPicker ||
-                        networkState == NetworkState.online)
-                      const MaterialPage(child: WifiPickerPage()),
-                    if (navigationState is ChannelPicker)
-                      const MaterialPage(child: ChannelPickerPage())
+                    if (networkState == NetworkState.online)
+                      const MaterialPage(
+                          child: ChannelPickerPage(),
+                          key: ValueKey('ChannelPickerPage')),
+                    if (networkState == NetworkState.offline)
+                      const MaterialPage(
+                          child: WifiPickerPage(),
+                          key: ValueKey('WifiPickerPage')),
                   ],
                   onPopPage: (route, result) => route.didPop(result),
                 );
