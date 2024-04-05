@@ -44,7 +44,7 @@ export default async function() {
     'Received all messages': (r) => {
       let totalLines = 0
       for (let line of r.body.split('\n\n')) {
-        if (line.includes("data: \"noop\"")) {
+        if (line.includes("data: 0")) {
           totalLines += 1
         }
       }

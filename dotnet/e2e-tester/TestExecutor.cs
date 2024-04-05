@@ -29,6 +29,7 @@ public class TestExecutor
     private DbConnection? dbConnection;
     private ApplicationDbContext? applicationDbContext;
     private string absolutePath;
+    private Dictionary<string, string> envBag;
 
     public TestExecutor(
         ILoggerFactory logFactory,
@@ -48,6 +49,7 @@ public class TestExecutor
             SchemasToInclude = ["public"],
             DbAdapter = DbAdapter.Postgres
         };
+        envBag = new Dictionary<string, string>();
         Info("Creating test environment");
 
         BACKEND_PORT = backendPort;
@@ -98,6 +100,9 @@ public class TestExecutor
             return false;
 
         if (!await OverrideEnvVariables())
+            return false;
+
+        if (!await FillEnvBag())
             return false;
 
         if (!await StartStack())
@@ -173,6 +178,7 @@ public class TestExecutor
             Info,
             Warn,
             Error,
+            envBag,
             token
         );
 
@@ -310,16 +316,53 @@ public class TestExecutor
         foreach (var command in commmands)
         {
             var writeResult = await testEnvironment.ExecAsync(command);
-            if (writeResult.ExitCode != 0)
+            if (writeResult.ExitCode == 0)
+                continue;
+            Error("Received exit status code {0}: \n{1}", writeResult.ExitCode, writeResult.Stderr);
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> FillEnvBag()
+    {
+        Info("Filling environment variables");
+        var commands = new[] { new[] { "cat", ".env" } };
+
+        foreach (var command in commands)
+        {
+            var result = await testEnvironment.ExecAsync(command);
+            if (result.ExitCode != 0)
             {
-                Error(
-                    "Received exit status code {0}: \n{1}",
-                    writeResult.ExitCode,
-                    writeResult.Stderr
-                );
+                Error("Received exit status code {0}: \n{1}", result.ExitCode, result.Stderr);
                 return false;
             }
+
+            foreach (var line in result.Stdout.Split('\n'))
+            {
+                if (string.IsNullOrEmpty(line))
+                    continue;
+                if (line.StartsWith("#"))
+                    continue;
+
+                var parts = line.Split("=", 2, StringSplitOptions.TrimEntries);
+                var key = parts[0];
+                var value = parts[1];
+
+                if (envBag.ContainsKey(key))
+                {
+                    Warn(
+                        "Overriding already found env variable '{0}' from value '{1}' to value '{2}'",
+                        key,
+                        envBag[key],
+                        value
+                    );
+                }
+                envBag[key] = value;
+            }
         }
+        Info("Filled environment variables");
 
         return true;
     }
