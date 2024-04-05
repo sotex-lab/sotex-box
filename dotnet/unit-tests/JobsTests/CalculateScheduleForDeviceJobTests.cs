@@ -1,8 +1,8 @@
 using Amazon.Runtime.Internal.Util;
+using Amazon.S3.Model;
 using AutoMapper;
 using backend.Hangfire;
 using backend.Services.Aws;
-using backend.Services.Files;
 using DotNext;
 using DotNext.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +28,8 @@ public class CalculateScheduleForDeviceJobTests
     ).CreateMapper();
     private Mock<IPreSignObjectService> preSignMock = new Mock<IPreSignObjectService>();
     private Mock<IGetOrCreateBucketService> getOrCreateMock = new Mock<IGetOrCreateBucketService>();
-    private Mock<IFileUtil> fileUtilMock = new Mock<IFileUtil>();
+    private Mock<IPutObjectService> putObjectMock = new Mock<IPutObjectService>();
+    private Mock<IGetObjectService> getObjectMock = new Mock<IGetObjectService>();
     private List<Guid> devices = new List<Guid>
     {
         Guid.Parse("A6A94D36-DDEE-452D-BAEF-3CEF9F573D82"),
@@ -67,7 +68,8 @@ public class CalculateScheduleForDeviceJobTests
             mapper,
             preSignMock.Object,
             getOrCreateMock.Object,
-            fileUtilMock.Object
+            putObjectMock.Object,
+            getObjectMock.Object
         );
     }
 
@@ -107,18 +109,20 @@ public class CalculateScheduleForDeviceJobTests
                 }
             );
 
-        fileUtilMock.Setup(x => x.DirectoryExists(It.IsAny<string>())).Returns(true);
-        fileUtilMock.Setup(x => x.FileExists(It.IsAny<string>())).Returns(true);
-        fileUtilMock
-            .Setup(x => x.ReadAllTextAsync(It.IsAny<string>()))
-            .ReturnsAsync(JsonConvert.SerializeObject(contract ?? new ScheduleContract()));
-        fileUtilMock
-            .Setup(x => x.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .Callback<string, string>(
-                (path, text) =>
+        putObjectMock
+            .Setup(x => x.Put(It.IsAny<S3Bucket>(), It.IsAny<string>(), It.IsAny<Stream>()))
+            .Callback<S3Bucket, string, Stream>(
+                async (bucket, key, stream) =>
                 {
-                    writtenString = text;
+                    writtenString = await new StreamReader(stream).ReadToEndAsync();
                 }
+            )
+            .ReturnsAsync(new Result<string, PutObjectError>(string.Empty));
+
+        getObjectMock
+            .Setup(x => x.GetObjectByKey(It.IsAny<S3Bucket>(), It.IsAny<string>()))
+            .ReturnsAsync(
+                new Result<ScheduleContract, GetObjectError>(contract ?? new ScheduleContract())
             );
 
         adRepoMock
@@ -136,33 +140,33 @@ public class CalculateScheduleForDeviceJobTests
             );
 
         preSignMock
-            .Setup(x =>
-                x.Get(
-                    It.IsAny<Amazon.S3.Model.S3Bucket>(),
-                    It.IsAny<string>(),
-                    It.IsAny<DateTime>()
-                )
-            )
+            .Setup(x => x.Get(It.IsAny<S3Bucket>(), It.IsAny<string>(), It.IsAny<DateTime>()))
             .ReturnsAsync(new Result<string, PreSignErr>("download-link"));
     }
 
-    private void GetOrCreateReturns(string bucket) =>
+    private void GetOrCreateReturns(string bucket)
+    {
         getOrCreateMock
             .Setup(x => x.GetProcessed())
             .ReturnsAsync(
-                new Result<Amazon.S3.Model.S3Bucket, GetOrCreateBucketError>(
-                    new Amazon.S3.Model.S3Bucket
-                    {
-                        BucketName = bucket,
-                        CreationDate = DateTime.Now
-                    }
+                new Result<S3Bucket, GetOrCreateBucketError>(
+                    new S3Bucket { BucketName = bucket, CreationDate = DateTime.Now }
                 )
             );
+
+        getOrCreateMock
+            .Setup(x => x.GetSchedule())
+            .ReturnsAsync(
+                new Result<S3Bucket, GetOrCreateBucketError>(
+                    new S3Bucket { BucketName = bucket, CreationDate = DateTime.Now }
+                )
+            );
+    }
 
     private void GetOrCreateReturns(GetOrCreateBucketError error) =>
         getOrCreateMock
             .Setup(x => x.GetProcessed())
-            .ReturnsAsync(new Result<Amazon.S3.Model.S3Bucket, GetOrCreateBucketError>(error));
+            .ReturnsAsync(new Result<S3Bucket, GetOrCreateBucketError>(error));
 
     [TestMethod]
     public async Task Should_Not_ProceedInvalidDeviceId()
@@ -192,8 +196,8 @@ public class CalculateScheduleForDeviceJobTests
         await job.Calculate(Guid.NewGuid().ToString());
 
         getOrCreateMock.Verify(x => x.GetProcessed(), Times.Once());
+        getOrCreateMock.Verify(x => x.GetSchedule(), Times.Never());
         deviceRepoMock.Verify(x => x.GetSingle(It.IsAny<Guid>(), default), Times.Once());
-        fileUtilMock.Verify(x => x.DirectoryExists(It.IsAny<string>()), Times.Never());
     }
 
     private ScheduleContract Deserialize()
@@ -204,14 +208,14 @@ public class CalculateScheduleForDeviceJobTests
     }
 
     [TestMethod]
-    public async Task Should_CreateDirectoryAndWriteBatch()
+    public async Task Should_CreateBucketAndWriteBatch()
     {
         GetOrCreateReturns("test");
         Setup(10, "/");
 
         await job.Calculate(devices[0].ToString());
 
-        fileUtilMock.Verify(x => x.ReadAllTextAsync(It.IsAny<string>()), Times.Once());
+        getOrCreateMock.Verify(x => x.GetSchedule(), Times.Once());
         adRepoMock.Verify(x => x.TakeFrom(It.IsAny<Guid>(), It.IsAny<uint>()), Times.Once());
 
         var deseriliazed = Deserialize();
@@ -254,8 +258,8 @@ public class CalculateScheduleForDeviceJobTests
 
         await job.Calculate(devices[0].ToString());
 
-        fileUtilMock.Verify(
-            x => x.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()),
+        putObjectMock.Verify(
+            x => x.Put(It.IsAny<S3Bucket>(), It.IsAny<string>(), It.IsAny<Stream>()),
             Times.Once()
         );
         var deserialized = Deserialize();

@@ -1,7 +1,6 @@
-using Amazon.S3;
+using System.Text;
 using AutoMapper;
 using backend.Services.Aws;
-using backend.Services.Files;
 using model.Contracts;
 using Newtonsoft.Json;
 using persistence.Repository;
@@ -14,8 +13,6 @@ public class CalculateScheduleForDeviceJob
     private ILogger<CalculateScheduleForDeviceJob> _logger;
     private uint pageSize =>
         uint.Parse(Environment.GetEnvironmentVariable("CALCULATESCHEDULEFOR_DEVICE_THRESHOLD")!);
-    private string localStoragePath =>
-        Environment.GetEnvironmentVariable("CALCULATESCHEDULEFOR_DEVICE_LOCALPATH")!;
     private TimeSpan expiration =>
         TimeSpan.Parse(Environment.GetEnvironmentVariable("CALCULATESCHEDULEFOR_URL_EXPIRE")!);
     private readonly IAdRepository _adRepository;
@@ -23,7 +20,8 @@ public class CalculateScheduleForDeviceJob
     private readonly IMapper _mapper;
     private readonly IPreSignObjectService _presigner;
     private readonly IGetOrCreateBucketService _bucketService;
-    private readonly IFileUtil _fileUtil;
+    private readonly IPutObjectService _putObjectService;
+    private readonly IGetObjectService _getObjectService;
 
     public CalculateScheduleForDeviceJob(
         ILogger<CalculateScheduleForDeviceJob> logger,
@@ -32,7 +30,8 @@ public class CalculateScheduleForDeviceJob
         IMapper mapper,
         IPreSignObjectService preSign,
         IGetOrCreateBucketService getOrCreate,
-        IFileUtil fileUtil
+        IPutObjectService putObjectService,
+        IGetObjectService getObjectService
     )
     {
         _adRepository = adRepository;
@@ -41,7 +40,8 @@ public class CalculateScheduleForDeviceJob
         _mapper = mapper;
         _presigner = preSign;
         _bucketService = getOrCreate;
-        _fileUtil = fileUtil;
+        _putObjectService = putObjectService;
+        _getObjectService = getObjectService;
     }
 
     public async Task Calculate(string deviceIdString)
@@ -72,20 +72,24 @@ public class CalculateScheduleForDeviceJob
             return;
         }
 
-        if (!_fileUtil.DirectoryExists(localStoragePath))
+        var maybeScheduleBucket = await _bucketService.GetSchedule();
+        if (!maybeScheduleBucket.IsSuccessful)
         {
-            _logger.LogInformation("Directory {0} doesn't exist, creating...", localStoragePath);
-            _fileUtil.CreateDirectory(localStoragePath);
+            _logger.LogInformation(
+                "Failed to get bucket info for schedules: {0}",
+                maybeScheduleBucket.Error.ToString()
+            );
+            return;
         }
 
         ScheduleContract oldSchedule = new ScheduleContract();
-        var filePath = Path.Combine(localStoragePath, string.Format("{0}.json", deviceId));
-        if (_fileUtil.FileExists(filePath))
+        var maybeOldSchedule = await _getObjectService.GetObjectByKey(
+            maybeScheduleBucket.Value,
+            deviceIdString
+        );
+        if (maybeOldSchedule.IsSuccessful)
         {
-            _logger.LogInformation("Found previous schedule for device {0}", deviceId);
-            oldSchedule = JsonConvert.DeserializeObject<ScheduleContract>(
-                await _fileUtil.ReadAllTextAsync(filePath)
-            );
+            oldSchedule = maybeOldSchedule.Value;
         }
 
         var maybeLastAd = oldSchedule.Schedule.LastOrDefault();
@@ -94,23 +98,35 @@ public class CalculateScheduleForDeviceJob
             pageSize
         );
 
-        await _fileUtil.WriteAllTextAsync(
-            filePath,
-            JsonConvert.SerializeObject(
-                new ScheduleContract
-                {
-                    CreatedAt = DateTime.Now,
-                    DeviceId = maybeDevice.Value.Id,
-                    Schedule = newBatchOfAds
-                        .Select(async x => new ScheduleItemContract
+        var response = await _putObjectService.Put(
+            maybeScheduleBucket.Value,
+            deviceIdString,
+            new MemoryStream(
+                Encoding.UTF8.GetBytes(
+                    JsonConvert.SerializeObject(
+                        new ScheduleContract
                         {
-                            Ad = _mapper.Map<AdContract>(x),
-                            DownloadLink = await GetLink(x.Id, maybeBucket.Value)
-                        })
-                        .Select(x => x.Result)
-                }
+                            CreatedAt = DateTime.Now,
+                            DeviceId = maybeDevice.Value.Id,
+                            Schedule = newBatchOfAds
+                                .Select(async x => new ScheduleItemContract
+                                {
+                                    Ad = _mapper.Map<AdContract>(x),
+                                    DownloadLink = await GetLink(x.Id, maybeBucket.Value)
+                                })
+                                .Select(x => x.Result)
+                        }
+                    )
+                )
             )
         );
+        if (!response.IsSuccessful)
+        {
+            _logger.LogError(
+                "Couldn't persist schedule due to error: {0}",
+                response.Error.ToString()
+            );
+        }
     }
 
     private async Task<string> GetLink(Guid id, Amazon.S3.Model.S3Bucket bucket)

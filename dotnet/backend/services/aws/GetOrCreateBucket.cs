@@ -9,6 +9,7 @@ public interface IGetOrCreateBucketService
 {
     Task<Result<S3Bucket, GetOrCreateBucketError>> GetProcessed();
     Task<Result<S3Bucket, GetOrCreateBucketError>> GetNonProcessed();
+    Task<Result<S3Bucket, GetOrCreateBucketError>> GetSchedule();
 }
 
 public enum GetOrCreateBucketError
@@ -28,6 +29,7 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
 #pragma warning disable CS0414 // Add readonly modifier
     private static string processed = "processed";
 #pragma warning restore CS0414 // Add readonly modifier
+    private static string schedule = "schedule";
 
     public GetOrCreateBucketServiceImpl(IAmazonS3 s3, ILogger<GetOrCreateBucketServiceImpl> logger)
     {
@@ -42,6 +44,9 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
 
     public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetNonProcessed() =>
         await EnsureCreated(nonProcessed);
+
+    public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetSchedule() =>
+        await EnsureCreated(schedule);
 
     private async Task<Result<S3Bucket, GetOrCreateBucketError>> EnsureCreated(string bucketName)
     {

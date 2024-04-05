@@ -179,8 +179,7 @@ ensure-setup:
         echo "$(ENV_FILE) exists"; \
     fi
 
-	mkdir -p volumes.local/minio volumes.local/backend
-	chmod o+w volumes.local/backend
+	mkdir -p volumes.local/minio
 
 .PHONY: compose-up
 compose-up: container-build-backend
