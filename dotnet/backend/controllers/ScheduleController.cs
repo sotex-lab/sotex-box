@@ -16,7 +16,7 @@ enum ScheduleError
 }
 
 [ApiController]
-[Route("/[controller]/[action]")]
+[Route("/[controller]")]
 public class ScheduleController(
     IPreSignObjectService preSignObjectService,
     IDeviceRepository deviceRepository,

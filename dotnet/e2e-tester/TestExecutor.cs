@@ -214,16 +214,28 @@ public class TestExecutor
     {
         try
         {
-            applicationDbContext = new ApplicationDbContextFactory().CreateDbContext(
-                $"Host=localhost;Port={testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
+            await pipeline.ExecuteAsync(
+                static async (executor, token) =>
+                {
+                    executor.applicationDbContext =
+                        new ApplicationDbContextFactory().CreateDbContext(
+                            $"Host=localhost;Port={executor.testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
+                        );
+
+                    executor.dbConnection =
+                        executor.applicationDbContext.Database.GetDbConnection();
+                    await executor.dbConnection.OpenAsync(token);
+
+                    executor.respawner = await Respawner.CreateAsync(
+                        executor.dbConnection,
+                        executor.respawnerOptions
+                    );
+
+                    executor.Info("Database communication established");
+                },
+                this,
+                token
             );
-
-            dbConnection = applicationDbContext.Database.GetDbConnection();
-            await dbConnection.OpenAsync(token);
-
-            respawner = await Respawner.CreateAsync(dbConnection, respawnerOptions);
-
-            Info("Database communication established");
         }
         catch (Exception e)
         {
