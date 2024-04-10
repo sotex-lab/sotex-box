@@ -1,5 +1,4 @@
 import 'package:logger/logger.dart';
-import 'package:collection/collection.dart';
 
 class LogLevelMapper {
   Map<String, Level> _getLogLevelMapper() {
