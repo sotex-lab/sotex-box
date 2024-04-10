@@ -1,13 +1,17 @@
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
 import 'package:launcher/app_observer.dart';
 import 'package:launcher/src/common/network/network.dart';
-import 'package:launcher/src/navigation/app_navigator.dart';
 import 'package:launcher/src/navigation/app_router_delegate.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
+import 'package:launcher/src/sse/sse_entry.dart';
 
 void main() {
+  ReceivePort receivePort = ReceivePort();
+  Isolate.spawn(sseEntryPoint, receivePort.sendPort);
   Bloc.observer = const AppObserver();
   runApp(const SotexBox());
 }
