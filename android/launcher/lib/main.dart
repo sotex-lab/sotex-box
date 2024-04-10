@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
-import 'package:launcher/safe_casting.dart';
 
 void main() {
   runApp(const SotexBox());
@@ -14,9 +13,9 @@ class SotexBox extends StatefulWidget {
 }
 
 class SotexBoxState extends State<SotexBox> {
-  int get splashScreenDuration => tryCastInt(
-      const String.fromEnvironment("splash_screen_duration", defaultValue: ""),
-      fallback: 3600);
+  int get splashScreenDuration =>
+      int.parse(const String.fromEnvironment("splash_screen_duration"));
+
   @override
   void initState() {
     super.initState();
