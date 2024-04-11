@@ -74,6 +74,7 @@ nav:
       - Overview: repository/dotnet/index.md
     - Android:
       - Overview: repository/android/index.md
+      - Troubleshoot: repository/android/troubleshoot.md
     - Infrastructure:
       - Overview: repository/infra/index.md
     - Continous Integration:

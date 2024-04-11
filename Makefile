@@ -49,10 +49,15 @@ edit-docs: ## Run mkdocs local server for development
 	poetry run mkdocs serve
 
 ANDROID_IMAGE := "system-images;android-31;android-tv;x86"
-
+BUILD_TOOLS := "build-tools;31.0.0"
+PLATFORMS := "platforms;android-31"
 .PHONY: flutter-create-emulator
 flutter-create-emulator: ## Shorthand for setting up an emulator
+	sdkmanager $(BUILD_TOOLS)
+	sdkmanager $(PLATFORMS)
 	sdkmanager $(ANDROID_IMAGE)
+	sdkmanager emulator
+	sdkmanager platform-tools
 	avdmanager create avd -n "android_tv" -k $(ANDROID_IMAGE) --force
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
@@ -119,7 +124,7 @@ run-backend: ## Shorthand for running backend from cli
 
 .PHONY: run-emu
 run-emu: ## Shorthand for running the android emulator
-	emulator -avd "android_tv" -skin 1920x1080
+	emulator -avd "android_tv" -skin 1920x1080 # -no-snapshot-load
 
 .PHONY: rotate-emu
 rotate-emu: ## Shorthand for rotating the android emulator
@@ -127,7 +132,7 @@ rotate-emu: ## Shorthand for rotating the android emulator
 
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
-	(cd android/launcher && flutter run -d emulator-5554)
+	(cd android/launcher && flutter run --dart-define-from-file=.env.json -d emulator-5554)
 
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
