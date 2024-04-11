@@ -25,15 +25,15 @@ k6 run load-tests/sse/connectionTest.js --vus 600 --iterations 600 --duration 60
 ### Math
 Since we are limited by the lack of support for propper SSE handler in `k6` we had to take into account the amount of load this will take on the laptop itself so it doesn't get killed by [Linux OOM Killer](https://neo4j.com/developer/kb/linux-out-of-memory-killer/).
 ```bash
-noop = "data: \"noop\"\n\n"                             # Data that comes with each noop
-noopSize = noop.length * 1B = 14B                       # Size of 1 noop in Bytes
-totalSeconds = 3600                                     # Desired seconds for a test to run
-testShutdown = totalSeconds - 5 = 3595                  # Shutdown signal for one test
-noopInterval = 15                                       # 1 noop per 15 seconds
-vus = 600                                               # Total VUs per laptop
-expectedNoopsPerVu = testShutdown / noopInterval = 239  # Total expected noops per test
-totalNoops = vus * expectedNoopsPerVu = 143400          # Total noops per laptop
-totalMemory = totalNoops * noopSize = 2007600B ~ 2MB    # Total memory consumption per laptop
+noop = "data: 0\n\n"                                      # Data that comes with each noop
+noopSize = noop.length * 1B = 9B                          # Size of 1 noop in Bytes
+totalSeconds = 3600                                       # Desired seconds for a test to run
+testShutdown = totalSeconds - 5 = 3595                    # Shutdown signal for one test
+noopInterval = 15                                         # 1 noop per 15 seconds
+vus = 600                                                 # Total VUs per laptop
+expectedNoopsPerVu = testShutdown / noopInterval = 239    # Total expected noops per test
+totalNoops = vus * expectedNoopsPerVu = 143400            # Total noops per laptop
+totalMemory = totalNoops * noopSize = 1290600B ~ 1.23MB   # Total memory consumption per laptop
 ```
 
 ## Results

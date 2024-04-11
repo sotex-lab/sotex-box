@@ -14,8 +14,8 @@
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.11" />
     <PackageReference Include="Hangfire.Core" Version="1.8.11" />
     <PackageReference Include="Hangfire.InMemory" Version="0.8.0" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.20.8" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />
-    <PackageReference Include="NCrontab" Version="3.3.3" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.7.0" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.7.0-rc.1" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />

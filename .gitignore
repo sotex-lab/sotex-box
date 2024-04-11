@@ -49,6 +49,7 @@ __pypackages__/
 .mono
 
 # Environments
+.env.json
 .env
 .venv
 env/

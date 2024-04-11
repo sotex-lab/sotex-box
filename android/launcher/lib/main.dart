@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
 import 'package:launcher/app_observer.dart';
 import 'package:launcher/src/common/network/network.dart';
-import 'package:launcher/src/navigation/app_navigator.dart';
 import 'package:launcher/src/navigation/app_router_delegate.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
 
@@ -20,6 +19,8 @@ class SotexBox extends StatefulWidget {
 }
 
 class SotexBoxState extends State<SotexBox> {
+  int get splashScreenDuration =>
+      int.parse(const String.fromEnvironment("splash_screen_duration"));
   final navigationCubit = NavigationCubit();
   @override
   void initState() {
@@ -28,7 +29,7 @@ class SotexBoxState extends State<SotexBox> {
   }
 
   Future<void> hideScreen() async {
-    Future.delayed(const Duration(milliseconds: 3600), () {
+    Future.delayed(Duration(milliseconds: splashScreenDuration), () {
       FlutterSplashScreen.hide();
     });
   }
