@@ -616,7 +616,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-flutter_jank*.json
+**/flutter_jank*.json
 
 # Symbolication related
 app.*.symbols
