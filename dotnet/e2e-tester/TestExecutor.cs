@@ -17,6 +17,7 @@ public class TestExecutor
     private readonly int BACKEND_PORT;
     private static int DATABASE_PORT = 5432;
     private static int MINIO_PORT = 9000;
+    private static int PGADMIN_PORT = 5050;
     private readonly IContainer testEnvironment;
     private readonly ILogger<TestExecutor> logger;
     private readonly ILoggerFactory loggerFactory;
@@ -79,6 +80,7 @@ public class TestExecutor
             .WithPortBinding(BACKEND_PORT)
             .WithPortBinding(DATABASE_PORT, true)
             .WithPortBinding(MINIO_PORT, true)
+            .WithPortBinding(PGADMIN_PORT, true)
             .Build();
 
         Info("Created test environment");
@@ -240,6 +242,7 @@ public class TestExecutor
         catch (Exception e)
         {
             Error("Error while creating database connection: {0}", e.Message);
+            await Task.Delay(TimeSpan.FromHours(2), token);
             return false;
         }
         return true;

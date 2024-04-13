@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using model.Contracts;
 using model.Core;
 using Newtonsoft.Json;
@@ -19,10 +18,20 @@ public class GetScheduleTest : E2ETest
     protected override async Task Run(CancellationToken token)
     {
         var deviceRepo = GetRepository<Device, Guid>();
-        var device = new Device { UtilityName = "test" };
-        var maybeSavedDevice = await deviceRepo.Add(device, token);
-        maybeSavedDevice.IsSuccessful.ShouldBeTrue();
-        device = maybeSavedDevice.Value;
+
+        var deviceInBatchThreshold = uint.Parse(
+            GetEnvironmentVariable("CALLFORSCHEDULE_DEVICE_THRESHOLD")
+        );
+
+        var devices = Enumerable
+            .Range(0, (int)deviceInBatchThreshold + 10)
+            .Select(i => new Device { UtilityName = string.Format("test-device-{0}", i) })
+            .ToList();
+        foreach (var device in devices)
+        {
+            var maybeSavedDevice = await deviceRepo.Add(device, token);
+            maybeSavedDevice.IsSuccessful.ShouldBeTrue();
+        }
 
         var adRepo = GetRepository<Ad, Guid>();
         var ad = new Ad();
@@ -33,10 +42,32 @@ public class GetScheduleTest : E2ETest
         var maxDelay = TimeSpan
             .Parse(GetEnvironmentVariable("CALLFORSCHEDULE_MAX_DELAY"))
             .Multiply(2);
-        Info("Sleeping for {0} to wait for schedule for device {1}", maxDelay, device.Id);
+        Info("Sleeping for {0} to wait for schedule", maxDelay);
         await Task.Delay(maxDelay, token);
 
         var client = GetClient();
+        foreach (var device in devices.Take((int)deviceInBatchThreshold))
+        {
+            await ShouldHaveCorrectAds(device, client, token, ad);
+        }
+
+        foreach (
+            var device in devices
+                .Skip((int)deviceInBatchThreshold)
+                .Take(devices.Count - (int)deviceInBatchThreshold)
+        )
+        {
+            await ShouldNotHaveCorrectAds(device, client, token);
+        }
+    }
+
+    private async Task ShouldHaveCorrectAds(
+        Device device,
+        HttpClient client,
+        CancellationToken token,
+        Ad ad
+    )
+    {
         var scheduleResponse = await client.GetAsync($"/schedule/{device.Id}", token);
         scheduleResponse.IsSuccessStatusCode.ShouldBeTrue();
 
@@ -54,5 +85,15 @@ public class GetScheduleTest : E2ETest
         onlyItem.Ad.ShouldNotBeNull();
         onlyItem.Ad.Id.ShouldBe(ad.Id);
         onlyItem.DownloadLink.ShouldNotBeNullOrEmpty();
+    }
+
+    private async Task ShouldNotHaveCorrectAds(
+        Device device,
+        HttpClient client,
+        CancellationToken token
+    )
+    {
+        var scheduleResponse = await client.GetAsync($"/schedule/{device.Id}", token);
+        scheduleResponse.IsSuccessStatusCode.ShouldBeFalse();
     }
 }
