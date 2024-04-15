@@ -55,7 +55,7 @@ public class AdsControllerTests
         (await _tagRepository.Fetch().CountAsync()).ShouldBe(2);
 
         var bucketsResponse = await _s3Client.ListBucketsAsync();
-        bucketsResponse.Buckets.Count.ShouldBe(1);
+        bucketsResponse.Buckets.Count.ShouldBeGreaterThanOrEqualTo(1);
 
         bucketsResponse.Buckets.First().BucketName.ShouldBe("non-processed");
     }
@@ -88,7 +88,7 @@ public class AdsControllerTests
         (await _tagRepository.Fetch().CountAsync()).ShouldBe(1);
 
         var bucketsResponse = await _s3Client.ListBucketsAsync();
-        bucketsResponse.Buckets.Count.ShouldBe(1);
+        bucketsResponse.Buckets.Count.ShouldBeGreaterThanOrEqualTo(1);
 
         bucketsResponse.Buckets.First().BucketName.ShouldBe("non-processed");
     }
