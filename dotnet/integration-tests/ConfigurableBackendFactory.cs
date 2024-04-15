@@ -82,6 +82,10 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["AWS_SQS_SECRET_KEY"] = "x",
             ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = "/000000000000/nonprocessed",
             ["REQUIRE_KNOWN_DEVICES"] = "false",
+            ["SCHEDULE_MAX_DELAY"] = "00:01:00",
+            ["SCHEDULE_DEVICE_THRESHOLD"] = "100",
+            ["SCHEDULE_AD_THRESHOLD"] = "10",
+            ["SCHEDULE_URL_EXPIRE"] = "01:00:00"
         };
 
         foreach (var kvp in backendEnvVars)

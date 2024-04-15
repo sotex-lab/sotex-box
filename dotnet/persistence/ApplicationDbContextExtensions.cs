@@ -46,9 +46,9 @@ public static class ApplicationDbContextExtensions
         };
 
         var pipeline = new ResiliencePipelineBuilder().AddRetry(options).Build();
-        pipeline.Execute(() =>
+        try
         {
-            try
+            pipeline.Execute(() =>
             {
                 var pendingMigrations = db.Database.GetPendingMigrations();
 
@@ -66,15 +66,15 @@ public static class ApplicationDbContextExtensions
                 db.Database.Migrate();
 
                 logger.LogInformation("Successfully migrated pending migrations");
-            }
-            catch (Exception)
-            {
-                logger.LogWarning("Caught expcetion while migrating. Retrying...");
-                response = new Result<ApplicationDbContext, RepositoryError>(
-                    RepositoryError.FailedToInit
-                );
-            }
-        });
+            });
+        }
+        catch (Exception e)
+        {
+            logger.LogWarning("Caught expcetion while migrating. {0}", e.Message);
+            response = new Result<ApplicationDbContext, RepositoryError>(
+                RepositoryError.FailedToInit
+            );
+        }
 
         return response;
     }

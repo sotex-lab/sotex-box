@@ -49,14 +49,12 @@ builder.Services.AddHangfire(config =>
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
         .UseSimpleAssemblyNameTypeSerializer()
         .UseRecommendedSerializerSettings()
-        .UsePostgreSqlStorage(options =>
-        {
-            options.UseNpgsqlConnection(ApplicationDbContextFactory.CONNECTION_STRING);
-        })
+        .UseInMemoryStorage()
 );
 
 builder.Services.ConfigureAwsClients();
 builder.Services.RegisterOurServices();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

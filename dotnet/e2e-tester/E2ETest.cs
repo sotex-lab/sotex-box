@@ -34,7 +34,15 @@ public abstract class E2ETest
                     test.Info("Test started");
                     test.summary.Retries++;
 
-                    await test.Run(token);
+                    try
+                    {
+                        await test.Run(token);
+                    }
+                    catch (Exception e)
+                    {
+                        test.Error(e.Message);
+                        throw;
+                    }
 
                     test.summary.Elapsed = DateTime.Now.Subtract(start);
                     test.summary.Outcome = true;

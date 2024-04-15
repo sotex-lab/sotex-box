@@ -15,5 +15,7 @@ public static class RegisterOurServicesExtensions
             sp.GetService<ILogger<PreSignObjectServiceImpl>>()!,
             Environment.GetEnvironmentVariable("AWS_PROTOCOL")!
         ));
+
+        services.AddTransient<IGetObjectService, GetObjectService>();
     }
 }

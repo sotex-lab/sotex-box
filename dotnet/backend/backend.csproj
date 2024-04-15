@@ -13,7 +13,7 @@
     <PackageReference Include="AWSSDK.SQS" Version="3.7.300.57" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.11" />
     <PackageReference Include="Hangfire.Core" Version="1.8.11" />
-    <PackageReference Include="Hangfire.InMemory" Version="0.8.0" />
+    <PackageReference Include="Hangfire.InMemory" Version="0.8.1" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.20.8" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.7.0" />

@@ -50,7 +50,7 @@ public class CreateAdTest : E2ETest
 
         putResponse.IsSuccessStatusCode.ShouldBeTrue();
 
-        await Task.Delay(DefaultJobInterval(), token);
+        await Task.Delay(DefaultJobInterval().Add(TimeSpan.FromSeconds(5)), token);
 
         var adRepo = GetRepository<Ad, Guid>();
 

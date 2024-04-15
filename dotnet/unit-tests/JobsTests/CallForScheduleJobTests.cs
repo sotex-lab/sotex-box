@@ -1,12 +1,19 @@
+using Amazon.S3.Model;
+using AutoMapper;
 using backend.Hangfire;
+using backend.Services.Aws;
 using DotNext;
+using DotNext.Collections.Generic;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using model.Contracts;
 using model.Core;
+using model.Mappers;
 using Moq;
+using Newtonsoft.Json;
 using persistence.Repository;
 using Shouldly;
 using SseHandler;
@@ -16,7 +23,7 @@ namespace unit_tests;
 [TestClass]
 public class CallForScheduleJobTests
 {
-    private CallForScheduleJob job;
+    private ScheduleJob job;
     private Mock<IEventCoordinator> coordinatorMock = new Mock<IEventCoordinator>();
     private Mock<IConfigurationRepository> configRepoMock;
     private Mock<IDeviceRepository> deviceRepoMock;
@@ -51,7 +58,41 @@ public class CallForScheduleJobTests
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     { }
 
-    private void Setup(uint pageNumber, int threshold, string maxDelay)
+    private IMapper mapper = new MapperConfiguration(cfg =>
+        cfg.AddMaps(typeof(CoreMapper))
+    ).CreateMapper();
+    private Mock<IAdRepository> adRepoMock = new Mock<IAdRepository>();
+    private Mock<IPreSignObjectService> preSignMock = new Mock<IPreSignObjectService>();
+    private Mock<IGetOrCreateBucketService> getOrCreateMock = new Mock<IGetOrCreateBucketService>();
+    private Mock<IPutObjectService> putObjectMock = new Mock<IPutObjectService>();
+    private Mock<IGetObjectService> getObjectMock = new Mock<IGetObjectService>();
+    private List<Ad> ads = new List<Ad>
+    {
+        new Ad { Id = Guid.Parse("B6A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("C6A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("D6A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("E6A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("F6A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("06A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("16A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("26A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("36A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("46A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("56A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("66A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("76A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("86A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+        new Ad { Id = Guid.Parse("96A94D36-DDEE-452D-BAEF-3CEF9F573D82") },
+    };
+    private string? writtenString;
+
+    private void Setup(
+        uint pageNumber,
+        int threshold,
+        string maxDelay,
+        uint adPageSize,
+        ScheduleContract? contract = null
+    )
     {
         coordinatorMock = new Mock<IEventCoordinator>();
         configRepoMock = new Mock<IConfigurationRepository>();
@@ -60,11 +101,13 @@ public class CallForScheduleJobTests
 
         page = new Configuration { Id = pageId, Value = pageNumber.ToString() };
 
+        Environment.SetEnvironmentVariable("SCHEDULE_DEVICE_THRESHOLD", threshold.ToString());
+        Environment.SetEnvironmentVariable("SCHEDULE_MAX_DELAY", maxDelay);
+        Environment.SetEnvironmentVariable("SCHEDULE_AD_THRESHOLD", adPageSize.ToString());
         Environment.SetEnvironmentVariable(
-            "CALLFORSCHEDULE_DEVICE_THRESHOLD",
-            threshold.ToString()
+            "SCHEDULE_URL_EXPIRE",
+            TimeSpan.FromMinutes(30).ToString()
         );
-        Environment.SetEnvironmentVariable("CALLFORSCHEDULE_MAX_DELAY", maxDelay);
 
         configRepoMock.Setup(x => x.GetSingle(page.Id, default)).ReturnsAsync(page);
         configRepoMock
@@ -115,9 +158,11 @@ public class CallForScheduleJobTests
             .Callback<Job, IState>(
                 (job, state) =>
                 {
-                    var scheduledState = (ScheduledState)state;
-                    calledTimespan = scheduledState.EnqueueAt.Subtract(DateTime.UtcNow);
-                    Console.WriteLine("Setting callback: " + calledTimespan);
+                    if (state is ScheduledState scheduledState)
+                    {
+                        calledTimespan = scheduledState.EnqueueAt.Subtract(DateTime.UtcNow);
+                        Console.WriteLine("Setting callback: " + calledTimespan);
+                    }
                 }
             );
         backroundSchedulerMock
@@ -137,19 +182,83 @@ public class CallForScheduleJobTests
                 }
             );
 
-        job = new CallForScheduleJob(
-            factory.CreateLogger<CallForScheduleJob>(),
+        putObjectMock
+            .Setup(x => x.Put(It.IsAny<S3Bucket>(), It.IsAny<string>(), It.IsAny<Stream>()))
+            .Callback<S3Bucket, string, Stream>(
+                async (bucket, key, stream) =>
+                {
+                    writtenString = await new StreamReader(stream).ReadToEndAsync();
+                }
+            )
+            .ReturnsAsync(new Result<string, PutObjectError>(string.Empty));
+
+        getObjectMock
+            .Setup(x => x.GetObjectByKey(It.IsAny<S3Bucket>(), It.IsAny<string>()))
+            .ReturnsAsync(
+                new Result<ScheduleContract, GetObjectError>(contract ?? new ScheduleContract())
+            );
+
+        adRepoMock
+            .Setup(x => x.TakeFrom(It.IsAny<Guid>(), It.IsAny<uint>()))
+            .Returns<Guid, uint>(
+                (id, take) =>
+                {
+                    IQueryable<Ad> adsQuery = ads.AsQueryable();
+                    if (id != Guid.Empty)
+                    {
+                        adsQuery = adsQuery.SkipWhile(x => x.Id != id).Skip(1);
+                    }
+                    return Task.FromResult(adsQuery.Take((int)take).AsEnumerable());
+                }
+            );
+
+        preSignMock
+            .Setup(x => x.Get(It.IsAny<S3Bucket>(), It.IsAny<string>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new Result<string, PreSignErr>("download-link"));
+
+        job = new ScheduleJob(
+            factory.CreateLogger<ScheduleJob>(),
             coordinatorMock.Object,
             configRepoMock.Object,
             backroundSchedulerMock.Object,
-            deviceRepoMock.Object
+            deviceRepoMock.Object,
+            mapper,
+            preSignMock.Object,
+            getOrCreateMock.Object,
+            putObjectMock.Object,
+            getObjectMock.Object,
+            adRepoMock.Object
         );
     }
+
+    private void GetOrCreateReturns(string bucket)
+    {
+        getOrCreateMock
+            .Setup(x => x.GetProcessed())
+            .ReturnsAsync(
+                new Result<S3Bucket, GetOrCreateBucketError>(
+                    new S3Bucket { BucketName = bucket, CreationDate = DateTime.Now }
+                )
+            );
+
+        getOrCreateMock
+            .Setup(x => x.GetSchedule())
+            .ReturnsAsync(
+                new Result<S3Bucket, GetOrCreateBucketError>(
+                    new S3Bucket { BucketName = bucket, CreationDate = DateTime.Now }
+                )
+            );
+    }
+
+    private void GetOrCreateReturns(GetOrCreateBucketError error) =>
+        getOrCreateMock
+            .Setup(x => x.GetSchedule())
+            .ReturnsAsync(new Result<S3Bucket, GetOrCreateBucketError>(error));
 
     [TestMethod]
     public async Task Should_CallAllDevices()
     {
-        Setup(0, 100, "00:10:00");
+        Setup(0, 100, "00:10:00", 10);
         await job.Run();
 
         called.Count.ShouldBe(devices.Count);
@@ -160,7 +269,7 @@ public class CallForScheduleJobTests
     [TestMethod]
     public async Task Should_SplitBecauseMoreThanMaxBatch()
     {
-        Setup(3, 2, "00:10:00");
+        Setup(3, 2, "00:10:00", 10);
         await job.Run();
 
         called.Count.ShouldBe(2);
@@ -171,7 +280,7 @@ public class CallForScheduleJobTests
     [TestMethod]
     public async Task Should_Rollover()
     {
-        Setup((uint)(devices.Count / 2 + 1), 2, "00:10:00");
+        Setup((uint)(devices.Count / 2 + 1), 2, "00:10:00", 10);
         await job.Run();
 
         called.Count.ShouldBe(2);
@@ -191,13 +300,111 @@ public class CallForScheduleJobTests
             }
         }
         devices = prodDevices;
-        Setup(2, 100, "04:00:00");
+        Setup(2, 100, "04:00:00", 10);
 
         await job.Run();
 
         called.Count.ShouldBe(100);
         calledTimespan.ShouldBeAround(TimeSpan.FromMinutes(20));
         page.Value.ShouldBe("3".ToString());
+    }
+
+    [TestMethod]
+    public async Task Should_Not_ProceedFailedToGetBucket()
+    {
+        Setup(2, 100, "04:00:00", 10);
+        GetOrCreateReturns(GetOrCreateBucketError.FailedToCreateBucket);
+
+        await job.Run();
+
+        called.Count.ShouldBe(0);
+        getOrCreateMock.Verify(x => x.GetSchedule(), Times.Once());
+        deviceRepoMock.Verify(x => x.GetSingle(It.IsAny<Guid>(), default), Times.Never());
+    }
+
+    private ScheduleContract Deserialize()
+    {
+        writtenString.ShouldNotBeNullOrEmpty();
+
+        return JsonConvert.DeserializeObject<ScheduleContract>(writtenString)!;
+    }
+
+    [TestMethod]
+    public async Task Should_CreateBucketAndWriteBatch()
+    {
+        GetOrCreateReturns("test");
+        Setup(2, 100, "04:00:00", 10);
+        await job.Run();
+
+        getOrCreateMock.Verify(x => x.GetSchedule(), Times.Once());
+        adRepoMock.Verify(
+            x => x.TakeFrom(It.IsAny<Guid>(), It.IsAny<uint>()),
+            Times.Exactly(called.Count)
+        );
+
+        var deseriliazed = Deserialize();
+        deseriliazed.Schedule.ShouldNotBeEmpty();
+        deseriliazed.Schedule.Count().ShouldBe(10);
+        var adIds = ads.Select(x => x.Id).ToList();
+        deseriliazed.Schedule.ForEach(x =>
+        {
+            x.DownloadLink.ShouldNotBeNullOrEmpty();
+            adIds.ShouldContain(x.Ad!.Id);
+        });
+    }
+
+    [TestMethod]
+    public async Task Should_CreateScheduleIfNotStartingFromNothing()
+    {
+        Enumerable
+            .Range(0, 1000)
+            .Select(_ => new Ad { AdScope = AdScope.Global, Id = Guid.NewGuid(), })
+            .ForEach(ads.Add);
+        var randomAd = new Random().Next(0, ads.Count);
+
+        var schedule = new ScheduleContract
+        {
+            CreatedAt = DateTime.Now,
+            DeviceId = devices[0],
+            Schedule =
+            [
+                new ScheduleItemContract
+                {
+                    Ad = new AdContract { Id = ads[randomAd].Id, Scope = ads[randomAd++].AdScope }
+                }
+            ]
+        };
+
+        GetOrCreateReturns("test");
+        uint pageSize = 10;
+        Setup(2, 100, "04:00:00", pageSize, schedule);
+
+        await job.Run();
+
+        putObjectMock.Verify(
+            x => x.Put(It.IsAny<S3Bucket>(), It.IsAny<string>(), It.IsAny<Stream>()),
+            Times.Exactly(called.Count)
+        );
+        var deserialized = Deserialize();
+        deserialized.Schedule.Count().ShouldBe(10);
+        var expectedAds = new List<Ad>();
+        while (expectedAds.Count != pageSize)
+        {
+            if (randomAd == ads.Count)
+            {
+                randomAd = 0;
+            }
+            expectedAds.Add(ads[randomAd++]);
+        }
+        var outcome = true;
+        for (int i = 0; i < expectedAds.Count; i++)
+        {
+            var expected = expectedAds[i].Id;
+            var got = deserialized.Schedule.ElementAt(i).Ad!.Id;
+            Console.WriteLine("Got {0}, Expected {1}", got, expected);
+            outcome &= got == expected;
+        }
+        outcome.ShouldBeTrue();
     }
 }
 

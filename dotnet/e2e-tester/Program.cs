@@ -205,6 +205,7 @@ CoconaApp.Run(
 
             var succeeded = testSummaries.Count(x => x.Outcome);
             var succeededProcentage = Math.Round(100 * (double)succeeded / testSummaries.Count, 2);
+            var failed = Math.Round(100 - succeededProcentage, 2);
 
             var overview = new Document(
                 new Grid
@@ -227,7 +228,7 @@ CoconaApp.Run(
                             {
                                 Result = "Failed".Red(),
                                 Count = (testSummaries.Count - succeeded).ToString().Red(),
-                                Percentage = string.Format("{0}%", 100 - succeededProcentage).Red()
+                                Percentage = string.Format("{0}%", failed).Red()
                             },
                         }.Select(x =>
                             new[]
