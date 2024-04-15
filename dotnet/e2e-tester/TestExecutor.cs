@@ -18,6 +18,7 @@ public class TestExecutor
     private static int DATABASE_PORT = 5432;
     private static int MINIO_PORT = 9000;
     private static int PGADMIN_PORT = 5050;
+    private static int MINIO_CONSOLE_PORT = 9001;
     private readonly IContainer testEnvironment;
     private readonly ILogger<TestExecutor> logger;
     private readonly ILoggerFactory loggerFactory;
@@ -81,6 +82,7 @@ public class TestExecutor
             .WithPortBinding(DATABASE_PORT, true)
             .WithPortBinding(MINIO_PORT, true)
             .WithPortBinding(PGADMIN_PORT, true)
+            .WithPortBinding(MINIO_CONSOLE_PORT, true)
             .Build();
 
         Info("Created test environment");

@@ -20,7 +20,7 @@ public class GetScheduleTest : E2ETest
         var deviceRepo = GetRepository<Device, Guid>();
 
         var deviceInBatchThreshold = uint.Parse(
-            GetEnvironmentVariable("CALLFORSCHEDULE_DEVICE_THRESHOLD")
+            GetEnvironmentVariable("SCHEDULE_DEVICE_THRESHOLD")
         );
 
         var devices = Enumerable
@@ -39,16 +39,23 @@ public class GetScheduleTest : E2ETest
         maybeSavedAd.IsSuccessful.ShouldBeTrue();
         ad = maybeSavedAd.Value;
 
-        var maxDelay = TimeSpan
-            .Parse(GetEnvironmentVariable("CALLFORSCHEDULE_MAX_DELAY"))
-            .Multiply(2);
+        var maxDelay = TimeSpan.Parse(GetEnvironmentVariable("SCHEDULE_MAX_DELAY")).Multiply(1.2);
         Info("Sleeping for {0} to wait for schedule", maxDelay);
         await Task.Delay(maxDelay, token);
 
         var client = GetClient();
+        var shouldBeCorrectError = 0;
+        var shouldNotBeCorrectError = 0;
         foreach (var device in devices.Take((int)deviceInBatchThreshold))
         {
-            await ShouldHaveCorrectAds(device, client, token, ad);
+            try
+            {
+                await ShouldHaveCorrectAds(device, client, token, ad);
+            }
+            catch (Exception)
+            {
+                shouldBeCorrectError++;
+            }
         }
 
         foreach (
@@ -57,8 +64,17 @@ public class GetScheduleTest : E2ETest
                 .Take(devices.Count - (int)deviceInBatchThreshold)
         )
         {
-            await ShouldNotHaveCorrectAds(device, client, token);
+            try
+            {
+                await ShouldNotHaveCorrectAds(device, client, token);
+            }
+            catch (Exception)
+            {
+                shouldNotBeCorrectError++;
+            }
         }
+
+        (shouldBeCorrectError, shouldNotBeCorrectError).ShouldBe((0, 0));
     }
 
     private async Task ShouldHaveCorrectAds(
@@ -94,6 +110,10 @@ public class GetScheduleTest : E2ETest
     )
     {
         var scheduleResponse = await client.GetAsync($"/schedule/{device.Id}", token);
-        scheduleResponse.IsSuccessStatusCode.ShouldBeFalse();
+        scheduleResponse.IsSuccessStatusCode.ShouldBeTrue();
+
+        var url = await scheduleResponse.Content.ReadAsStringAsync();
+        var minioResponse = await client.GetAsync(url, token);
+        minioResponse.IsSuccessStatusCode.ShouldBeFalse();
     }
 }

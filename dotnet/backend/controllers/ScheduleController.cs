@@ -34,7 +34,7 @@ public class ScheduleController(
             async (cacheEntry) =>
             {
                 var maximumExpiration = TimeSpan.Parse(
-                    Environment.GetEnvironmentVariable("CALLFORSCHEDULE_MAX_DELAY")!
+                    Environment.GetEnvironmentVariable("SCHEDULE_MAX_DELAY")!
                 );
 
                 var maybeDevice = await deviceRepository.GetSingle(id);
