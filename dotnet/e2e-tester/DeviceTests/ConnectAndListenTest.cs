@@ -21,7 +21,7 @@ public class ConnectAndListeTest : E2ETest
         var addResult = await deviceRepo.Add(device, token);
         addResult.IsSuccessful.ShouldBeTrue();
         device = addResult.Value;
-        var maxDely = GetEnvironmentVariable("CALLFORSCHEDULE_MAX_DELAY");
+        var maxDely = GetEnvironmentVariable("SCHEDULE_MAX_DELAY");
         var parsed = TimeSpan.Parse(maxDely);
         var delay = parsed.Multiply(2);
 
