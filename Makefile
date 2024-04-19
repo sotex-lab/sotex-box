@@ -18,12 +18,15 @@ ifeq ($(CONTAINER_TOOL),auto)
 endif
 
 # Conditional assignment of COMPOSE_COMMAND
-ifeq ($(CONTAINER_TOOL),podman)
-    COMPOSE_COMMAND := podman-compose
-else ifeq ($(CONTAINER_TOOL),docker)
-    COMPOSE_COMMAND := docker compose
-else
-    $(error Unsupported value for CONTAINER_TOOL: $(CONTAINER_TOOL))
+export COMPOSE_COMMAND ?= auto
+ifeq ($(COMPOSE_COMMAND),auto)
+	ifeq ($(CONTAINER_TOOL),podman)
+		override COMPOSE_COMMAND := podman-compose
+	else ifeq ($(CONTAINER_TOOL),docker)
+		override COMPOSE_COMMAND := docker compose
+	else
+		$(error Unsupported value for CONTAINER_TOOL: $(CONTAINER_TOOL))
+	endif
 endif
 
 # If we're using podman create pods else if we're using docker create networks.
