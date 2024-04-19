@@ -64,6 +64,7 @@ class SotexBoxStack : Stack
             new SecurityGroupArgs
             {
                 Description = "allow all inbound trafic",
+                VpcId = vpc.Id,
                 Ingress =
                 {
                     new SecurityGroupIngressArgs
@@ -160,7 +161,7 @@ class SotexBoxStack : Stack
             {
                 KeyName = "key-pair",
                 PublicKey =
-                    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDJ78GLgD+3djgVse41XinimL5jO1h0FrFCXU7hm1+tXnLS1av6uV6sQKGYqYYDCs+b0aZhp1hqt6WRjbLkc20JMZi9ZlVtHgtY9IO396dzljFEj8VZ141TnNvwAmzD2sWuPGN/chI4/u8b16E/znwY4xXNFH2ydfUloYiNAcRI7pYv1ixuGWqu7OKSKZf9P9qTqoVJQisku9Gt5wkKNBnWuNkiX8hWeQeyR/0LsX1MIG5/ncuf9e/N16EzXB9yWi2o+DNpk9Yv36RDkygcuv4WMimVqJp5WXqLenWGntVkBCK8Yb8YwjdFHi5uUX0BFam+aJ9z8VqXALM3GbhMQXPxRr1ZMeJO+uD6tNTvbvoXz3uTqwt9BnI4nQJmdREzODf+JhuFTq7DBtLfq7v+TnsERkX8rJ4aONwOqW/07t3pr13NdSYjfwnvxXm2M/i2u6dYFvDJOBdaIq8Cs7tBkpdqe+eKTt1l0rL9HPJWSLpnZuYwvEjtJ93MvGnBZbVfDaH88jypqARiTAZd8poBO5EoHv8JSaWpYyRfdOd1Z/XBPSKhFcItIg8DZaFbjqG8NS3Zhc/RvxpVWFCTcrKW8kKofp821nHkQoX62yfEgzKbJyJMEqBor1Xjqr3aNz5x2m2vr2A8M842ID6Ec6nVqtyUMo7NtNqpfV/pt81ubTBA3Q=="
+                    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ8HeJ+7gg3jHS6b25feqENPpul4qBqwm07eS7oOxfuF"
             }
         );
 
@@ -179,6 +180,7 @@ class SotexBoxStack : Stack
                     set -euo pipefail
 
                     cd /home/ubuntu
+                    echo 'export COMPOSE_COMMAND=docker-compose' >> .bashrc
                     sudo apt -y update
                     sudo apt install -y git docker.io make
                     sudo systemctl start docker
@@ -191,7 +193,7 @@ class SotexBoxStack : Stack
 
                     newgrp docker
                     git clone https://github.com/sotex-lab/sotex-box.git
-                    sudo chown ubuntu:ubuntu sotex-box",
+                    sudo chown -R ubuntu:ubuntu sotex-box",
             }
         );
         PublicDns = instance.PublicDns;
