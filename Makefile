@@ -200,6 +200,13 @@ compose-up-d: ensure-setup
 compose-up-d: ## Run local stack detached. Used for e2e tests
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up -d
 
+.PHONY: compose-up-aws
+compose-up-non-local: compose-down
+compose-up-non-local: ensure-setup
+compose-up-non-local: container-build-backend
+compose-up-non-local: ## Run stack on AWS EC2
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml up -d
+
 .PHONY: compose-down
 compose-down: ## Remove local stack
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml down

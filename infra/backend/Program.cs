@@ -1,7 +1,11 @@
 ﻿using System.Threading.Tasks;
 using Pulumi;
+using Pulumi.Aws;
 using Pulumi.Aws.Ec2;
 using Pulumi.Aws.Ec2.Inputs;
+using Pulumi.Aws.Iam;
+using Pulumi.Aws.S3;
+using Pulumi.Aws.Sqs;
 
 class SotexBoxStack : Stack
 {
@@ -46,6 +50,56 @@ class SotexBoxStack : Stack
             new RouteTableAssociationArgs { RouteTableId = routeTable.Id, SubnetId = subnet.Id }
         );
 
+        var bucket = new Bucket("bucket", BucketArgs.Empty);
+        S3Url = Output.Format($"s3://{bucket.BucketName}");
+        S3Region = Output.Create(GetRegion.InvokeAsync()).Apply(region => region.Name);
+
+        var queue = new Queue("queue", QueueArgs.Empty);
+        SqsUrl = queue.Id.Apply(id =>
+            $"https://sqs.{Output.Create(GetRegion.InvokeAsync()).Apply(region => region.Name)}.amazonaws.com/<accountId>/{id}"
+        );
+
+        var dbSecGroup = new SecurityGroup(
+            "db-sec-group",
+            new SecurityGroupArgs
+            {
+                Description = "allow all inbound trafic",
+                Ingress =
+                {
+                    new SecurityGroupIngressArgs
+                    {
+                        Protocol = "-1",
+                        FromPort = 0,
+                        ToPort = 0,
+                        CidrBlocks = { "0.0.0.0/0" }
+                    }
+                }
+            }
+        );
+
+        var dbInstance = new Pulumi.Aws.Rds.Instance(
+            "postgres",
+            new Pulumi.Aws.Rds.InstanceArgs
+            {
+                AllocatedStorage = 5,
+                Engine = "postgres",
+                EngineVersion = "16.2",
+                InstanceClass = "db.t3.micro",
+                DbName = "postgres",
+                Password = "sotex123",
+                Username = "sotex",
+                VpcSecurityGroupIds = dbSecGroup.Id,
+                SkipFinalSnapshot = true
+            }
+        );
+
+        ConnectionString = Output
+            .Tuple(dbInstance.Endpoint, dbInstance.DbName, dbInstance.Username, dbInstance.Password)
+            .Apply(t =>
+            {
+                (string endpoint, string name, string username, string? password) = t;
+                return $"Host={endpoint};Database={name};Username={username};Password={password}";
+            });
         // Create a new security group for HTTP and SSH access
         var securityGroup = new SecurityGroup(
             "web-sg",
@@ -130,6 +184,10 @@ class SotexBoxStack : Stack
                     sudo docker run hello-world
                     sudo systemctl enable docker
                     sudo usermod -a -G docker ubuntu
+
+                    sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+                    sudo chmod +x /usr/local/bin/docker-compose
+
                     newgrp docker
                     git clone https://github.com/sotex-lab/sotex-box.git",
             }
@@ -141,6 +199,10 @@ class SotexBoxStack : Stack
     [Output]
     public Output<string> PublicDns { get; set; }
     public Output<string> PublicIp { get; set; }
+    public Output<string> S3Url { get; set; }
+    public Output<string> S3Region { get; set; }
+    public Output<string> SqsUrl { get; set; }
+    public Output<string> ConnectionString { get; set; }
 }
 
 class Program
