@@ -1,237 +1,146 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using ConfigTranslator;
+﻿using System.Threading.Tasks;
 using Pulumi;
 using Pulumi.Aws.Ec2;
 using Pulumi.Aws.Ec2.Inputs;
-using Pulumi.Aws.Ecs;
-using Pulumi.Aws.Ecs.Inputs;
-using Pulumi.Aws.Iam;
-using Pulumi.Aws.LB;
-using Pulumi.Aws.LB.Inputs;
 
 class SotexBoxStack : Stack
 {
     public SotexBoxStack()
     {
-        var stackName = Deployment.Instance.StackName;
-        var config = new Config();
-        var mapped = new PulumiMapper(config).Map<MappedConfig>();
-
         var vpc = new Vpc(
-            string.Format("{0}-vpc", stackName),
-            new VpcArgs { CidrBlock = mapped.NetworkingVpcCidrBlock, }
-        );
-
-        var internetGateway = new InternetGateway(
-            string.Format("{0}-internet-gateway", stackName),
-            new InternetGatewayArgs { VpcId = vpc.Id }
-        );
-
-        var publicRouteTable = new RouteTable(
-            string.Format("{0}-route-table", stackName),
-            new RouteTableArgs
+            "vpc",
+            new VpcArgs
             {
-                Routes =
-                {
-                    new RouteTableRouteArgs
-                    {
-                        CidrBlock = mapped.NetworkingPublicRoutingTableCidrBlock,
-                        GatewayId = internetGateway.Id,
-                    }
-                },
-                VpcId = vpc.Id,
+                CidrBlock = "10.0.0.0/16",
+                EnableDnsSupport = true,
+                EnableDnsHostnames = true
             }
         );
 
-        var subnets = new List<Subnet>();
-        for (int i = 0; i < mapped.NetworkingSubnetsCidrBlock!.Count(); i++)
-        {
-            var subnet = new Subnet(
-                string.Format("{0}-subnet-{1}", stackName, i),
-                new SubnetArgs
-                {
-                    VpcId = vpc.Id,
-                    CidrBlock = mapped.NetworkingSubnetsCidrBlock!.ElementAt(i),
-                    AvailabilityZone = mapped.NetworkingSubnetsAvailabilityZone!.ElementAt(i),
-                }
-            );
+        var igw = new InternetGateway("gateway", new InternetGatewayArgs { VpcId = vpc.Id });
 
-            new RouteTableAssociation(
-                string.Format("{0}-subnet-{1}-assosiation", stackName, i),
-                new RouteTableAssociationArgs
-                {
-                    SubnetId = subnet.Id,
-                    RouteTableId = publicRouteTable.Id
-                }
-            );
-
-            subnets.Add(subnet);
-        }
-
-        var securityGroup = new SecurityGroup(
-            string.Format("{0}-security-group", stackName),
-            new SecurityGroupArgs
+        var routeTable = new RouteTable(
+            "routingTable",
+            new RouteTableArgs
             {
                 VpcId = vpc.Id,
-                Egress =
+                Routes =
                 {
-                    new SecurityGroupEgressArgs
-                    {
-                        Protocol = mapped.NetworkingSecurityGroupEgressProtocol,
-                        FromPort = mapped.NetworkingSecurityGroupEgressFromPort,
-                        ToPort = mapped.NetworkingSecurityGroupEgressToPort,
-                        CidrBlocks = { mapped.NetworkingSecurityGroupEgressCidrBlocks }
-                    }
+                    new RouteTableRouteArgs { CidrBlock = "0.0.0.0/0", GatewayId = igw.Id, }
                 },
+            }
+        );
+
+        var subnet = new Subnet(
+            "subnet",
+            new SubnetArgs
+            {
+                VpcId = vpc.Id,
+                CidrBlock = "10.0.1.0/24",
+                MapPublicIpOnLaunch = true
+            }
+        );
+
+        var routeTableAssociation = new RouteTableAssociation(
+            "rta",
+            new RouteTableAssociationArgs { RouteTableId = routeTable.Id, SubnetId = subnet.Id }
+        );
+
+        // Create a new security group for HTTP and SSH access
+        var securityGroup = new SecurityGroup(
+            "web-sg",
+            new SecurityGroupArgs
+            {
+                Description = "Enable HTTP and SSH access",
+                VpcId = vpc.Id,
                 Ingress =
                 {
                     new SecurityGroupIngressArgs
                     {
-                        Protocol = mapped.NetworkingSecurityGroupIngressProtocol,
-                        FromPort = mapped.NetworkingSecurityGroupIngressFromPort,
-                        ToPort = mapped.NetworkingSecurityGroupIngressToPort,
-                        CidrBlocks = { mapped.NetworkingSecurityGroupIngressCidrBlocks }
-                    }
-                }
-            }
-        );
-
-        var cluster = new Cluster(string.Format("{0}-cluster", stackName));
-        var rolePolicy = JsonSerializer.Serialize(
-            new
-            {
-                Version = mapped.RolePolicyVersion,
-                Statement = new[]
-                {
-                    new
+                        Protocol = "tcp",
+                        FromPort = 22,
+                        ToPort = 22,
+                        CidrBlocks = { "0.0.0.0/0" },
+                    },
+                    new SecurityGroupIngressArgs
                     {
-                        Sid = mapped.RolePolicyStatementSid,
-                        Effect = mapped.RolePolicyStatementEffect,
-                        Principal = new { Service = mapped.RolePolicyStatementPrincipalService },
-                        Action = mapped.RolePolicyStatementAction
+                        Protocol = "tcp",
+                        FromPort = 80,
+                        ToPort = 80,
+                        CidrBlocks = { "0.0.0.0/0" },
                     }
-                }
-            }
-        );
-
-        var taskExecRole = new Role(
-            string.Format("{0}-task-execution-role", stackName),
-            new RoleArgs { AssumeRolePolicy = rolePolicy }
-        );
-
-        new RolePolicyAttachment(
-            string.Format("{0}-task-exec-policy", stackName),
-            new RolePolicyAttachmentArgs
-            {
-                Role = taskExecRole.Name,
-                PolicyArn = mapped.RolePolicyPolicyArn
-            }
-        );
-
-        var loadBalancer = new LoadBalancer(
-            string.Format("{0}-load-balancer", stackName),
-            new LoadBalancerArgs
-            {
-                Subnets = subnets.Select(x => x.Id).ToList(),
-                SecurityGroups = { securityGroup.Id },
-            }
-        );
-
-        var targetGroup = new TargetGroup(
-            string.Format("{0}-target-group", stackName),
-            new TargetGroupArgs
-            {
-                Port = mapped.NetworkingTargetGroupPort,
-                Protocol = mapped.NetworkingTargetGroupProtocol,
-                TargetType = mapped.NetworkingTargetGroupTargetType,
-                VpcId = vpc.Id,
-            }
-        );
-
-        var listener = new Listener(
-            string.Format("{0}-listener", stackName),
-            new ListenerArgs
-            {
-                LoadBalancerArn = loadBalancer.Arn,
-                Port = mapped.NetworkingListenerPort,
-                DefaultActions =
-                {
-                    new ListenerDefaultActionArgs
-                    {
-                        Type = mapped.NetworkingListenerActionType,
-                        TargetGroupArn = targetGroup.Arn
-                    }
-                }
-            }
-        );
-
-        var taskDefinition = new TaskDefinition(
-            string.Format("{0}-task", stackName),
-            new TaskDefinitionArgs
-            {
-                Family = "fargate-task-definition",
-                Cpu = mapped.TaskDefinitionCpu,
-                Memory = mapped.TaskDefinitionMemory,
-                NetworkMode = "awsvpc",
-                RequiresCompatibilities = { "FARGATE" },
-                ExecutionRoleArn = taskExecRole.Arn,
-                ContainerDefinitions = JsonSerializer.Serialize(
-                    new[]
-                    {
-                        new
-                        {
-                            name = stackName,
-                            image = mapped.TaskDefintionBackendImage,
-                            portMappings = new[]
-                            {
-                                new
-                                {
-                                    containerPort = mapped.TaskDefinitionBackendContainerPort,
-                                    hostPort = mapped.TaskDefinitionBackendHostPort,
-                                    protocol = mapped.TaskDefinitionBackendProtocol
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-        );
-
-        new Service(
-            string.Format("{0}-service", stackName),
-            new ServiceArgs
-            {
-                Cluster = cluster.Arn,
-                DesiredCount = mapped.ServiceDesiredCount,
-                LaunchType = "FARGATE",
-                TaskDefinition = taskDefinition.Arn,
-                NetworkConfiguration = new ServiceNetworkConfigurationArgs
-                {
-                    AssignPublicIp = true,
-                    Subnets = subnets.Select(x => x.Id).ToList(),
-                    SecurityGroups = { securityGroup.Id }
                 },
-                LoadBalancers =
+                Egress =
                 {
-                    new ServiceLoadBalancerArgs
+                    new SecurityGroupEgressArgs
                     {
-                        TargetGroupArn = targetGroup.Arn,
-                        ContainerName = stackName,
-                        ContainerPort = mapped.TaskDefinitionBackendContainerPort
+                        Protocol = "-1",
+                        FromPort = 0,
+                        ToPort = 0,
+                        CidrBlocks = { "0.0.0.0/0" }
                     }
                 }
-            },
-            new CustomResourceOptions { DependsOn = listener }
+            }
         );
 
-        BackendUrl = Output.Format($"http://{loadBalancer.DnsName}");
+        // Find an Ubuntu AMI to use
+        var ami = GetAmi.Invoke(
+            new GetAmiInvokeArgs
+            {
+                Filters =
+                {
+                    new GetAmiFilterInputArgs
+                    {
+                        Name = "name",
+                        Values = { "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*" },
+                    }
+                },
+                Owners = { "099720109477" }, // Canonical
+                MostRecent = true
+            }
+        );
+
+        var keyPair = new KeyPair(
+            "ec2KeyPair",
+            new KeyPairArgs
+            {
+                KeyName = "key-pair",
+                PublicKey =
+                    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDJ78GLgD+3djgVse41XinimL5jO1h0FrFCXU7hm1+tXnLS1av6uV6sQKGYqYYDCs+b0aZhp1hqt6WRjbLkc20JMZi9ZlVtHgtY9IO396dzljFEj8VZ141TnNvwAmzD2sWuPGN/chI4/u8b16E/znwY4xXNFH2ydfUloYiNAcRI7pYv1ixuGWqu7OKSKZf9P9qTqoVJQisku9Gt5wkKNBnWuNkiX8hWeQeyR/0LsX1MIG5/ncuf9e/N16EzXB9yWi2o+DNpk9Yv36RDkygcuv4WMimVqJp5WXqLenWGntVkBCK8Yb8YwjdFHi5uUX0BFam+aJ9z8VqXALM3GbhMQXPxRr1ZMeJO+uD6tNTvbvoXz3uTqwt9BnI4nQJmdREzODf+JhuFTq7DBtLfq7v+TnsERkX8rJ4aONwOqW/07t3pr13NdSYjfwnvxXm2M/i2u6dYFvDJOBdaIq8Cs7tBkpdqe+eKTt1l0rL9HPJWSLpnZuYwvEjtJ93MvGnBZbVfDaH88jypqARiTAZd8poBO5EoHv8JSaWpYyRfdOd1Z/XBPSKhFcItIg8DZaFbjqG8NS3Zhc/RvxpVWFCTcrKW8kKofp821nHkQoX62yfEgzKbJyJMEqBor1Xjqr3aNz5x2m2vr2A8M842ID6Ec6nVqtyUMo7NtNqpfV/pt81ubTBA3Q=="
+            }
+        );
+
+        // Spin up a new EC2 instance
+        var instance = new Instance(
+            "web-instance",
+            new InstanceArgs
+            {
+                InstanceType = "t2.micro",
+                Ami = ami.Apply(a => a.Id),
+                KeyName = keyPair.KeyName,
+                VpcSecurityGroupIds = { securityGroup.Id },
+                SubnetId = subnet.Id,
+                UserData =
+                    @"#!/bin/bash
+                    set -euo pipefail
+
+                    sudo apt -y update
+                    sudo apt install -y git docker.io make
+                    sudo systemctl start docker
+                    sudo docker run hello-world
+                    sudo systemctl enable docker
+                    sudo usermod -a -G docker ubuntu
+                    newgrp docker
+                    git clone https://github.com/sotex-lab/sotex-box.git",
+            }
+        );
+        PublicDns = instance.PublicDns;
+        PublicIp = instance.PublicIp;
     }
 
     [Output]
-    public Output<string> BackendUrl { get; set; }
+    public Output<string> PublicDns { get; set; }
+    public Output<string> PublicIp { get; set; }
 }
 
 class Program
