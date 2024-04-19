@@ -178,6 +178,7 @@ class SotexBoxStack : Stack
                     @"#!/bin/bash
                     set -euo pipefail
 
+                    cd /home/ubuntu
                     sudo apt -y update
                     sudo apt install -y git docker.io make
                     sudo systemctl start docker
@@ -189,7 +190,8 @@ class SotexBoxStack : Stack
                     sudo chmod +x /usr/local/bin/docker-compose
 
                     newgrp docker
-                    git clone https://github.com/sotex-lab/sotex-box.git",
+                    git clone https://github.com/sotex-lab/sotex-box.git
+                    sudo chown ubuntu:ubuntu sotex-box",
             }
         );
         PublicDns = instance.PublicDns;
