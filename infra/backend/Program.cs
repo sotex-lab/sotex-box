@@ -217,7 +217,7 @@ class SotexBoxStack : Stack
             }
         );
         PublicDns = instance.PublicDns;
-        PublicIp = instance.PublicIp;
+        PublicIp = instance.PublicIp.Apply(ip => $"ubuntu@{ip}");
     }
 
     [Output]
