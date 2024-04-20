@@ -4,6 +4,7 @@ using Pulumi.Aws;
 using Pulumi.Aws.Ec2;
 using Pulumi.Aws.Ec2.Inputs;
 using Pulumi.Aws.Iam;
+using Pulumi.Aws.Rds;
 using Pulumi.Aws.S3;
 using Pulumi.Aws.Sqs;
 
@@ -41,8 +42,24 @@ class SotexBoxStack : Stack
             {
                 VpcId = vpc.Id,
                 CidrBlock = "10.0.1.0/24",
-                MapPublicIpOnLaunch = true
+                MapPublicIpOnLaunch = true,
+                AvailabilityZone = "eu-central-1a"
             }
+        );
+        var subnet2 = new Subnet(
+            "subnet2",
+            new SubnetArgs
+            {
+                VpcId = vpc.Id,
+                CidrBlock = "10.0.2.0/24",
+                MapPublicIpOnLaunch = true,
+                AvailabilityZone = "eu-central-1b"
+            }
+        );
+
+        var subnetGroup = new SubnetGroup(
+            "subnet-group",
+            new SubnetGroupArgs { Name = "subnet-group", SubnetIds = { subnet.Id, subnet2.Id } }
         );
 
         var routeTableAssociation = new RouteTableAssociation(
@@ -50,14 +67,16 @@ class SotexBoxStack : Stack
             new RouteTableAssociationArgs { RouteTableId = routeTable.Id, SubnetId = subnet.Id }
         );
 
-        var bucket = new Bucket("bucket", BucketArgs.Empty);
-        S3Url = Output.Format($"s3://{bucket.BucketName}");
-        S3Region = Output.Create(GetRegion.InvokeAsync()).Apply(region => region.Name);
+        var processed = new Bucket("processed", BucketArgs.Empty);
+        var nonprocessed = new Bucket("non-processed", BucketArgs.Empty);
+        var schedule = new Bucket("schedule", BucketArgs.Empty);
+        S3Url = Output.Format($"https://s3.eu-central-1.amazonaws.com");
+        ProcessedBucketName = processed.BucketName.Apply(name => name);
+        NonProcessedBucketName = nonprocessed.BucketName.Apply(name => name);
+        ScheduleBucketName = schedule.BucketName.Apply(name => name);
 
         var queue = new Queue("queue", QueueArgs.Empty);
-        SqsUrl = queue.Id.Apply(id =>
-            $"https://sqs.{Output.Create(GetRegion.InvokeAsync()).Apply(region => region.Name)}.amazonaws.com/<accountId>/{id}"
-        );
+        SqsUrl = queue.Url.Apply(url => url);
 
         var dbSecGroup = new SecurityGroup(
             "db-sec-group",
@@ -90,7 +109,8 @@ class SotexBoxStack : Stack
                 Password = "sotex123",
                 Username = "sotex",
                 VpcSecurityGroupIds = dbSecGroup.Id,
-                SkipFinalSnapshot = true
+                DbSubnetGroupName = subnetGroup.Name,
+                SkipFinalSnapshot = true,
             }
         );
 
@@ -166,9 +186,9 @@ class SotexBoxStack : Stack
         );
 
         // Spin up a new EC2 instance
-        var instance = new Instance(
+        var instance = new Pulumi.Aws.Ec2.Instance(
             "web-instance",
-            new InstanceArgs
+            new Pulumi.Aws.Ec2.InstanceArgs
             {
                 InstanceType = "t2.micro",
                 Ami = ami.Apply(a => a.Id),
@@ -202,11 +222,30 @@ class SotexBoxStack : Stack
 
     [Output]
     public Output<string> PublicDns { get; set; }
+
+    [Output]
     public Output<string> PublicIp { get; set; }
+
+    [Output]
     public Output<string> S3Url { get; set; }
+
+    [Output]
     public Output<string> S3Region { get; set; }
+
+    [Output]
     public Output<string> SqsUrl { get; set; }
+
+    [Output]
     public Output<string> ConnectionString { get; set; }
+
+    [Output]
+    public Output<string> ProcessedBucketName { get; set; }
+
+    [Output]
+    public Output<string> NonProcessedBucketName { get; set; }
+
+    [Output]
+    public Output<string> ScheduleBucketName { get; set; }
 }
 
 class Program
