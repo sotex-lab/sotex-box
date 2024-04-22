@@ -139,6 +139,9 @@ class SotexBoxStack : Stack
             }
         );
 
+        var access_key = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!;
+        var secret_key = Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!;
+
         var dbInstance = new Pulumi.Aws.Rds.Instance(
             "postgres",
             new Pulumi.Aws.Rds.InstanceArgs
@@ -148,7 +151,7 @@ class SotexBoxStack : Stack
                 EngineVersion = mapped.DbEngineVersion,
                 InstanceClass = mapped.DbInstanceClass,
                 DbName = mapped.DbEngine,
-                Password = "sotex123",
+                Password = secret_key,
                 Username = "sotex",
                 VpcSecurityGroupIds = dbSecGroup.Id,
                 DbSubnetGroupName = subnetGroup.Name,
@@ -219,8 +222,6 @@ class SotexBoxStack : Stack
             new KeyPairArgs { KeyName = "key-pair", PublicKey = mapped.PublicKey }
         );
 
-        var access_key = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!;
-        var secret_key = Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!;
         var s3Url = "https://s3.eu-central-1.amazonaws.com";
         var sqsUrl = "https://sqs.eu-central-1.amazonaws.com";
 
