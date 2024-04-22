@@ -61,11 +61,11 @@ CoconaApp.Run(
 
         try
         {
-            var tasks = executors.Select((x, i) => (x.Start(), i));
+            var tasks = executors.Select((x, i) => (x.Start(), i)).ToList();
             await Task.WhenAll(tasks.Select(x => x.Item1));
             foreach (var task in tasks)
             {
-                var outcome = await task.Item1;
+                var outcome = task.Item1.Result;
 
                 if (!outcome)
                 {
@@ -107,6 +107,10 @@ CoconaApp.Run(
         catch (OperationCanceledException)
         {
             globalLogger.LogInformation("Received shutdown");
+        }
+        catch (Exception e)
+        {
+            globalLogger.LogError("Received error: {0}", e);
         }
         finally
         {
@@ -201,6 +205,7 @@ CoconaApp.Run(
 
             var succeeded = testSummaries.Count(x => x.Outcome);
             var succeededProcentage = Math.Round(100 * (double)succeeded / testSummaries.Count, 2);
+            var failed = Math.Round(100 - succeededProcentage, 2);
 
             var overview = new Document(
                 new Grid
@@ -223,7 +228,7 @@ CoconaApp.Run(
                             {
                                 Result = "Failed".Red(),
                                 Count = (testSummaries.Count - succeeded).ToString().Red(),
-                                Percentage = string.Format("{0}%", 100 - succeededProcentage).Red()
+                                Percentage = string.Format("{0}%", failed).Red()
                             },
                         }.Select(x =>
                             new[]

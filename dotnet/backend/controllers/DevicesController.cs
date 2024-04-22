@@ -1,6 +1,7 @@
 using System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using model.Contracts;
 using model.Core;
 using persistence.Repository;
 using persistence.Repository.Base;

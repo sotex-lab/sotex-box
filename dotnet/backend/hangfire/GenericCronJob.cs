@@ -1,5 +1,3 @@
-using NCrontab;
-
 namespace backend.Hangfire;
 
 public interface IGenericCronJob
@@ -13,25 +11,8 @@ public abstract class GenericCronJob<T>
     private static string defaultCron = "0/15 * * ? * *";
     protected readonly ILogger<GenericCronJob<T>> _logger;
 
-    public static string Cron()
-    {
-        var value = Environment.GetEnvironmentVariable(T.EnvironmentVariableName);
-        if (value == null)
-            return defaultCron;
-
-        try
-        {
-            var parsed = CrontabSchedule.Parse(
-                value,
-                new CrontabSchedule.ParseOptions { IncludingSeconds = true }
-            );
-            return value;
-        }
-        catch (CrontabException)
-        {
-            return defaultCron;
-        }
-    }
+    public static string Cron() =>
+        Environment.GetEnvironmentVariable(T.EnvironmentVariableName) ?? defaultCron;
 
     public GenericCronJob(ILogger<GenericCronJob<T>> logger)
     {

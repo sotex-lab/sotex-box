@@ -49,6 +49,7 @@ __pypackages__/
 .mono
 
 # Environments
+.env.json
 .env
 .venv
 env/
@@ -615,6 +616,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+**/flutter_jank*.json
 
 # Symbolication related
 app.*.symbols

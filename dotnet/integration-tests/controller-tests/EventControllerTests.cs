@@ -71,6 +71,7 @@ public class EventControllerTests
 
         var client = _factory.CreateClient();
         var task = Task.Run(async () => await client.GetAsync($"/event/connect?id={id}"));
+        await Task.Delay(100);
         var removeResponse = await client.DeleteAsync($"/event/ForceDisconnect?id={id}");
 
         await Task.Delay(500);

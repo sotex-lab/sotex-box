@@ -1,9 +1,8 @@
 import 'dart:isolate';
 import 'package:eventflux/client.dart';
 import 'package:eventflux/enum.dart';
-import 'package:eventflux/models/exception.dart';
 import 'package:eventflux/models/response.dart';
-import 'package:launcher/src/common/logger.dart';
+import 'package:launcher/src/common/logging.dart';
 
 extension SSEConverting on String {
   SSE toSSE() {

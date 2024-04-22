@@ -9,6 +9,7 @@ public interface IGetOrCreateBucketService
 {
     Task<Result<S3Bucket, GetOrCreateBucketError>> GetProcessed();
     Task<Result<S3Bucket, GetOrCreateBucketError>> GetNonProcessed();
+    Task<Result<S3Bucket, GetOrCreateBucketError>> GetSchedule();
 }
 
 public enum GetOrCreateBucketError
@@ -25,7 +26,10 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
     private readonly ILogger<GetOrCreateBucketServiceImpl> _logger;
 
     private static string nonProcessed = "non-processed";
+#pragma warning disable CS0414 // Add readonly modifier
     private static string processed = "processed";
+#pragma warning restore CS0414 // Add readonly modifier
+    private static string schedule = "schedule";
 
     public GetOrCreateBucketServiceImpl(IAmazonS3 s3, ILogger<GetOrCreateBucketServiceImpl> logger)
     {
@@ -33,11 +37,16 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
         _logger = logger;
     }
 
+    //TODO: should be changed to processed once we implement the way of transfering from
+    //      one bucket to another. Also should remove the queting of warning above
     public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetProcessed() =>
-        await EnsureCreated(processed);
+        await EnsureCreated(nonProcessed);
 
     public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetNonProcessed() =>
         await EnsureCreated(nonProcessed);
+
+    public async Task<Result<S3Bucket, GetOrCreateBucketError>> GetSchedule() =>
+        await EnsureCreated(schedule);
 
     private async Task<Result<S3Bucket, GetOrCreateBucketError>> EnsureCreated(string bucketName)
     {

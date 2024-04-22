@@ -4,6 +4,7 @@ using backend.Hangfire.Dashboard;
 using backend.Services;
 using Hangfire;
 using Hangfire.Dashboard;
+using Hangfire.PostgreSql;
 using model.Mappers;
 using OpenTelemetry.Metrics;
 using persistence;
@@ -38,6 +39,11 @@ builder
             .AddMeter(IDeviceMetrics.MeterName);
     });
 
+builder.Services.AddHangfireServer();
+
+builder.Services.AddSotexBoxDatabase();
+builder.Services.AddAutoMapper(typeof(CoreMapper).Assembly);
+
 builder.Services.AddHangfire(config =>
     config
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -45,13 +51,10 @@ builder.Services.AddHangfire(config =>
         .UseRecommendedSerializerSettings()
         .UseInMemoryStorage()
 );
-builder.Services.AddHangfireServer();
-
-builder.Services.AddSotexBoxDatabase();
-builder.Services.AddAutoMapper(typeof(CoreMapper).Assembly);
 
 builder.Services.ConfigureAwsClients();
 builder.Services.RegisterOurServices();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

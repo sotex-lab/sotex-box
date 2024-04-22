@@ -17,6 +17,8 @@ public class TestExecutor
     private readonly int BACKEND_PORT;
     private static int DATABASE_PORT = 5432;
     private static int MINIO_PORT = 9000;
+    private static int PGADMIN_PORT = 5050;
+    private static int MINIO_CONSOLE_PORT = 9001;
     private readonly IContainer testEnvironment;
     private readonly ILogger<TestExecutor> logger;
     private readonly ILoggerFactory loggerFactory;
@@ -29,6 +31,7 @@ public class TestExecutor
     private DbConnection? dbConnection;
     private ApplicationDbContext? applicationDbContext;
     private string absolutePath;
+    private Dictionary<string, string> envBag;
 
     public TestExecutor(
         ILoggerFactory logFactory,
@@ -48,6 +51,7 @@ public class TestExecutor
             SchemasToInclude = ["public"],
             DbAdapter = DbAdapter.Postgres
         };
+        envBag = new Dictionary<string, string>();
         Info("Creating test environment");
 
         BACKEND_PORT = backendPort;
@@ -77,6 +81,8 @@ public class TestExecutor
             .WithPortBinding(BACKEND_PORT)
             .WithPortBinding(DATABASE_PORT, true)
             .WithPortBinding(MINIO_PORT, true)
+            .WithPortBinding(PGADMIN_PORT, true)
+            .WithPortBinding(MINIO_CONSOLE_PORT, true)
             .Build();
 
         Info("Created test environment");
@@ -98,6 +104,9 @@ public class TestExecutor
             return false;
 
         if (!await OverrideEnvVariables())
+            return false;
+
+        if (!await FillEnvBag())
             return false;
 
         if (!await StartStack())
@@ -173,6 +182,7 @@ public class TestExecutor
             Info,
             Warn,
             Error,
+            envBag,
             token
         );
 
@@ -208,20 +218,33 @@ public class TestExecutor
     {
         try
         {
-            applicationDbContext = new ApplicationDbContextFactory().CreateDbContext(
-                $"Host=localhost;Port={testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
+            await pipeline.ExecuteAsync(
+                static async (executor, token) =>
+                {
+                    executor.applicationDbContext =
+                        new ApplicationDbContextFactory().CreateDbContext(
+                            $"Host=localhost;Port={executor.testEnvironment.GetMappedPublicPort(DATABASE_PORT)};Username=postgres;Password=postgres;Database=postgres"
+                        );
+
+                    executor.dbConnection =
+                        executor.applicationDbContext.Database.GetDbConnection();
+                    await executor.dbConnection.OpenAsync(token);
+
+                    executor.respawner = await Respawner.CreateAsync(
+                        executor.dbConnection,
+                        executor.respawnerOptions
+                    );
+
+                    executor.Info("Database communication established");
+                },
+                this,
+                token
             );
-
-            dbConnection = applicationDbContext.Database.GetDbConnection();
-            await dbConnection.OpenAsync(token);
-
-            respawner = await Respawner.CreateAsync(dbConnection, respawnerOptions);
-
-            Info("Database communication established");
         }
         catch (Exception e)
         {
             Error("Error while creating database connection: {0}", e.Message);
+            await Task.Delay(TimeSpan.FromHours(2), token);
             return false;
         }
         return true;
@@ -310,16 +333,53 @@ public class TestExecutor
         foreach (var command in commmands)
         {
             var writeResult = await testEnvironment.ExecAsync(command);
-            if (writeResult.ExitCode != 0)
+            if (writeResult.ExitCode == 0)
+                continue;
+            Error("Received exit status code {0}: \n{1}", writeResult.ExitCode, writeResult.Stderr);
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> FillEnvBag()
+    {
+        Info("Filling environment variables");
+        var commands = new[] { new[] { "cat", ".env" } };
+
+        foreach (var command in commands)
+        {
+            var result = await testEnvironment.ExecAsync(command);
+            if (result.ExitCode != 0)
             {
-                Error(
-                    "Received exit status code {0}: \n{1}",
-                    writeResult.ExitCode,
-                    writeResult.Stderr
-                );
+                Error("Received exit status code {0}: \n{1}", result.ExitCode, result.Stderr);
                 return false;
             }
+
+            foreach (var line in result.Stdout.Split('\n'))
+            {
+                if (string.IsNullOrEmpty(line))
+                    continue;
+                if (line.StartsWith("#"))
+                    continue;
+
+                var parts = line.Split("=", 2, StringSplitOptions.TrimEntries);
+                var key = parts[0];
+                var value = parts[1];
+
+                if (envBag.ContainsKey(key))
+                {
+                    Warn(
+                        "Overriding already found env variable '{0}' from value '{1}' to value '{2}'",
+                        key,
+                        envBag[key],
+                        value
+                    );
+                }
+                envBag[key] = value;
+            }
         }
+        Info("Filled environment variables");
 
         return true;
     }
