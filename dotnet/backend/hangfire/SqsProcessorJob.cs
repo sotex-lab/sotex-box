@@ -62,6 +62,9 @@ public class SqsProcessorJob : GenericCronJob<SqsProcessorJob>, IGenericCronJob
                 continue;
             }
 
+            if (mapped.Records == null)
+                continue;
+
             foreach (var record in mapped.Records!)
             {
                 var key = record.S3!.Object!.Key!;

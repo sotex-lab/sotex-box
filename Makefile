@@ -150,9 +150,17 @@ dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	cat BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md >> docs/benchmark-EventCoordinator.md
 
 ##@ Infrastructure actions
+export AWS_ACCESS_KEY ?= auto
+ifeq ($(AWS_ACCESS_KEY),auto)
+	override AWS_ACCESS_KEY = $(shell taplo get -f ~/.aws/credentials 'service-account.aws_access_key_id')
+endif
+export AWS_SECRET_KEY ?= auto
+ifeq ($(AWS_SECRET_KEY),auto)
+	override AWS_SECRET_KEY = $(shell taplo get -f ~/.aws/credentials 'service-account.aws_secret_access_key')
+endif
 .PHONY: pulumi-up-staging
 pulumi-up-staging: ## Command to deploy the staging infra
-	pulumi up --cwd infra/backend --stack staging
+	@AWS_ACCESS_KEY=$(AWS_ACCESS_KEY) AWS_SECRET_KEY=$(AWS_SECRET_KEY) pulumi up --cwd infra/backend --stack staging
 
 .PHONY: pulumi-destroy-staging
 pulumi-destroy-staging: ## Command to destroy the staging infra
