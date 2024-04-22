@@ -95,6 +95,18 @@ public class SqsProcessorJob : GenericCronJob<SqsProcessorJob>, IGenericCronJob
                     );
                 }
             }
+
+            await _sqsClient.DeleteMessageAsync(
+                new DeleteMessageRequest
+                {
+                    QueueUrl = request.QueueUrl,
+                    ReceiptHandle = message.ReceiptHandle
+                }
+            );
+            _logger.LogDebug(
+                "Deleted message after successful processing: {0}",
+                message.ReceiptHandle
+            );
         }
 
         _logger.LogDebug("Polling sqs finished");
