@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:launcher/src/common/common.dart';
+import 'package:launcher/src/common/logging.dart';
 
 /// [BlocObserver] for the application which
 /// observes all state changes
