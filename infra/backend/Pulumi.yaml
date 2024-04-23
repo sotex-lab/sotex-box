@@ -9,10 +9,6 @@ config:
     description: VPC Cidr Block
     default: 10.0.0.0/16
     type: string
-  sotex-box:networking-publicRoutingTable-cidrBlock:
-    value: 0.0.0.0/0
-    description: Public routing table CidrBlock
-    type: string
   sotex-box:networking-subnets-cidrBlock:
     description: Subnet cidrBlock blocks
     type: array
@@ -30,120 +26,49 @@ config:
       - eu-central-1a
       - eu-central-1b
 
-  sotex-box:networking-securityGroup-egress-protocol:
-    description: Egress protocol settings
-    default: "-1"
+  sotex-box:buckets:
+    description: List of buckets to initialize
+    type: array
+    items:
+      type: string
+    default:
+      - processed
+      - non-processed
+      - schedule
+
+  sotex-box:sqsProcessorQueue:
+    description: Queue for sqsProcessor job
     type: string
-  sotex-box:networking-securityGroup-egress-fromPort:
-    description: Egress fromPort settings
-    default: 0
+    default: sqsProcessor
+
+  sotex-box:dbAllocatedStorage:
+    description: Amount of storage in gigabytes
     type: integer
-  sotex-box:networking-securityGroup-egress-toPort:
-    description: Egress toPort settings
-    default: 0
-    type: integer
-  sotex-box:networking-securityGroup-egress-cidrBlocks:
-    description: Egress cidrBlock settings
-    default: 0.0.0.0/0
+    default: 5
+  sotex-box:dbEngine:
+    description: Engine used for database
     type: string
+    default: postgres
+  sotex-box:dbEngineVersion:
+    description: Engine version used for database
+    type: string
+    default: "16.2"
+  sotex-box:dbInstanceClass:
+    description: Instance class used for database machine
+    type: string
+    default: db.t3.micro
 
-  sotex-box:networking-securityGroup-ingress-protocol:
-    description: Ingress protocol settings
-    default: tcp
+  sotex-box:ubuntuAmi:
+    description: Ubuntu AMI used for running ec2 instance
     type: string
-  sotex-box:networking-securityGroup-ingress-fromPort:
-    description: Ingress fromPort settings
-    default: 80
-    type: integer
-  sotex-box:networking-securityGroup-ingress-toPort:
-    description: Ingress toPort settings
-    default: 80
-    type: integer
-  sotex-box:networking-securityGroup-ingress-cidrBlocks:
-    description: Ingress cidrBlock settings
-    default: 0.0.0.0/0
-    type: string
+    default: ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*
 
-  sotex-box:networking-targetGroup-protocol:
-    description: Target group port settings
-    default: HTTP
+  sotex-box:publicKey:
+    description: Public key used for signing in ec2
     type: string
-  sotex-box:networking-targetGroup-port:
-    description: Target group port settings
-    default: 80
-    type: integer
-  sotex-box:networking-targetGroup-targetType:
-    description: Target group target type
-    default: ip
-    type: string
+    default: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ8HeJ+7gg3jHS6b25feqENPpul4qBqwm07eS7oOxfuF
 
-  sotex-box:networking-listener-port:
-    description: Listener port settings
-    default: 80
-    type: integer
-  sotex-box:networking-listener-actionType:
-    description: Listener action type
-    default: forward
+  sotex-box:ec2InstanceType:
+    description: Instance type used to run ec2
     type: string
-
-  # Role policy
-  sotex-box:rolePolicy-version:
-    description: Role policy version settings
-    default: "2008-10-17"
-    type: string
-
-  sotex-box:rolePolicy-statement-sid:
-    description: Role policy statement sid
-    default: ""
-    type: string
-  sotex-box:rolePolicy-statement-effect:
-    description: Role policy statement effect
-    default: allow
-    type: string
-  sotex-box:rolePolicy-statement-principalService:
-    description: Role policy statement principal service
-    default: ecs-tasks.amazonaws.com
-    type: string
-  sotex-box:rolePolicy-statement-action:
-    description: Role policy statement action
-    default: sts:AssumeRole
-    type: string
-
-  sotex-box:rolePolicy-policyArn:
-    description: Policy arn
-    default: arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-    type: string
-
-  # Task definition
-
-  sotex-box:taskDefinition-cpu:
-    description: Task definition cpu
-    default: "256"
-    type: string
-  sotex-box:taskDefinition-memory:
-    description: Task definition memory
-    default: "512"
-    type: string
-
-  sotex-box:taskDefinition-backend-image:
-    description: Backend image to run
-    default: nginx
-    type: string
-  sotex-box:taskDefinition-backend-containerPort:
-    description: Container port to use
-    default: 80
-    type: integer
-  sotex-box:taskDefinition-backend-hostPort:
-    description: To which port on host to map
-    default: 80
-    type: integer
-  sotex-box:taskDefinition-backend-protocol:
-    description: What kind of protocol to use
-    default: tcp
-    type: string
-
-  # Service
-  sotex-box:service-desiredCount:
-    description: Desired count of services
-    default: 1
-    type: integer
+    default: t2.micro

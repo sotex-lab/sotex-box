@@ -62,6 +62,9 @@ public class SqsProcessorJob : GenericCronJob<SqsProcessorJob>, IGenericCronJob
                 continue;
             }
 
+            if (mapped.Records == null)
+                continue;
+
             foreach (var record in mapped.Records!)
             {
                 var key = record.S3!.Object!.Key!;
@@ -92,6 +95,18 @@ public class SqsProcessorJob : GenericCronJob<SqsProcessorJob>, IGenericCronJob
                     );
                 }
             }
+
+            await _sqsClient.DeleteMessageAsync(
+                new DeleteMessageRequest
+                {
+                    QueueUrl = request.QueueUrl,
+                    ReceiptHandle = message.ReceiptHandle
+                }
+            );
+            _logger.LogDebug(
+                "Deleted message after successful processing: {0}",
+                message.ReceiptHandle
+            );
         }
 
         _logger.LogDebug("Polling sqs finished");

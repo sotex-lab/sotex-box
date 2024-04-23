@@ -18,12 +18,15 @@ ifeq ($(CONTAINER_TOOL),auto)
 endif
 
 # Conditional assignment of COMPOSE_COMMAND
-ifeq ($(CONTAINER_TOOL),podman)
-    COMPOSE_COMMAND := podman-compose
-else ifeq ($(CONTAINER_TOOL),docker)
-    COMPOSE_COMMAND := docker compose
-else
-    $(error Unsupported value for CONTAINER_TOOL: $(CONTAINER_TOOL))
+export COMPOSE_COMMAND ?= auto
+ifeq ($(COMPOSE_COMMAND),auto)
+	ifeq ($(CONTAINER_TOOL),podman)
+		override COMPOSE_COMMAND := podman-compose
+	else ifeq ($(CONTAINER_TOOL),docker)
+		override COMPOSE_COMMAND := docker compose
+	else
+		$(error Unsupported value for CONTAINER_TOOL: $(CONTAINER_TOOL))
+	endif
 endif
 
 # If we're using podman create pods else if we're using docker create networks.
@@ -148,9 +151,17 @@ dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 	cat BenchmarkDotNet.Artifacts/results/Benchmarks-report-github.md >> docs/benchmark-EventCoordinator.md
 
 ##@ Infrastructure actions
+export AWS_ACCESS_KEY ?= auto
+ifeq ($(AWS_ACCESS_KEY),auto)
+	override AWS_ACCESS_KEY = $(shell taplo get -f ~/.aws/credentials 'service-account.aws_access_key_id')
+endif
+export AWS_SECRET_KEY ?= auto
+ifeq ($(AWS_SECRET_KEY),auto)
+	override AWS_SECRET_KEY = $(shell taplo get -f ~/.aws/credentials 'service-account.aws_secret_access_key')
+endif
 .PHONY: pulumi-up-staging
 pulumi-up-staging: ## Command to deploy the staging infra
-	pulumi up --cwd infra/backend --stack staging
+	@AWS_ACCESS_KEY=$(AWS_ACCESS_KEY) AWS_SECRET_KEY=$(AWS_SECRET_KEY) pulumi up --cwd infra/backend --stack staging
 
 .PHONY: pulumi-destroy-staging
 pulumi-destroy-staging: ## Command to destroy the staging infra
@@ -200,6 +211,13 @@ compose-up-d: compose-down
 compose-up-d: ensure-setup
 compose-up-d: ## Run local stack detached. Used for e2e tests
 	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up -d
+
+.PHONY: compose-up-aws
+compose-up-non-local: compose-down
+compose-up-non-local: ensure-setup
+compose-up-non-local: container-build-backend
+compose-up-non-local: ## Run stack on AWS EC2
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml up -d
 
 .PHONY: compose-down
 compose-down: ## Remove local stack

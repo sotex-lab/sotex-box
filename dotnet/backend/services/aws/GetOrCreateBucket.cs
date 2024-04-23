@@ -25,11 +25,13 @@ public class GetOrCreateBucketServiceImpl : IGetOrCreateBucketService
     private readonly IAmazonS3 _s3Client;
     private readonly ILogger<GetOrCreateBucketServiceImpl> _logger;
 
-    private static string nonProcessed = "non-processed";
+    private static string nonProcessed = Environment.GetEnvironmentVariable(
+        "NON_PROCESSED_BUCKET_NAME"
+    )!;
 #pragma warning disable CS0414 // Add readonly modifier
-    private static string processed = "processed";
+    private static string processed = Environment.GetEnvironmentVariable("PROCESSED_BUCKET_NAME")!;
 #pragma warning restore CS0414 // Add readonly modifier
-    private static string schedule = "schedule";
+    private static string schedule = Environment.GetEnvironmentVariable("SCHEDULE_BUCKET_NAME")!;
 
     public GetOrCreateBucketServiceImpl(IAmazonS3 s3, ILogger<GetOrCreateBucketServiceImpl> logger)
     {
