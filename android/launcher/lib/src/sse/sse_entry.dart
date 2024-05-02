@@ -6,7 +6,8 @@ import 'package:eventflux/models/response.dart';
 import 'package:flutter/services.dart';
 import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:launcher/src/sse/processing/processor_factory.dart';
+import 'package:tuple/tuple.dart';
 
 extension SSEConverting on String {
   SSE toSSE() {
@@ -51,6 +52,22 @@ Future<SSE> waitForSSE(ReceivePort receivePort) {
   });
 
   return completer.future;
+}
+
+Future<Tuple2<RootIsolateToken, SSE>> waitForTokenAndSSE(
+    ReceivePort receivePort) async {
+  var tokenCompleter = Completer<RootIsolateToken>();
+  var sseCompleter = Completer<SSE>();
+
+  receivePort.listen((message) {
+    if (message is RootIsolateToken) {
+      tokenCompleter.complete(message);
+    } else if (message is SSE) {
+      sseCompleter.complete(message);
+    }
+  });
+
+  return Tuple2(await tokenCompleter.future, await sseCompleter.future);
 }
 
 Future<SendPort> waitForSendPort(ReceivePort receivePort) {
@@ -102,18 +119,12 @@ void sseEntryPoint(SendPort port) async {
 void processSSE(SendPort port) async {
   final receivePort = ReceivePort();
   port.send(receivePort.sendPort);
-  logger.d("Waiting for root token 2");
-  RootIsolateToken token = await waitForRootToken(receivePort);
-  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-  SSE message = SSEScheduleMessage();
-  logger.d("Are we here 0");
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
+  final tokenWithSSE = await waitForTokenAndSSE(receivePort);
+  BackgroundIsolateBinaryMessenger.ensureInitialized(tokenWithSSE.item1);
+  SSE message = tokenWithSSE.item2;
   final processorFactory = ProcessorFactory();
-  logger.d("Are we here 1");
   Processor? processor = processorFactory.create(message);
   if (processor != null) {
-    logger.d("Are we here 2");
     var success = await processor.process();
     if (!success) {
       logger.e("Unsuccessful processing for ${message.toString()}");
