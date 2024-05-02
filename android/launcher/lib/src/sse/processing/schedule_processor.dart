@@ -61,8 +61,6 @@ Future<DeviceSchedule> downloadSchedule(
 
 Future<int> saveScheduleToDatabase(DeviceSchedule deviceSchedule) async {
   final provider = ScheduleItemProvider();
-  final appDirectory = await getApplicationDocumentsDirectory();
-  await provider.open(join(appDirectory.path, 'sotex_box.db'));
   final count = await provider.insertBatch(deviceSchedule.schedule);
   return count;
 }

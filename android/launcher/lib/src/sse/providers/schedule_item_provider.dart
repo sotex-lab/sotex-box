@@ -2,41 +2,22 @@ import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:sqflite/sqflite.dart';
 
-const tableScheduleItems = "schedule_items";
-const columnId = "_id";
-const columnUrl = "url";
-const columnScope = "scope";
-const columnTags = "tags";
-const columnAdId = "adId";
-const createdAt = "_createdAt";
+import '../../database/database.dart';
 
 class ScheduleItemProvider {
-  late Database db;
+  final BoxDatabase boxDatabase = BoxDatabase();
 
-  Future open(String path) async {
-    logger.d("Database path: $path");
-    db = await openDatabase(path, version: 1,
-        onCreate: (Database db, int version) async {
-      await db.execute('''
-          create table if not exists $tableScheduleItems (
-          $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-          $createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          $columnUrl TEXT NOT NULL,
-          $columnScope INTEGER NOT NULL,
-          $columnTags TEXT NOT NULL,
-          $columnAdId TEXT NOT NULL
-          );
-          ''');
-    });
-  }
+  ScheduleItemProvider();
 
   Future<void> insert(ScheduleItem item) async {
-    await db.insert(tableScheduleItems, item.toMap());
+    Database database = await boxDatabase.get();
+    await database.insert(tableScheduleItems, item.toMap());
   }
 
   Future<int> insertBatch(List<ScheduleItem> items) async {
     try {
-      await db.transaction((txn) async {
+      Database database = await boxDatabase.get();
+      await database.transaction((txn) async {
         var batch = txn.batch();
 
         for (var it in items) {
@@ -54,14 +35,17 @@ class ScheduleItemProvider {
   }
 
   Future<void> removeOldEntries() async {
-    await db.transaction((txn) async {
+    Database database = await boxDatabase.get();
+    await database.transaction((txn) async {
       await txn.delete(tableScheduleItems,
           where: '_createdAt < DATE_SUB(NOW(), INTERVAL 1 DAY)');
     });
   }
 
   Future<List<ScheduleItem>> getScheduleItems() async {
-    final List<Map<String, dynamic>> maps = await db.query(tableScheduleItems);
+    Database database = await boxDatabase.get();
+    final List<Map<String, dynamic>> maps =
+        await database.query(tableScheduleItems);
     var result = maps
         .map((map) => ScheduleItem(
             downloadLink: map[columnUrl],

@@ -1,4 +1,4 @@
-import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
+import 'package:launcher/src/database/database.dart';
 
 class DeviceSchedule {
   final DateTime createdAt;

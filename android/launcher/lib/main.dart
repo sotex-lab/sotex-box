@@ -1,6 +1,3 @@
-import 'dart:isolate';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
@@ -12,12 +9,7 @@ import 'package:launcher/src/sse/sse_entry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  RootIsolateToken rootToken = RootIsolateToken.instance!;
-  ReceivePort receivePort = ReceivePort();
-  Isolate.spawn(sseEntryPoint, receivePort.sendPort);
-  SendPort sendPort = await waitForSendPort(receivePort);
-  sendPort.send(rootToken);
-
+  startListeningForSSE();
   Bloc.observer = const AppObserver();
   runApp(const SotexBox());
 }

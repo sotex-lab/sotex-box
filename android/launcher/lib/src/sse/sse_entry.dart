@@ -82,12 +82,7 @@ Future<SendPort> waitForSendPort(ReceivePort receivePort) {
   return completer.future;
 }
 
-void sseEntryPoint(SendPort port) async {
-  final receivePort = ReceivePort();
-  port.send(receivePort.sendPort);
-  RootIsolateToken token = await waitForRootToken(receivePort);
-  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-
+Future<void> startListeningForSSE() async {
   const deviceId = String.fromEnvironment("device_id");
   if (deviceId == "") {
     throw Exception("Device id is not defined.");
@@ -96,32 +91,21 @@ void sseEntryPoint(SendPort port) async {
   if (backendHost == "") {
     throw Exception("Backend host is not defined.");
   }
-
   const url = "$backendHost/event/connect?id=$deviceId";
-
   EventFlux.instance.connect(EventFluxConnectionType.get, url,
       onSuccessCallback: (EventFluxResponse? response) {
     response?.stream?.listen((event) async {
       final sseData =
           event.data.trim().replaceAll("'", "").replaceAll("\"", "");
       logger.i("SSE received: '$sseData'.");
-      final ssePort = ReceivePort();
-      Isolate.spawn(processSSE, ssePort.sendPort);
-      SendPort sendPort = await waitForSendPort(ssePort);
-      sendPort.send(token);
-      sendPort.send(sseData.toSSE());
+      processSSE(sseData.toSSE());
     });
   }, onError: (error) {
     logger.e("${error.message}");
   }, autoReconnect: true);
 }
 
-void processSSE(SendPort port) async {
-  final receivePort = ReceivePort();
-  port.send(receivePort.sendPort);
-  final tokenWithSSE = await waitForTokenAndSSE(receivePort);
-  BackgroundIsolateBinaryMessenger.ensureInitialized(tokenWithSSE.item1);
-  SSE message = tokenWithSSE.item2;
+void processSSE(SSE message) async {
   final processorFactory = ProcessorFactory();
   Processor? processor = processorFactory.create(message);
   if (processor != null) {
