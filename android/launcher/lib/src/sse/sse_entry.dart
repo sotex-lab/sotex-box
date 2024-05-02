@@ -3,12 +3,15 @@ import 'package:eventflux/client.dart';
 import 'package:eventflux/enum.dart';
 import 'package:eventflux/models/response.dart';
 import 'package:launcher/src/common/logging.dart';
+import 'package:launcher/src/sse/processing/processor.dart';
 
 extension SSEConverting on String {
   SSE toSSE() {
     switch (this) {
-      case "noop":
+      case "0":
         return SSENoopMessage();
+      case "1":
+        return SSEScheduleMessage();
       default:
         return SSEUndefinedMessage();
     }
@@ -21,17 +24,25 @@ class SSEUndefinedMessage implements SSE {}
 
 class SSENoopMessage implements SSE {}
 
+class SSEScheduleMessage implements SSE {}
+
 void sseEntryPoint(SendPort port) async {
-  const url = String.fromEnvironment("sse_url",
-      defaultValue:
-          "http://10.0.2.2:8000/event/connect?id=1218cbbc-f2d7-4a06-b8d9-d8d6d3732663");
-  if (url == "") {
-    throw Exception("SSE URL is not defined.");
+  const deviceId = String.fromEnvironment("device_id");
+  if (deviceId == "") {
+    throw Exception("Device id is not defined.");
   }
+  const backendHost = String.fromEnvironment("backend_host");
+  if (backendHost == "") {
+    throw Exception("Backend host is not defined.");
+  }
+
+  const url = "$backendHost/event/connect?id=$deviceId";
+
   EventFlux.instance.connect(EventFluxConnectionType.get, url,
       onSuccessCallback: (EventFluxResponse? response) {
     response?.stream?.listen((event) {
-      final sseData = event.data.trim().replaceAll("\"", "");
+      final sseData =
+          event.data.trim().replaceAll("'", "").replaceAll("\"", "");
       logger.i("SSE received: '$sseData'.");
       Isolate.spawn(processSSE, sseData.toSSE());
     });
@@ -40,10 +51,15 @@ void sseEntryPoint(SendPort port) async {
   }, autoReconnect: true);
 }
 
-void processSSE(SSE message) {
-  if (message is SSENoopMessage) {
-    logger.i("Noop message processed.");
+void processSSE(SSE message) async {
+  final processorFactory = ProcessorFactory();
+  Processor? processor = processorFactory.create(message);
+  if (processor != null) {
+    var success = await processor.process();
+    if (!success) {
+      logger.e("Unsuccessful processing for ${message.toString()}");
+    }
   } else {
-    logger.w("Undefined message processed.");
+    logger.w("No processor for ${message.toString()}");
   }
 }

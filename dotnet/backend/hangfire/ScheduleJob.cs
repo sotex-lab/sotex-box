@@ -88,6 +88,16 @@ public class ScheduleJob
             return;
         }
 
+        var maybeNonProcessedBucket = await _bucketService.GetNonProcessed();
+        if (!maybeNonProcessedBucket.IsSuccessful)
+        {
+            _logger.LogError(
+                "Failed to get bucket info for non processed: {0}",
+                maybeNonProcessedBucket.Error.ToString()
+            );
+            return;
+        }
+
         var total = await _deviceRepository.Count();
         if (total == 0)
         {
@@ -101,7 +111,7 @@ public class ScheduleJob
 
         foreach (var device in devices)
         {
-            await Calculate(device, maybeScheduleBucket.Value);
+            await Calculate(device, maybeScheduleBucket.Value, maybeNonProcessedBucket.Value);
             await _eventCoordinator.SendMessage(device.Id, Command.CallForSchedule);
         }
 
@@ -140,10 +150,17 @@ public class ScheduleJob
         }
     }
 
-    private async Task Calculate(Device device, S3Bucket bucket)
+    private async Task Calculate(
+        Device device,
+        S3Bucket scheduleBucket,
+        S3Bucket nonProcessedBucket
+    )
     {
         ScheduleContract oldSchedule = new ScheduleContract();
-        var maybeOldSchedule = await _getObjectService.GetObjectByKey(bucket, device.Id.ToString());
+        var maybeOldSchedule = await _getObjectService.GetObjectByKey(
+            scheduleBucket,
+            device.Id.ToString()
+        );
         if (maybeOldSchedule.IsSuccessful)
         {
             oldSchedule = maybeOldSchedule.Value;
@@ -156,7 +173,7 @@ public class ScheduleJob
         );
 
         var response = await _putObjectService.Put(
-            bucket,
+            scheduleBucket,
             device.Id.ToString(),
             new MemoryStream(
                 Encoding.UTF8.GetBytes(
@@ -169,7 +186,7 @@ public class ScheduleJob
                                 .Select(async x => new ScheduleItemContract
                                 {
                                     Ad = _mapper.Map<AdContract>(x),
-                                    DownloadLink = await GetLink(x.Id, bucket)
+                                    DownloadLink = await GetLink(x.Id, nonProcessedBucket)
                                 })
                                 .Select(x => x.Result)
                         }
