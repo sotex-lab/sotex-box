@@ -1,4 +1,5 @@
 import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,9 +10,14 @@ import 'package:launcher/src/navigation/app_router_delegate.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
 import 'package:launcher/src/sse/sse_entry.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  RootIsolateToken rootToken = RootIsolateToken.instance!;
   ReceivePort receivePort = ReceivePort();
   Isolate.spawn(sseEntryPoint, receivePort.sendPort);
+  SendPort sendPort = await waitForSendPort(receivePort);
+  sendPort.send(rootToken);
+
   Bloc.observer = const AppObserver();
   runApp(const SotexBox());
 }

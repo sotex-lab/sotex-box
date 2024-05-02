@@ -1,3 +1,5 @@
+import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
+
 class DeviceSchedule {
   final DateTime createdAt;
   final String deviceId;
@@ -39,6 +41,15 @@ class ScheduleItem {
       downloadLink: json['DownloadLink'],
       ad: Ad.fromJson(json['Ad']),
     );
+  }
+
+  Map<String, Object?> toMap() {
+    return {
+      columnUrl: downloadLink,
+      columnScope: ad.scope,
+      columnTags: ad.tags.join(','), // Store tags comma-separated
+      columnAdId: ad.id
+    };
   }
 
   @override
