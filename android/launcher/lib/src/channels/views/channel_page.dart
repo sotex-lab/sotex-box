@@ -21,12 +21,25 @@ class ChannelPickerPageState extends State<ChannelPickerPage> {
   Widget build(BuildContext context) {
     return BlocBuilder<PlaybackBloc, PlaybackState>(
       builder: (context, state) {
-        logger.d("Current path: ${state.current}");
         if (state.current != null) {
-          return AspectRatio(
-            aspectRatio: state.current!.value.aspectRatio,
-            child: VideoPlayer(state.current!),
-          );
+          state.current!.initialize().then((value) => {
+                state.current!.addListener(() {
+                  logger.d("Current controller: ${state.current}");
+                  if (state.current!.value.isCompleted) {
+                    context.read<PlaybackBloc>().add(PlaybackPlayNext());
+                  }
+                })
+              });
+          state.current!.play();
+          return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: AspectRatio(
+                aspectRatio: state.current!.value.aspectRatio,
+                child: VideoPlayer(state.current!),
+              ));
         } else {
           context.read<PlaybackBloc>().add(PlaybackPlayNext());
           return const Center(child: CircularProgressIndicator());
