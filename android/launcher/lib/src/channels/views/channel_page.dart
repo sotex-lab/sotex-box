@@ -11,40 +11,70 @@ class ChannelPickerPage extends StatefulWidget {
   ChannelPickerPageState createState() => ChannelPickerPageState();
 }
 
-class ChannelPickerPageState extends State<ChannelPickerPage> {
+class ChannelPickerPageState extends State<ChannelPickerPage>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+  }
+
   @override
   void dispose() {
     super.dispose();
+    _animationController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PlaybackBloc, PlaybackState>(
-      builder: (context, state) {
-        if (state.current != null) {
-          state.current!.initialize().then((value) => {
-                state.current!.addListener(() {
-                  logger.d("Current controller: ${state.current}");
-                  if (state.current!.value.isCompleted) {
-                    context.read<PlaybackBloc>().add(PlaybackPlayNext());
-                  }
-                })
+    return FadeTransition(
+        opacity: _animationController,
+        child: BlocBuilder<PlaybackBloc, PlaybackState>(
+          builder: (context, state) {
+            logger.d("Rerendering bloc");
+            logger.d(
+                "Animation controller status: ${_animationController.status}");
+            if (_animationController.status != AnimationStatus.completed) {
+              _animationController.forward();
+            }
+            if (state.current != null) {
+              state.current!.initialize().then((value) => {
+                    state.current!.addListener(() {
+                      void animationListener() {
+                        if (_animationController.status ==
+                            AnimationStatus.dismissed) {
+                          state.current!.dispose();
+                          context.read<PlaybackBloc>().add(PlaybackPlayNext());
+                          _animationController
+                              .removeListener(animationListener);
+                        }
+                      }
+
+                      // logger.d("Current controller: ${state.current}");
+                      if (state.current!.value.isCompleted &&
+                          _animationController.status ==
+                              AnimationStatus.completed) {
+                        _animationController.addListener(animationListener);
+                        _animationController.reverse();
+                      }
+                    })
+                  });
+              Future.delayed(const Duration(milliseconds: 500), () {
+                state.current!.play();
               });
-          state.current!.play();
-          return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: AspectRatio(
+              return AspectRatio(
                 aspectRatio: state.current!.value.aspectRatio,
                 child: VideoPlayer(state.current!),
-              ));
-        } else {
-          context.read<PlaybackBloc>().add(PlaybackPlayNext());
-          return const Center(child: CircularProgressIndicator());
-        }
-      },
-    );
+              );
+            } else {
+              context.read<PlaybackBloc>().add(PlaybackPlayNext());
+              return Center(
+                  key: UniqueKey(), child: const CircularProgressIndicator());
+            }
+          },
+        ));
   }
 }
