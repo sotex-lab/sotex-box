@@ -4,12 +4,12 @@ import 'dart:isolate';
 import 'package:dio/dio.dart';
 import 'package:launcher/src/common/dio_access.dart';
 import 'package:launcher/src/common/logging.dart';
+import 'package:launcher/src/database/media.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
 import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
 import 'package:launcher/src/sse/sse_entry.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 class ScheduleProcessor extends Processor {
   ScheduleProcessor(SSE message) : super(message);
@@ -71,16 +71,14 @@ Future<void> downloadScheduleMedia(DeviceSchedule deviceSchedule) async {
 
 isolateDownloadMedia(DeviceSchedule deviceSchedule) async {
   final Dio dio = Dio();
-  Directory applicationDirectory = await getApplicationDocumentsDirectory();
-  final mediaDirectory = join(applicationDirectory.path, "media");
   for (final item in deviceSchedule.schedule) {
-    var filePath = join(mediaDirectory, "${item.ad.id}.mp4");
-    var file = File(filePath);
+    final itemPath = await getMediaPathForItem(item);
+    var file = File(itemPath);
     if (!await file.exists()) {
-      logger.d("File directory: '$filePath'.");
+      logger.d("File directory: '$itemPath'.");
       logger.i("Downloading: '$item'.");
       await dio.download(
-          item.downloadLink, join(mediaDirectory, "${item.ad.id}.mp4"));
+          item.downloadLink, join(itemPath, "${item.ad.id}.mp4"));
     } else {
       logger.i("Already downloaded: '$item'.");
     }

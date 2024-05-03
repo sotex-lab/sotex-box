@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_splash_screen/flutter_splash_screen.dart';
 import 'package:launcher/app_observer.dart';
+import 'package:launcher/src/channels/bloc/playback_bloc.dart';
 import 'package:launcher/src/common/network/network.dart';
 import 'package:launcher/src/navigation/app_router_delegate.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
@@ -42,6 +43,7 @@ class SotexBoxState extends State<SotexBox> {
             providers: [
           BlocProvider(create: (context) => NavigationCubit()),
           BlocProvider(create: (context) => NetworkCubit()),
+          BlocProvider(create: (context) => PlaybackBloc()),
         ],
             child: MaterialApp.router(
               theme: ThemeData(
