@@ -19,7 +19,7 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+        vsync: this, duration: const Duration(milliseconds: 500), value: 1.0);
   }
 
   @override
@@ -38,7 +38,9 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
             logger.d(
                 "Animation controller status: ${_animationController.status}");
             if (_animationController.status != AnimationStatus.completed) {
-              _animationController.forward();
+              Future.delayed(const Duration(milliseconds: 500), () {
+                _animationController.forward();
+              });
             }
             if (state.current != null) {
               state.current!.initialize().then((value) => {

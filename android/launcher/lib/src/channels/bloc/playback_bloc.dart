@@ -54,8 +54,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         String? path = await getPathIfExistsForItem(item);
 
         if (path != null) {
-          current = VideoPlayerController.networkUrl(Uri.parse(
-              "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"));
+          current = VideoPlayerController.file(File(path));
           emit(PlaybackState(state.playbackQueue, current));
         } else {
           logger.w("Path to the video is null: '$path'.");
@@ -69,8 +68,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
           String? path = await getPathIfExistsForItem(item);
 
           if (path != null) {
-            current = VideoPlayerController.networkUrl(Uri.parse(
-                "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4"));
+            current = VideoPlayerController.file(File(path));
           }
         }
         var newState = PlaybackState(queue, current);
