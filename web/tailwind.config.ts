@@ -8,10 +8,25 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+      colors: {
+        "sotex-black": {
+          50: "#31343B",
+          450: "#4B4E57",
+          900: "#222429"
+        },
+        "sotex-purple": {
+          50: "#AD01FD"
+        },
+        "sotex-green": {
+          50: "#BCF068"
+        },
+        "sotex-yellow": {
+          50: "#FFC907"
+        },
+        "sotex-blue": {
+          50: "#0E6EFF"
+        }
+
       },
     },
   },
