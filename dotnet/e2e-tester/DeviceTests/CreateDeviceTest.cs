@@ -14,7 +14,7 @@ public class CreateDeviceTest : E2ETest
     protected override string Description() =>
         "Test tries to create a device via an API and connects as that device and connects as that device immediately";
 
-    public override string Name() => "Create device and connect";
+    public override string Name() => "Create device, schedule and connect";
 
     protected override async Task Run(CancellationToken token)
     {
@@ -41,6 +41,22 @@ public class CreateDeviceTest : E2ETest
         maybeDevice.IsSuccessful.ShouldBeTrue();
         var device = maybeDevice.Value;
         device.UtilityName.ShouldBe("e2e-test");
+
+        var sleepDuration = TimeSpan.FromSeconds(5);
+        Info("Sleeping for {0} to allow for calculating schedule", sleepDuration);
+        await Task.Delay(sleepDuration, token);
+
+        var scheduleLinkRequest = await client.GetAsync($"/schedule/{device.Id}", token);
+        scheduleLinkRequest.IsSuccessStatusCode.ShouldBeTrue();
+        var scheduleLink = await scheduleLinkRequest.Content.ReadAsStringAsync(token);
+        Info("Downloading schedule from: {0}", scheduleLink);
+
+        var schedule = await client.GetAsync(scheduleLink, token);
+        schedule.IsSuccessStatusCode.ShouldBeTrue();
+        var deserialized = JsonConvert.DeserializeObject<ScheduleContract>(
+            await schedule.Content.ReadAsStringAsync(token)
+        )!;
+        deserialized.DeviceId.ShouldBe(device.Id);
 
         _ = Task.Run(
             async () =>
