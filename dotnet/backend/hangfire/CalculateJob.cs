@@ -49,6 +49,16 @@ public class CalculateJob
 
     public async Task Calculate(Guid device)
     {
+        var maybeProcessedBucket = await _bucketService.GetProcessed();
+        if (!maybeProcessedBucket.IsSuccessful)
+        {
+            _logger.LogError(
+                "Failed to get bucket info for processed: {0}",
+                maybeProcessedBucket.Error.ToString()
+            );
+            return;
+        }
+
         var maybeScheduleBucket = await _bucketService.GetSchedule();
         if (!maybeScheduleBucket.IsSuccessful)
         {
@@ -86,7 +96,7 @@ public class CalculateJob
                                 .Select(async x => new ScheduleItemContract
                                 {
                                     Ad = _mapper.Map<AdContract>(x),
-                                    DownloadLink = await GetLink(x.Id, bucket)
+                                    DownloadLink = await GetLink(x.Id, maybeProcessedBucket.Value)
                                 })
                                 .Select(x => x.Result)
                         }
