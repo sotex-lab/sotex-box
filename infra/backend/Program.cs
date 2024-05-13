@@ -244,8 +244,8 @@ class SotexBoxStack : Stack
             ["SQS_CRON"] = Output.Create("0/15 * * ? * *"),
             ["SCHEDULE_MAX_DELAY"] = Output.Create("00:01:00"),
             ["SCHEDULE_DEVICE_THRESHOLD"] = Output.Create("100"),
-            ["SCHEDULE_AD_THRESHOLD"] = Output.Create("10"),
-            ["SCHEDULE_URL_EXPIRE"] = Output.Create("01:00:00")
+            ["CALCULATE_AD_THRESHOLD"] = Output.Create("10"),
+            ["CALCULATE_URL_EXPIRE"] = Output.Create("01:00:00")
         };
 
         foreach (var bucket in buckets)
