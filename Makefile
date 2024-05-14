@@ -63,6 +63,7 @@ flutter-create-emulator: ## Shorthand for setting up an emulator
 	sdkmanager platform-tools
 	avdmanager create avd -n "android_tv" -k $(ANDROID_IMAGE) --force
 	adb reverse tcp:8000 tcp:8000
+	adb reverse tcp:9000 tcp:9000
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
