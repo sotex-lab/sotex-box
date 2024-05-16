@@ -128,7 +128,7 @@ export default function Home() {
       [NoteColor.Neutral]: "bg-white"
     };
     return (
-      <div className="flex flex-col justify-start max-w-lg items-start p-4 gap-4 border-[1px] border-b-0 border-sotex-black-450 last:border-b-[1px] first:rounded-t-2xl lg:border-b-[1px] lg:flex-1 lg:rounded-2xl hover:shadow-lg hover:shadow-neutral-900">
+      <div className="flex flex-col justify-start max-w-lg items-start p-4 gap-4 border-[1px] border-b-0 border-sotex-black-450 last:border-b-[1px] first:rounded-t-2xl lg:border-b-[1px] lg:flex-1 lg:rounded-2xl hover:shadow-lg hover:shadow-neutral-900 transition-all ease-in-out duration-500">
         <div className="flex flex-row justify-between items-start w-full">
           <Image className="h-14 w-14" src={icon} alt={header} height={56} width={56} />
           {note ?
