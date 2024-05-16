@@ -1,3 +1,4 @@
+import { LandingAccordion } from "@/src/components/accordion";
 import Image from "next/image";
 
 enum NoteColor {
@@ -80,7 +81,9 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="p-4 relative flex flex-col justify-center items-center">
+      <LandingAccordion></LandingAccordion>
+
+      <footer className="p-4 relative flex flex-col justify-center items-center py-12">
         <div className="max-w-5xl m-auto flex flex-col justify-center items-center w-full lg:flex-row lg:justify-between lg:items-start">
           <div className="flex flex-col items-start justify-center">
             <Image className="" src={"/sotex_box.svg"} height={24} width={264} alt="SotexBox logo." />
