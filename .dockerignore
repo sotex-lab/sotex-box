@@ -3,6 +3,8 @@
 .github
 BenchmarkDotNet.Artifacts
 docs
+android
+load-tests
 
 bin/
 obj/

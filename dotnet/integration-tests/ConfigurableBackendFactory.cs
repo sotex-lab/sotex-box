@@ -84,8 +84,8 @@ public class ConfigurableBackendFactory : WebApplicationFactory<Program>, IAsync
             ["REQUIRE_KNOWN_DEVICES"] = "false",
             ["SCHEDULE_MAX_DELAY"] = "00:01:00",
             ["SCHEDULE_DEVICE_THRESHOLD"] = "100",
-            ["SCHEDULE_AD_THRESHOLD"] = "10",
-            ["SCHEDULE_URL_EXPIRE"] = "01:00:00",
+            ["CALCULATE_AD_THRESHOLD"] = "10",
+            ["CALCULATE_URL_EXPIRE"] = "01:00:00",
             ["PROCESSED_BUCKET_NAME"] = "processed",
             ["NON_PROCESSED_BUCKET_NAME"] = "non-processed",
             ["SCHEDULE_BUCKET_NAME"] = "schedule"

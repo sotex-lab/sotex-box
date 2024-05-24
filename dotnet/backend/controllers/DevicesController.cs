@@ -1,5 +1,7 @@
 using System.Net;
 using AutoMapper;
+using backend.Hangfire;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using model.Contracts;
 using model.Core;
@@ -10,7 +12,11 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
-public class DevicesController(IDeviceRepository deviceRepository, IMapper mapper) : ControllerBase
+public class DevicesController(
+    IDeviceRepository deviceRepository,
+    IMapper mapper,
+    IBackgroundJobClientV2 client
+) : ControllerBase
 {
     [HttpGet]
     public async IAsyncEnumerable<DeviceContract> Get()
@@ -45,6 +51,11 @@ public class DevicesController(IDeviceRepository deviceRepository, IMapper mappe
             return BadRequest(RepositoryError.Duplicate.Stringify());
 
         maybeDevice = await deviceRepository.Add(mapped, token);
+
+        if (maybeDevice.IsSuccessful)
+        {
+            client.Enqueue<CalculateJob>(j => j.Calculate(maybeDevice.Value.Id));
+        }
 
         return maybeDevice.IsSuccessful
             ? CreatedAtAction(nameof(Post), mapper.Map<DeviceContract>(maybeDevice.Value))
