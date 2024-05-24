@@ -27,7 +27,9 @@ def exec_file(f):
     s3_url = response.json()["presigned"]
 
     print("Uploading '%s' to '%s'" % (f, s3_url))
-    response = requests.put(s3_url, data=open(f, 'rb'))
+    response = requests.put(s3_url, data=open(f, 'rb'), headers={
+        "Content-Type": "video/mp4"
+    })
 
     if not (response.status_code >= 200 and response.status_code <= 299):
         print("Failed to upload '%s'" % f)
