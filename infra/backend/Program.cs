@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ConfigTranslator;
 using Pulumi;
@@ -141,6 +143,7 @@ class SotexBoxStack : Stack
 
         var access_key = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!;
         var secret_key = Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!;
+        var db_password = Convert.ToBase64String(Encoding.UTF8.GetBytes(secret_key));
 
         var dbInstance = new Pulumi.Aws.Rds.Instance(
             "postgres",
@@ -151,7 +154,7 @@ class SotexBoxStack : Stack
                 EngineVersion = mapped.DbEngineVersion,
                 InstanceClass = mapped.DbInstanceClass,
                 DbName = mapped.DbEngine,
-                Password = secret_key,
+                Password = db_password,
                 Username = "sotex",
                 VpcSecurityGroupIds = dbSecGroup.Id,
                 DbSubnetGroupName = subnetGroup.Name,
