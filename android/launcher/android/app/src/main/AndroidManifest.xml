@@ -6,7 +6,8 @@
     <application
         android:label="launcher"
         android:name="${applicationName}"
-        android:icon="@mipmap/sotex_solutions">
+        android:icon="@mipmap/sotex_solutions"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

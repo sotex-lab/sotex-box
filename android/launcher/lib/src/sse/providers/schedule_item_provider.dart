@@ -29,7 +29,7 @@ class ScheduleItemProvider {
 
       return items.length;
     } catch (e) {
-      logger.e(e);
+      (await LogManager().getOrCreateLogger()).e(e);
       return 0;
     }
   }

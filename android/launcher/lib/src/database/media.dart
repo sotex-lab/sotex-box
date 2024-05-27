@@ -5,7 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 Future<String> getMediaDirectory() async {
-  Directory applicationDirectory = await getApplicationDocumentsDirectory();
+  Directory applicationDirectory = await getApplicationSupportDirectory();
   final mediaDirectory = join(applicationDirectory.path, "media");
   return mediaDirectory;
 }

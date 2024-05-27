@@ -9,7 +9,6 @@ import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
 import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
 import 'package:launcher/src/sse/sse_entry.dart';
-import 'package:path/path.dart';
 
 class ScheduleProcessor extends Processor {
   ScheduleProcessor(SSE message) : super(message);
@@ -22,13 +21,15 @@ class ScheduleProcessor extends Processor {
           await downloadSchedule(dio, scheduleDownloadUrl);
       final insertCount = await saveScheduleToDatabase(deviceSchedule);
       isolateDownloadMedia(deviceSchedule);
-      logger.d("Inserted $insertCount schedule items in the database.");
+      (await LogManager().getOrCreateLogger())
+          .d("Inserted $insertCount schedule items in the database.");
     } catch (e) {
-      logger.e(e);
+      (await LogManager().getOrCreateLogger()).e(e);
+      (await LogManager().getOrCreateLogger()).e("FAILED TO DOWNLOAD SCHEDULE");
       return false;
     }
 
-    logger.i("Schedule message processed.");
+    (await LogManager().getOrCreateLogger()).i("Schedule message processed.");
     return true;
   }
 }
@@ -56,6 +57,7 @@ Future<DeviceSchedule> downloadSchedule(
   final schedule = res2.data.toString();
   final scheduleJson = jsonDecode(schedule) as Map<String, dynamic>;
   final deviceSchedule = DeviceSchedule.fromJson(scheduleJson);
+  downloadScheduleMedia(deviceSchedule);
   return deviceSchedule;
 }
 
@@ -75,12 +77,14 @@ isolateDownloadMedia(DeviceSchedule deviceSchedule) async {
     final itemPath = await getMediaPathForItem(item);
     var file = File(itemPath);
     if (!await file.exists()) {
-      logger.d("File directory: '$itemPath'.");
-      logger.i("Downloading: '$item'.");
-      await dio.download(
-          item.downloadLink, join(itemPath, "${item.ad.id}.mp4"));
+      (await LogManager().getOrCreateLogger())
+          .d("File directory: '$itemPath'.");
+      (await LogManager().getOrCreateLogger()).i("Downloading: '$item'.");
+      await dio.download(item.downloadLink, itemPath);
+      (await LogManager().getOrCreateLogger()).i("Finished download '$item'.");
     } else {
-      logger.i("Already downloaded: '$item'.");
+      (await LogManager().getOrCreateLogger())
+          .i("Already downloaded: '$item'.");
     }
   }
 }

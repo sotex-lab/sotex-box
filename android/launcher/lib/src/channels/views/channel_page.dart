@@ -34,9 +34,6 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
         opacity: _animationController,
         child: BlocBuilder<PlaybackBloc, PlaybackState>(
           builder: (context, state) {
-            logger.d("Rerendering bloc");
-            logger.d(
-                "Animation controller status: ${_animationController.status}");
             if (_animationController.status != AnimationStatus.completed) {
               Future.delayed(const Duration(milliseconds: 500), () {
                 _animationController.forward();
@@ -55,7 +52,6 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
                         }
                       }
 
-                      // logger.d("Current controller: ${state.current}");
                       if (state.current!.value.isCompleted &&
                           _animationController.status ==
                               AnimationStatus.completed) {
@@ -73,8 +69,33 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
               );
             } else {
               context.read<PlaybackBloc>().add(PlaybackPlayNext());
-              return Center(
-                  key: UniqueKey(), child: const CircularProgressIndicator());
+              if (const String.fromEnvironment("build") == "DEBUG" &&
+                  const String.fromEnvironment("log_type") == "FILE") {
+                return StreamBuilder(
+                    stream: LogManager().logFileStream,
+                    builder: (context, snapshot) {
+                      return Scaffold(
+                        body: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Text(
+                              snapshot.data ??
+                                  'No data available', // Display 'No data available' if log is null
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.normal,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    });
+              } else {
+                return Center(
+                    key: UniqueKey(), child: const CircularProgressIndicator());
+              }
             }
           },
         ));

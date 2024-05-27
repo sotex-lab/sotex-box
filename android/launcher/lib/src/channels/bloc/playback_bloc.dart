@@ -2,7 +2,6 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/database/media.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
@@ -48,31 +47,37 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     });
 
     on<PlaybackPlayNext>((event, emit) async {
-      VideoPlayerController? current;
-      if (state.playbackQueue.isNotEmpty) {
-        ScheduleItem item = state.playbackQueue.removeFirst();
-        String? path = await getPathIfExistsForItem(item);
+      VideoPlayerController? playerController;
 
-        if (path != null) {
-          current = VideoPlayerController.file(File(path));
-          emit(PlaybackState(state.playbackQueue, current));
-        } else {
-          logger.w("Path to the video is null: '$path'.");
-          emit(PlaybackState(state.playbackQueue, current));
-        }
-      } else {
-        final queue =
-            Queue<ScheduleItem>.from(await provider.getScheduleItems());
-        if (queue.isNotEmpty) {
+      while (true) {
+        if (state.playbackQueue.isEmpty) {
+          final queue =
+              Queue<ScheduleItem>.from(await provider.getScheduleItems());
+          if (queue.isEmpty) {
+            await Future.delayed(const Duration(seconds: 5));
+            continue;
+          }
+
           ScheduleItem item = queue.removeFirst();
           String? path = await getPathIfExistsForItem(item);
 
-          if (path != null) {
-            current = VideoPlayerController.file(File(path));
+          if (path == null) {
+            await Future.delayed(const Duration(seconds: 5));
+            continue;
           }
+
+          playerController = VideoPlayerController.file(File(path));
+          var newState = PlaybackState(queue, playerController);
+          emit(newState);
+          return;
         }
-        var newState = PlaybackState(queue, current);
-        emit(newState);
+
+        ScheduleItem item = state.playbackQueue.removeFirst();
+        String? path = await getPathIfExistsForItem(item);
+        if (path == null) continue;
+        playerController = VideoPlayerController.file(File(path));
+        emit(PlaybackState(state.playbackQueue, playerController));
+        return;
       }
     });
   }

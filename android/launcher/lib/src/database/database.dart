@@ -20,12 +20,17 @@ class BoxDatabase {
       return database!;
     }
 
-    database = await openDatabase(await _getDatabaseDirectory());
+    database = await open(await _getDatabaseDirectory());
     if (database == null) {
       throw Exception("Unable to open the database");
     }
 
     return database!;
+  }
+
+  Future<void> clean() async {
+    final db = await get();
+    db.execute("DELETE FROM $tableScheduleItems");
   }
 
   Future<Database> open(String path) async {
@@ -48,7 +53,6 @@ class BoxDatabase {
   Future<String> _getDatabaseDirectory() async {
     final appDirectory = await getApplicationDocumentsDirectory();
     final dbDirectory = join(appDirectory.path, databaseName);
-    logger.d("DB directory: $dbDirectory");
     return dbDirectory;
   }
 }
