@@ -294,10 +294,11 @@ class SotexBoxStack : Stack
 
                     newgrp docker
                     git clone https://github.com/sotex-lab/sotex-box.git
-                    sudo chown -R ubuntu:ubuntu sotex-box
                     cat <<EOF > sotex-box/.env
 {x}
 EOF
+                    sudo chown -R ubuntu:ubuntu sotex-box
+
                     ip=$(dig +short myip.opendns.com @resolver1.opendns.com | sed s/\\./-/g)
                     echo DOMAIN_NAME=ec2-$ip.eu-central-1.compute.amazonaws.com >> sotex-box/.env"
                 ),
