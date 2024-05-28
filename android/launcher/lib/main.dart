@@ -10,12 +10,14 @@ import 'package:launcher/src/navigation/app_router_delegate.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
 import 'package:launcher/src/sse/processing/schedule_processor.dart';
 import 'package:launcher/src/sse/sse_entry.dart';
+import 'package:launcher/src/common/notification.dart' as notif;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final db = BoxDatabase();
   await db.clean();
   startListeningForSSE();
+  notif.Notification().i("Hello World");
   ScheduleProcessor(SSEScheduleMessage()).process();
   Bloc.observer = const AppObserver();
   runApp(const SotexBox());

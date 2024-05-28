@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:eventflux/client.dart';
 import 'package:eventflux/enum.dart';
 import 'package:eventflux/models/response.dart';
-import 'package:launcher/src/common/logging.dart';
+import 'package:launcher/src/common/notification.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
 import 'package:launcher/src/sse/processing/processor_factory.dart';
 
@@ -42,11 +42,11 @@ Future<void> startListeningForSSE() async {
     response?.stream?.listen((event) async {
       final sseData =
           event.data.trim().replaceAll("'", "").replaceAll("\"", "");
-      (await LogManager().getOrCreateLogger()).i("SSE received: '$sseData'.");
+      Notification().i("SSE received: '$sseData'.");
       processSSE(sseData.toSSE());
     });
   }, onError: (error) async {
-    (await LogManager().getOrCreateLogger()).e("${error.message}");
+    Notification().i("SSE received: '${error.message}'.");
   }, autoReconnect: true);
 }
 
@@ -56,11 +56,9 @@ void processSSE(SSE message) async {
   if (processor != null) {
     var success = await processor.process();
     if (!success) {
-      (await LogManager().getOrCreateLogger())
-          .e("Unsuccessful processing for ${message.toString()}");
+      Notification().e("Unsuccessful processing for ${message.toString()}");
     }
   } else {
-    (await LogManager().getOrCreateLogger())
-        .w("No processor for ${message.toString()}");
+    Notification().w("No processor for ${message.toString()}");
   }
 }

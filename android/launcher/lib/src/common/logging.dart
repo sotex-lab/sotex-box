@@ -1,14 +1,12 @@
 import 'dart:collection';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:external_path/external_path.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:launcher/src/common/debug_singleton.dart';
+import 'package:launcher/src/common/notification.dart';
 import 'package:launcher/src/database/storage.dart';
 import 'package:logger/logger.dart';
-import 'package:path_provider/path_provider.dart';
 
 class CustomFilter extends LogFilter {
   @override
@@ -42,29 +40,15 @@ class LogLevelMapper {
 }
 
 class LogManager {
-  Logger? logger;
+  Logger? consoleLogger;
+  Logger? fileSystemLogger;
 
-  Stream<String> get logFileStream async* {
-    var file = await _getLogFile();
-    var lines = <String>[];
-    var bufferSize = 10;
+  LogManager._privateConstructor();
 
-    while (true) {
-      await for (var line in file
-          .openRead()
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())) {
-        lines.add(line);
-        if (lines.length > bufferSize) {
-          lines.removeAt(
-              0); // Remove the oldest line if more than bufferSize lines exist
-        }
-        yield lines
-            .join('\n'); // Emit the last 20 lines joined as a single string
-      }
+  static final LogManager _instance = LogManager._privateConstructor();
 
-      await Future.delayed(const Duration(seconds: 5));
-    }
+  factory LogManager() {
+    return _instance;
   }
 
   Future<File> _getLogFile() async {
@@ -93,26 +77,48 @@ class LogManager {
     file.deleteSync();
   }
 
-  Future<Logger> getOrCreateLogger() async {
-    if (logger != null) {
-      return logger!;
+  Future<void> ensureCreated() async {
+    fileSystemLogger ??= Logger(
+        filter: CustomFilter(),
+        level: LogLevelMapper().getLogLevel(),
+        output: FileOutput(file: await _getLogFile()),
+        printer: SimplePrinter());
+
+    consoleLogger ??= Logger(
+        filter: CustomFilter(),
+        level: LogLevelMapper().getLogLevel(),
+        output: ConsoleOutput(),
+        printer: SimplePrinter());
+  }
+
+  void i(String message) {
+    if (consoleLogger != null) {
+      consoleLogger!.i(message);
     }
 
-    if (const String.fromEnvironment("log_type") == "FILE") {
-      logger = Logger(
-          filter: CustomFilter(),
-          level: LogLevelMapper().getLogLevel(),
-          output: FileOutput(file: await _getLogFile()),
-          printer: SimplePrinter());
-    } else {
-      logger = Logger(
-          filter: CustomFilter(),
-          level: LogLevelMapper().getLogLevel(),
-          output: ConsoleOutput(),
-          printer: SimplePrinter());
+    if (fileSystemLogger != null) {
+      fileSystemLogger!.i(message);
+    }
+  }
+
+  void w(String message) {
+    if (consoleLogger != null) {
+      consoleLogger!.w(message);
     }
 
-    return logger!;
+    if (fileSystemLogger != null) {
+      fileSystemLogger!.w(message);
+    }
+  }
+
+  void e(String message) {
+    if (consoleLogger != null) {
+      consoleLogger!.e(message);
+    }
+
+    if (fileSystemLogger != null) {
+      fileSystemLogger!.e(message);
+    }
   }
 }
 
@@ -138,8 +144,8 @@ class DebugState {
 class DebugBloc extends Bloc<DebugEvent, DebugState> {
   DebugBloc() : super(DebugState(Queue<String>(), 10)) {
     on<DebugPushEvent>((event, emit) async {
-      (await LogManager().getOrCreateLogger())
-          .i("Debug Push Event with message ${event.message}");
+      Notification().i("Debug Push Event with message ${event.message}");
+
       if (state.logQueue.length < state.bufferSize) {
         state.logQueue.add(event.message);
       } else {
@@ -147,8 +153,7 @@ class DebugBloc extends Bloc<DebugEvent, DebugState> {
         state.logQueue.add(event.message);
       }
 
-      (await LogManager().getOrCreateLogger())
-          .i("Debug Push Event with queue ${state.logQueue}");
+      Notification().i("Debug Push Event with queue ${state.logQueue}");
 
       emit(DebugState(state.logQueue, state.bufferSize));
     });
