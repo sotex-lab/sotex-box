@@ -2,8 +2,11 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:external_path/external_path.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:launcher/src/common/debug_singleton.dart';
+import 'package:launcher/src/database/storage.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -65,13 +68,22 @@ class LogManager {
   }
 
   Future<File> _getLogFile() async {
-    Directory appDir = await getApplicationSupportDirectory();
+    Directory appDir = Directory(await DirectoryGetter().getLogDirectory());
     DateTime now = DateTime.now();
-
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
 
     String fileName = 'log_$formattedDate.txt';
     String filePath = '${appDir.path}/$fileName';
+
+    DebugSingleton()
+        .getDebugBloc
+        .add(DebugPushEvent("Log file path: $filePath"));
+
+    final file = File(filePath);
+
+    if (!(await file.exists())) {
+      return (await File(filePath).create());
+    }
 
     return File(filePath);
   }
@@ -104,18 +116,18 @@ class LogManager {
   }
 }
 
-sealed class LogEvent {}
+sealed class DebugEvent {}
 
-final class LogPushEvent extends LogEvent {
+final class DebugPushEvent extends DebugEvent {
   final String message;
-  LogPushEvent(this.message);
+  DebugPushEvent(this.message);
 }
 
-class LogState {
+class DebugState {
   final int bufferSize;
   final Queue<String> logQueue;
 
-  LogState(this.logQueue, this.bufferSize);
+  DebugState(this.logQueue, this.bufferSize);
 
   @override
   String toString() {
@@ -123,9 +135,11 @@ class LogState {
   }
 }
 
-class LogBloc extends Bloc<LogEvent, LogState> {
-  LogBloc() : super(LogState(Queue<String>(), 10)) {
-    on<LogPushEvent>((event, emit) async {
+class DebugBloc extends Bloc<DebugEvent, DebugState> {
+  DebugBloc() : super(DebugState(Queue<String>(), 10)) {
+    on<DebugPushEvent>((event, emit) async {
+      (await LogManager().getOrCreateLogger())
+          .i("Debug Push Event with message ${event.message}");
       if (state.logQueue.length < state.bufferSize) {
         state.logQueue.add(event.message);
       } else {
@@ -133,7 +147,10 @@ class LogBloc extends Bloc<LogEvent, LogState> {
         state.logQueue.add(event.message);
       }
 
-      emit(LogState(state.logQueue, state.bufferSize));
+      (await LogManager().getOrCreateLogger())
+          .i("Debug Push Event with queue ${state.logQueue}");
+
+      emit(DebugState(state.logQueue, state.bufferSize));
     });
   }
 }

@@ -69,29 +69,31 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
               );
             } else {
               context.read<PlaybackBloc>().add(PlaybackPlayNext());
-              if (const String.fromEnvironment("build") == "DEBUG" &&
-                  const String.fromEnvironment("log_type") == "FILE") {
-                return StreamBuilder(
-                    stream: LogManager().logFileStream,
-                    builder: (context, snapshot) {
-                      return Scaffold(
-                        body: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Text(
-                              snapshot.data ??
-                                  'No data available', // Display 'No data available' if log is null
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.normal,
-                                color: Colors.white,
+              if (const String.fromEnvironment("build") == "DEBUG") {
+                return BlocBuilder<DebugBloc, DebugState>(
+                  builder: (context, state) {
+                    return Scaffold(
+                      backgroundColor: Colors.black,
+                      body: Center(
+                        child: BlocBuilder<DebugBloc, DebugState>(
+                          builder: (context, state) {
+                            return Container(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                state.logQueue.join("\n"),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.justify,
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    });
+                      ),
+                    );
+                  },
+                );
               } else {
                 return Center(
                     key: UniqueKey(), child: const CircularProgressIndicator());

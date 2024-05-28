@@ -1,3 +1,4 @@
+import 'package:launcher/src/common/debug_singleton.dart';
 import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:sqflite/sqflite.dart';

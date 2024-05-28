@@ -6,6 +6,8 @@ import 'package:launcher/src/database/media.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:launcher/src/common/debug_singleton.dart';
+import 'package:launcher/src/common/logging.dart';
 
 sealed class PlaybackEvent {}
 
@@ -54,11 +56,15 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
           final queue =
               Queue<ScheduleItem>.from(await provider.getScheduleItems());
           if (queue.isEmpty) {
+            DebugSingleton().getDebugBloc.add(DebugPushEvent("Queue empty"));
             await Future.delayed(const Duration(seconds: 5));
             continue;
           }
 
           ScheduleItem item = queue.removeFirst();
+          DebugSingleton()
+              .getDebugBloc
+              .add(DebugPushEvent("Schedule item: ${item.ad.id}"));
           String? path = await getPathIfExistsForItem(item);
 
           if (path == null) {
