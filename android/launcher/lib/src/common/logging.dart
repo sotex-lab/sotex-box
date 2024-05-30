@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:launcher/src/common/debug_singleton.dart';
-import 'package:launcher/src/common/notification.dart';
 import 'package:launcher/src/database/storage.dart';
 import 'package:logger/logger.dart';
 
@@ -144,17 +143,12 @@ class DebugState {
 class DebugBloc extends Bloc<DebugEvent, DebugState> {
   DebugBloc() : super(DebugState(Queue<String>(), 10)) {
     on<DebugPushEvent>((event, emit) async {
-      Notification().i("Debug Push Event with message ${event.message}");
-
       if (state.logQueue.length < state.bufferSize) {
         state.logQueue.add(event.message);
       } else {
         state.logQueue.removeFirst();
         state.logQueue.add(event.message);
       }
-
-      Notification().i("Debug Push Event with queue ${state.logQueue}");
-
       emit(DebugState(state.logQueue, state.bufferSize));
     });
   }

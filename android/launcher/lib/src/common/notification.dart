@@ -1,3 +1,4 @@
+import 'package:launcher/src/common/debug_singleton.dart';
 import 'package:launcher/src/common/logging.dart';
 
 class Notification {
@@ -11,7 +12,7 @@ class Notification {
   }
 
   void i(String message) async {
-    // DebugSingleton().getDebugBloc.add(DebugPushEvent(message));
+    DebugSingleton().getDebugBloc.add(DebugPushEvent(message));
     LogManager().i(message);
   }
 
