@@ -3,12 +3,13 @@ import 'dart:io';
 import 'dart:isolate';
 import 'package:dio/dio.dart';
 import 'package:launcher/src/common/dio_access.dart';
-import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/database/media.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
 import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
 import 'package:launcher/src/sse/sse_entry.dart';
+
+import '../../common/notification.dart';
 
 class ScheduleProcessor extends Processor {
   ScheduleProcessor(SSE message) : super(message);
@@ -21,15 +22,14 @@ class ScheduleProcessor extends Processor {
           await downloadSchedule(dio, scheduleDownloadUrl);
       final insertCount = await saveScheduleToDatabase(deviceSchedule);
       isolateDownloadMedia(deviceSchedule);
-      (await LogManager().getOrCreateLogger())
-          .d("Inserted $insertCount schedule items in the database.");
+      Notification().i("Inserted $insertCount schedule items in the database.");
     } catch (e) {
-      (await LogManager().getOrCreateLogger()).e(e);
-      (await LogManager().getOrCreateLogger()).e("FAILED TO DOWNLOAD SCHEDULE");
+      Notification().e(e.toString());
+      Notification().e("FAILED TO DOWNLOAD SCHEDULE");
       return false;
     }
 
-    (await LogManager().getOrCreateLogger()).i("Schedule message processed.");
+    Notification().i("Schedule message processed.");
     return true;
   }
 }
@@ -77,14 +77,12 @@ isolateDownloadMedia(DeviceSchedule deviceSchedule) async {
     final itemPath = await getMediaPathForItem(item);
     var file = File(itemPath);
     if (!await file.exists()) {
-      (await LogManager().getOrCreateLogger())
-          .d("File directory: '$itemPath'.");
-      (await LogManager().getOrCreateLogger()).i("Downloading: '$item'.");
+      Notification().i("File directory: '$itemPath'.");
+      Notification().i("Downloading: '$item'.");
       await dio.download(item.downloadLink, itemPath);
-      (await LogManager().getOrCreateLogger()).i("Finished download '$item'.");
+      Notification().i("Finished download '$item'.");
     } else {
-      (await LogManager().getOrCreateLogger())
-          .i("Already downloaded: '$item'.");
+      Notification().i("Already downloaded: '$item'.");
     }
   }
 }
