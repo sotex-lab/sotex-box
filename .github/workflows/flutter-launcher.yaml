@@ -20,8 +20,6 @@ jobs:
         app:
           - directory: "./android/launcher"
             name: launcher
-          - directory: "./android/sotex_box"
-            name: box
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
