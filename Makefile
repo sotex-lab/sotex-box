@@ -140,6 +140,10 @@ rotate-emu: ## Shorthand for rotating the android emulator
 run-launcher: ## Shorthand for running the launcher app locally
 	(cd android/launcher && flutter run --dart-define-from-file=.env.json -d emulator-5554)
 
+.PHONY: build-launcher
+build-launcher: ## Shorthand for building the launcher app locally
+	(cd android/launcher && flutter build apk --dart-define-from-file=.env.device.json --release)
+
 .PHONY: run-box
 run-box: ## Shorthand for running the sotex_box app locally
 	emulator -avd "android_tv" -skin 1280x720

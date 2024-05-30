@@ -34,9 +34,6 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
         opacity: _animationController,
         child: BlocBuilder<PlaybackBloc, PlaybackState>(
           builder: (context, state) {
-            logger.d("Rerendering bloc");
-            logger.d(
-                "Animation controller status: ${_animationController.status}");
             if (_animationController.status != AnimationStatus.completed) {
               Future.delayed(const Duration(milliseconds: 500), () {
                 _animationController.forward();
@@ -55,7 +52,6 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
                         }
                       }
 
-                      // logger.d("Current controller: ${state.current}");
                       if (state.current!.value.isCompleted &&
                           _animationController.status ==
                               AnimationStatus.completed) {
@@ -73,8 +69,35 @@ class ChannelPickerPageState extends State<ChannelPickerPage>
               );
             } else {
               context.read<PlaybackBloc>().add(PlaybackPlayNext());
-              return Center(
-                  key: UniqueKey(), child: const CircularProgressIndicator());
+              if (const String.fromEnvironment("build") == "DEBUG") {
+                return BlocBuilder<DebugBloc, DebugState>(
+                  builder: (context, state) {
+                    return Scaffold(
+                      backgroundColor: Colors.black,
+                      body: Center(
+                        child: BlocBuilder<DebugBloc, DebugState>(
+                          builder: (context, state) {
+                            return Container(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                state.logQueue.join("\n"),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.justify,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              } else {
+                return Center(
+                    key: UniqueKey(), child: const CircularProgressIndicator());
+              }
             }
           },
         ));

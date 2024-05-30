@@ -42,23 +42,25 @@ Future<void> startListeningForSSE() async {
     response?.stream?.listen((event) async {
       final sseData =
           event.data.trim().replaceAll("'", "").replaceAll("\"", "");
-      logger.i("SSE received: '$sseData'.");
+      (await LogManager().getOrCreateLogger()).i("SSE received: '$sseData'.");
       processSSE(sseData.toSSE());
     });
-  }, onError: (error) {
-    logger.e("${error.message}");
+  }, onError: (error) async {
+    (await LogManager().getOrCreateLogger()).e("${error.message}");
   }, autoReconnect: true);
 }
 
 void processSSE(SSE message) async {
   final processorFactory = ProcessorFactory();
-  Processor? processor = processorFactory.create(message);
+  Processor? processor = await processorFactory.create(message);
   if (processor != null) {
     var success = await processor.process();
     if (!success) {
-      logger.e("Unsuccessful processing for ${message.toString()}");
+      (await LogManager().getOrCreateLogger())
+          .e("Unsuccessful processing for ${message.toString()}");
     }
   } else {
-    logger.w("No processor for ${message.toString()}");
+    (await LogManager().getOrCreateLogger())
+        .w("No processor for ${message.toString()}");
   }
 }
