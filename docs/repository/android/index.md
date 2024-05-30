@@ -10,7 +10,7 @@ Sotex Box is an actual app which will provide the targeted media services.
 
 You are free to use either software emulation or android supported hardware. To setup the local software emulator you can use make:
 ```bash
-make flutter-create-emulator
+make setup-emulator
 ```
 **You only have to do this once**, but for the sake of simplicity and possibility of platform version changes it is added as a command.
 
@@ -35,8 +35,7 @@ Set ```hw.keyboard = yes```
 In order to run a particular part of the frontend you can use make:
 
 ```bash
-make run-launcher # or
-make run-box
+make run-launcher
 ```
 
 ## Testing
@@ -52,8 +51,7 @@ make flutter-test
 
 To run a particular set of tests you can use `make`:
 ```bash
-make flutter-test-launcher # or
-make flutter-test-box
+make flutter-test-launcher
 ```
 
 If you have problems setting it up, look at this [troubleshooting guide](troubleshoot.md).

@@ -17,6 +17,11 @@ ifeq ($(CONTAINER_TOOL),auto)
 	override CONTAINER_TOOL = $(shell docker version >/dev/null 2>&1 && echo docker || echo podman)
 endif
 
+export ANDROID_HOME ?= auto
+ifeq ($(ANDROID_HOME),auto)
+	$(shell echo "Setup ANDROID_HOME env variable")
+endif
+
 # Conditional assignment of COMPOSE_COMMAND
 export COMPOSE_COMMAND ?= auto
 ifeq ($(COMPOSE_COMMAND),auto)
@@ -54,16 +59,11 @@ edit-docs: ## Run mkdocs local server for development
 ANDROID_IMAGE := "system-images;android-31;android-tv;x86"
 BUILD_TOOLS := "build-tools;31.0.0"
 PLATFORMS := "platforms;android-31"
-.PHONY: flutter-create-emulator
-flutter-create-emulator: ## Shorthand for setting up an emulator
-	sdkmanager $(BUILD_TOOLS)
-	sdkmanager $(PLATFORMS)
-	sdkmanager $(ANDROID_IMAGE)
-	sdkmanager emulator
-	sdkmanager platform-tools
+.PHONY: setup-emulator
+setup-emulator: ## Shorthand for setting up an emulator
+	if [ -z $(ANDROID_HOME) ]; then echo "ANDROID_HOME is not set. Please set it and re-run this command."; exit 1; fi
+	sdkmanager --sdk_root=$(ANDROID_HOME) $(BUILD_TOOLS) $(PLATFORMS) $(ANDROID_IMAGE) emulator platform-tools
 	avdmanager create avd -n "android_tv" -k $(ANDROID_IMAGE) --force
-	adb reverse tcp:8000 tcp:8000
-	adb reverse tcp:9000 tcp:9000
 
 UNWANTED_VOLUMES := $(shell $(CONTAINER_TOOL) volume list -q --filter name=sotex)
 .PHONY: full-local-cleanup
@@ -123,26 +123,24 @@ flutter-test: ## Shorthand for running all flutter tests
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
 
-.PHONY: run-emu
-run-emu: ## Shorthand for running the android emulator
-	emulator -avd "android_tv" -skin 1920x1080 # -no-snapshot-load
-
-.PHONY: rotate-emu
-rotate-emu: ## Shorthand for rotating the android emulator
-	adb emu rotate
-
+ENV_FILE_LAUNCHER := android/.env.json
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
+	@if [ -z "$(wildcard $(ENV_FILE_LAUNCHER))" ]; then \
+        echo "$(ENV_FILE_LAUNCHER) does not exist. To run the stack you should create $(ENV_FILE_LAUNCHER). Use $(ENV_FILE_LAUNCHER).template to start"; \
+        exit 1; \
+    else \
+        echo "$(ENV_FILE_LAUNCHER) exists"; \
+    fi
 	(cd android/launcher && flutter run --dart-define-from-file=.env.json -d emulator-5554)
+
+.PHONY: run-emu
+run-emu: ## Shorthand for running the android emulator
+	emulator -avd "android_tv" -skin 1920x1080 -sysdir $(ANDROID_HOME)/system-images/android-31/android-tv/x86/ # -no-snapshot-load
 
 .PHONY: build-launcher
 build-launcher: ## Shorthand for building the launcher app locally
 	(cd android/launcher && flutter build apk --dart-define-from-file=.env.device.json --release)
-
-.PHONY: run-box
-run-box: ## Shorthand for running the sotex_box app locally
-	emulator -avd "android_tv" -skin 1280x720
-	(cd android/sotex_box && flutter run -d emulator-5554)
 
 ##@ Benchmarking
 .PHONY: dotnet-benchmark
