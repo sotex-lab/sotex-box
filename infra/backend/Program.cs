@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ConfigTranslator;
 using Pulumi;
@@ -141,6 +143,7 @@ class SotexBoxStack : Stack
 
         var access_key = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY")!;
         var secret_key = Environment.GetEnvironmentVariable("AWS_SECRET_KEY")!;
+        var db_password = Convert.ToBase64String(Encoding.UTF8.GetBytes(secret_key));
 
         var dbInstance = new Pulumi.Aws.Rds.Instance(
             "postgres",
@@ -151,7 +154,7 @@ class SotexBoxStack : Stack
                 EngineVersion = mapped.DbEngineVersion,
                 InstanceClass = mapped.DbInstanceClass,
                 DbName = mapped.DbEngine,
-                Password = secret_key,
+                Password = db_password,
                 Username = "sotex",
                 VpcSecurityGroupIds = dbSecGroup.Id,
                 DbSubnetGroupName = subnetGroup.Name,
@@ -242,10 +245,10 @@ class SotexBoxStack : Stack
             ["REQUIRE_KNOWN_DEVICES"] = Output.Create("true"),
             ["NOOP_CRON"] = Output.Create("0/15 * * ? * *"),
             ["SQS_CRON"] = Output.Create("0/15 * * ? * *"),
-            ["SCHEDULE_MAX_DELAY"] = Output.Create("00:01:00"),
+            ["SCHEDULE_MAX_DELAY"] = Output.Create("00:30:00"),
             ["SCHEDULE_DEVICE_THRESHOLD"] = Output.Create("100"),
             ["CALCULATE_AD_THRESHOLD"] = Output.Create("10"),
-            ["CALCULATE_URL_EXPIRE"] = Output.Create("01:00:00")
+            ["CALCULATE_URL_EXPIRE"] = Output.Create("10:00:00")
         };
 
         foreach (var bucket in buckets)
@@ -291,10 +294,11 @@ class SotexBoxStack : Stack
 
                     newgrp docker
                     git clone https://github.com/sotex-lab/sotex-box.git
-                    sudo chown -R ubuntu:ubuntu sotex-box
                     cat <<EOF > sotex-box/.env
 {x}
 EOF
+                    sudo chown -R ubuntu:ubuntu sotex-box
+
                     ip=$(dig +short myip.opendns.com @resolver1.opendns.com | sed s/\\./-/g)
                     echo DOMAIN_NAME=ec2-$ip.eu-central-1.compute.amazonaws.com >> sotex-box/.env"
                 ),

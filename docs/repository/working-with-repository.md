@@ -7,7 +7,7 @@ You need a couple of tools to be able to fully work with this repository:
 | # | Name | Version | Windows | Linux | Mac |
 |---|------|---------|---------|-------|-----|
 | 1 | python | ^3.9 | [🔗](https://www.python.org/downloads/windows/) | [🔗](https://www.python.org/downloads/source/) | [🔗](https://www.python.org/downloads/macos/) |
-| 2 | poetry | ^1.7.1 | [🔗](https://python-poetry.org/docs/#installing-with-the-official-installer) | [🔗](https://python-poetry.org/docs/#installing-with-the-official-installer) | [🔗](https://python-poetry.org/docs/#installing-with-the-official-installer) |
+| 2 | pixi | ^0.22.0 | [🔗](https://pixi.sh/latest/#__tabbed_1_2) | [🔗](https://pixi.sh/latest/) | [🔗](https://pixi.sh/latest/) |
 | 3 | precommit | ^3.6.0 | [🔗](https://pre-commit.com/#install) | [🔗](https://pre-commit.com/#install) | [🔗](https://pre-commit.com/#install) |
 | 4 | dotnet | ^8.0.1 | [🔗](https://dotnet.microsoft.com/en-us/download) | [🔗](https://dotnet.microsoft.com/en-us/download) | [🔗](https://dotnet.microsoft.com/en-us/download) |
 | 5 | pulumi | ^3.107.0 | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) | [🔗](https://www.pulumi.com/docs/clouds/aws/get-started/begin/#install-pulumi) |
