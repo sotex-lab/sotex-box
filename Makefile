@@ -43,13 +43,13 @@ help:
 
 ##@ Misc actions
 .PHONY: py-export
-py-export: ## Export poetry into requirements
-	poetry export > requirements.txt
+py-export: ## Export pixi into requirements
+	pixi run pipreqs --force
 
 .PHONY: edit-docs
 edit-docs: ## Run mkdocs local server for development
-	poetry install
-	poetry run mkdocs serve
+	pixi install
+	pixi run mkdocs serve
 
 ANDROID_IMAGE := "system-images;android-31;android-tv;x86"
 BUILD_TOOLS := "build-tools;31.0.0"
