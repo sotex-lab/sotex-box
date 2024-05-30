@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'package:dio/dio.dart';
 import 'package:launcher/src/common/dio_access.dart';
-import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/database/media.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
