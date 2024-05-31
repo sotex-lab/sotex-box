@@ -132,7 +132,7 @@ run-launcher: ## Shorthand for running the launcher app locally
 
 .PHONY: run-emu
 run-emu: ## Shorthand for running the android emulator
-	emulator -avd "android_tv" -skin 1920x1080 -sysdir $(ANDROID_HOME)/system-images/android-31/android-tv/x86/ # -no-snapshot-load
+	emulator -avd "android_tv" -skin 1920x1080 -sysdir $(ANDROID_HOME)/system-images/android-31/android-tv/x86/
 
 .PHONY: build-launcher
 build-launcher: ## Shorthand for building the launcher app locally
