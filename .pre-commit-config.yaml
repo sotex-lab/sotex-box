@@ -11,12 +11,6 @@ repos:
       - id: detect-private-key
   - repo: local
     hooks:
-      - id: export-requirements-txt
-        name: Export requirements.txt
-        entry: make py-export
-        language: system
-        files: 'pyproject.toml'
-
       ## Dotnet checks
       - id: dotnet-tool-restore
         name: Install dotnet tools

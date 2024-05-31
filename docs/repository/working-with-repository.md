@@ -19,6 +19,7 @@ You need a couple of tools to be able to fully work with this repository:
 | 10 | kotlin | ^1.9.21 | [🔗](https://kotlinlang.org/docs/command-line.html#manual-install) | [🔗](https://kotlinlang.org/docs/command-line.html#snap-package) | [🔗](https://kotlinlang.org/docs/command-line.html#homebrew) |
 | 11 | flutter | ^3.19.1 | [🔗](https://docs.flutter.dev/get-started/install/windows) | [🔗](https://docs.flutter.dev/get-started/install/linux) | [🔗](https://docs.flutter.dev/get-started/install/macos) |
 | 12 | k6 | ^0.49.0 | [🔗](https://k6.io/docs/get-started/installation/#windows) | [🔗](https://k6.io/docs/get-started/installation/#linux) | [🔗](https://k6.io/docs/get-started/installation/#macos) |
+| 13 | android platform tools | latest | [🔗](https://dl.google.com/android/repository/platform-tools-latest-windows.zip) | [🔗](https://dl.google.com/android/repository/platform-tools-latest-linux.zip) | [🔗](https://dl.google.com/android/repository/platform-tools-latest-darwin.zip)
 
 For more details about flutter installation, visit the android part of the docs.
 

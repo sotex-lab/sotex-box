@@ -3,7 +3,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=test
       - AWS_PROXY_HOST=minio
-      - AWS_PROXY_PORT=9000
+      - AWS_PROXY_PORT=9002
     links:
       - minio
       - postgres
@@ -17,17 +17,19 @@ services:
     environment:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=admin123
-      - MC_HOST_local=http://admin:admin123@localhost:9000
+      - MC_HOST_local=http://admin:admin123@localhost:9002
       - MINIO_NOTIFY_WEBHOOK_ENABLE_ADPOSTHOOK=on
       - MINIO_NOTIFY_WEBHOOK_ENDPOINT_ADPOSTHOOK=http://local-pusher:5000/webhook
     ports:
-      - 9000:9000
+      - 9002:9002
       - 9001:9001
     command:
       - server
       - /data
       - --console-address
       - :9001
+      - --address
+      - :9002
     healthcheck:
       test: mc ready local
       interval: 10s
@@ -40,7 +42,7 @@ services:
     restart: no
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 admin admin123 &&
+      mc alias set local http://minio:9002 admin admin123 &&
       buckets=("non-processed" "processed" "schedule") &&
       for bucket in "$${buckets[@]}"; do
         mc mb local/"$$bucket" || true
