@@ -47,10 +47,6 @@ help:
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make ${FORMATTING_BEGIN_BLUE}<target>${FORMATTING_END}\nSelected container tool: ${FORMATTING_BEGIN_BLUE}${CONTAINER_TOOL}, ${COMPOSE_COMMAND}${FORMATTING_END}\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  ${FORMATTING_BEGIN_BLUE}%-46s${FORMATTING_END} %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Misc actions
-.PHONY: py-export
-py-export: ## Export pixi into requirements
-	pixi run pipreqs --force
-
 .PHONY: edit-docs
 edit-docs: ## Run mkdocs local server for development
 	pixi install
