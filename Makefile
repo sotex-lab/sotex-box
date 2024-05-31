@@ -134,6 +134,11 @@ run-launcher: ## Shorthand for running the launcher app locally
 run-emu: ## Shorthand for running the android emulator
 	emulator -avd "android_tv" -skin 1920x1080 -sysdir $(ANDROID_HOME)/system-images/android-31/android-tv/x86/
 
+.PHONY: reverse-ports
+reverse-ports: ## Reverse ports for backend and minio for local development, should be run after run-emu
+	adb reverse tcp:8000 tcp:8000
+	adb reverse tcp:9002 tcp:9002
+
 .PHONY: build-launcher
 build-launcher: ## Shorthand for building the launcher app locally
 	(cd launcher && flutter build apk --dart-define-from-file=.env.device.json --release)
