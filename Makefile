@@ -112,7 +112,7 @@ dotnet-e2e-tests: ## Run dotnet e2e tests, excluded from dotnet-test
 ##@ Flutter testing
 .PHONY: flutter-test-launcher
 flutter-test-launcher: ## Shorthand for running the launcher tests
-	(cd android/launcher && flutter test -r expanded)
+	(cd launcher && flutter test -r expanded)
 
 .PHONY: flutter-test
 flutter-test: flutter-test-launcher
@@ -123,7 +123,7 @@ flutter-test: ## Shorthand for running all flutter tests
 run-backend: ## Shorthand for running backend from cli
 	dotnet run --project dotnet/backend
 
-ENV_FILE_LAUNCHER := android/.env.json
+ENV_FILE_LAUNCHER := launcher/.env.json
 .PHONY: run-launcher
 run-launcher: ## Shorthand for running the launcher app locally
 	@if [ -z "$(wildcard $(ENV_FILE_LAUNCHER))" ]; then \
@@ -132,7 +132,7 @@ run-launcher: ## Shorthand for running the launcher app locally
     else \
         echo "$(ENV_FILE_LAUNCHER) exists"; \
     fi
-	(cd android/launcher && flutter run --dart-define-from-file=.env.json -d emulator-5554)
+	(cd launcher && flutter run --dart-define-from-file=.env.json -d emulator-5554)
 
 .PHONY: run-emu
 run-emu: ## Shorthand for running the android emulator
@@ -140,7 +140,7 @@ run-emu: ## Shorthand for running the android emulator
 
 .PHONY: build-launcher
 build-launcher: ## Shorthand for building the launcher app locally
-	(cd android/launcher && flutter build apk --dart-define-from-file=.env.device.json --release)
+	(cd launcher && flutter build apk --dart-define-from-file=.env.device.json --release)
 
 ##@ Benchmarking
 .PHONY: dotnet-benchmark
