@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Buffers.Text;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -225,23 +223,21 @@ class SotexBoxStack : Stack
             new KeyPairArgs { KeyName = "key-pair", PublicKey = mapped.PublicKey }
         );
 
-        var s3Url = "https://s3.eu-central-1.amazonaws.com";
-        var sqsUrl = "https://sqs.eu-central-1.amazonaws.com";
-
         var envVariables = new Dictionary<string, Output<string>>
         {
             ["GF_SECURITY_ADMIN_PASSWORD"] = Output.Create(secret_key),
             ["NGINX_PORT"] = Output.Create("80"),
             ["CONNECTION_STRING"] = connectionString,
-            ["AWS_S3_URL"] = Output.Create(s3Url),
+            ["AWS_S3_URL"] = Output.Create(mapped.S3Url),
             ["AWS_REGION"] = Output.Create("eu-central-1"),
             ["AWS_S3_ACCESS_KEY"] = Output.Create(access_key),
             ["AWS_S3_SECRET_KEY"] = Output.Create(secret_key),
-            ["AWS_PROTOCOL"] = Output.Create("https"),
-            ["AWS_SQS_URL"] = Output.Create(sqsUrl),
+            ["AWS_SQS_URL"] = Output.Create(mapped.SqsUrl),
             ["AWS_SQS_ACCESS_KEY"] = Output.Create(access_key),
             ["AWS_SQS_SECRET_KEY"] = Output.Create(secret_key),
-            ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = queue.Url.Apply(url => url.Split(sqsUrl)[1]),
+            ["AWS_SQS_NONPROCESSED_QUEUE_URL"] = queue.Url.Apply(url =>
+                url.Split(mapped.SqsUrl)[1]
+            ),
             ["REQUIRE_KNOWN_DEVICES"] = Output.Create("true"),
             ["NOOP_CRON"] = Output.Create("0/15 * * ? * *"),
             ["SQS_CRON"] = Output.Create("0/15 * * ? * *"),
@@ -282,8 +278,9 @@ class SotexBoxStack : Stack
 
                     cd /home/ubuntu
                     echo 'export COMPOSE_COMMAND=docker-compose' >> .bashrc
+                    echo 'export ANDROID_HOME=notImportant' >> .bashrc
                     sudo apt -y update
-                    sudo apt install -y git docker.io make
+                    sudo apt install -y git docker.io make gzip
                     sudo systemctl start docker
                     sudo docker run hello-world
                     sudo systemctl enable docker
@@ -293,6 +290,12 @@ class SotexBoxStack : Stack
                     sudo chmod +x /usr/local/bin/docker-compose
 
                     newgrp docker
+
+                    curl -L -O https://github.com/tamasfe/taplo/releases/download/0.8.0/taplo-full-linux-x86_64.gz
+                    gzip -d taplo-full-linux-x86_64.gz
+                    chmod +x taplo-full-linux-x86_64
+                    sudo mv taplo-full-linux-x86_64 /usr/local/bin/taplo
+
                     git clone https://github.com/sotex-lab/sotex-box.git
                     cat <<EOF > sotex-box/.env
 {x}

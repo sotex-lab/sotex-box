@@ -4,7 +4,14 @@ description: Sotex-box deployment
 config:
   aws:profile: service-account
   # Networking
-
+  sotex-box:s3Url:
+    description: Default S3 url
+    default: https://s3.eu-central-1.amazonaws.com
+    type: string
+  sotex-box:sqsUrl:
+    description: Default SQS url
+    default: https://sqs.eu-central-1.amazonaws.com
+    type: string
   sotex-box:networking-vpc-cidrBlock:
     description: VPC Cidr Block
     default: 10.0.0.0/16

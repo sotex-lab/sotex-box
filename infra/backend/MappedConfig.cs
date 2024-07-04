@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ConfigTranslator.Attributes;
 
@@ -38,4 +39,10 @@ public class MappedConfig
 
     [String("ec2InstanceType")]
     public string Ec2InstanceType { get; set; }
+
+    [String("sqsUrl")]
+    public string SqsUrl { get; set; }
+
+    [String("s3Url")]
+    public string S3Url { get; set; }
 }
