@@ -300,7 +300,9 @@ EOF
                     sudo chown -R ubuntu:ubuntu sotex-box
 
                     ip=$(dig +short myip.opendns.com @resolver1.opendns.com | sed s/\\./-/g)
-                    echo DOMAIN_NAME=ec2-$ip.eu-central-1.compute.amazonaws.com >> sotex-box/.env"
+                    echo DOMAIN_NAME=ec2-$ip.eu-central-1.compute.amazonaws.com >> sotex-box/.env
+                    docker compose up
+                    "
                 ),
             }
         );

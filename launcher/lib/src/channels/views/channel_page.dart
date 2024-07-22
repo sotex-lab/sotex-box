@@ -4,14 +4,14 @@ import 'package:launcher/src/channels/bloc/playback_bloc.dart';
 import 'package:launcher/src/common/logging.dart';
 import 'package:video_player/video_player.dart';
 
-class ChannelPickerPage extends StatefulWidget {
-  const ChannelPickerPage({Key? key}) : super(key: key);
+class ChannelPage extends StatefulWidget {
+  const ChannelPage({Key? key}) : super(key: key);
 
   @override
-  ChannelPickerPageState createState() => ChannelPickerPageState();
+  ChannelPageState createState() => ChannelPageState();
 }
 
-class ChannelPickerPageState extends State<ChannelPickerPage>
+class ChannelPageState extends State<ChannelPage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
 

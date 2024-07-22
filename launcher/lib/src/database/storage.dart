@@ -5,10 +5,6 @@ import 'package:path_provider/path_provider.dart';
 
 class DirectoryGetter {
   Future<String> _applicationDirectory() async {
-    if (const String.fromEnvironment("build_type") == "DEVICE") {
-      return "/sdcard";
-    }
-
     return (await getApplicationSupportDirectory()).path;
   }
 
