@@ -20,6 +20,7 @@ final class PlaybackPlayNext extends PlaybackEvent {}
 class PlaybackState {
   final Queue<ScheduleItem> playbackQueue;
   final VideoPlayerController? current;
+//  final VideoPlayerController? next;
 
   PlaybackState(this.playbackQueue, this.current);
 
@@ -36,13 +37,19 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     on<PlaybackInitial>((event, emit) async {
       VideoPlayerController? current;
       final queue = Queue<ScheduleItem>.from(await provider.getScheduleItems());
+
       if (queue.isNotEmpty) {
         ScheduleItem item = queue.removeFirst();
         String? path = await getPathIfExistsForItem(item);
 
         if (path != null) {
           current = VideoPlayerController.file(File(path));
+          await current.initialize();
+          await current.setLooping(false);
         }
+      }
+      if (state.current != null) {
+        state.current!.dispose();
       }
       var newState = PlaybackState(queue, current);
       emit(newState);
@@ -73,6 +80,12 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
           }
 
           playerController = VideoPlayerController.file(File(path));
+          await playerController.initialize();
+          await playerController.setLooping(false);
+          if (state.current != null) {
+            state.current!.dispose();
+          }
+
           var newState = PlaybackState(queue, playerController);
           emit(newState);
           return;
@@ -82,6 +95,11 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         String? path = await getPathIfExistsForItem(item);
         if (path == null) continue;
         playerController = VideoPlayerController.file(File(path));
+        await playerController.initialize();
+        await playerController.setLooping(false);
+        if (state.current != null) {
+          state.current!.dispose();
+        }
         emit(PlaybackState(state.playbackQueue, playerController));
         return;
       }
