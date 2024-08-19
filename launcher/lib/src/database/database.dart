@@ -50,7 +50,7 @@ class BoxDatabase {
   }
 
   Future<String> _getDatabaseDirectory() async {
-    final appDirectory = await getApplicationDocumentsDirectory();
+    final appDirectory = await getApplicationSupportDirectory();
     final dbDirectory = join(appDirectory.path, databaseName);
     return dbDirectory;
   }

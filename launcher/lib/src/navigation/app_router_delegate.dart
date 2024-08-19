@@ -13,6 +13,14 @@ class AppRouterDelegate extends RouterDelegate<NavigationState>
 
   @override
   Widget build(BuildContext context) {
+    MaterialPage<void> wifiPickerPage = const MaterialPage(
+        child: WifiPickerPage(), key: ValueKey('WifiPickerPage'));
+
+    MaterialPage<void> channelPage = const MaterialPage(
+        child: ChannelPage(), key: ValueKey('ChannelPickerPage'));
+
+    List<MaterialPage<void>> pages = [wifiPickerPage, channelPage];
+
     return BlocBuilder<NavigationCubit, NavigationState>(
         builder: (context, navigationState) =>
             BlocBuilder<NetworkCubit, NetworkState>(
@@ -20,16 +28,13 @@ class AppRouterDelegate extends RouterDelegate<NavigationState>
                 return Navigator(
                   key: navigatorKey,
                   pages: [
-                    if (networkState == NetworkState.online)
-                      const MaterialPage(
-                          child: ChannelPickerPage(),
-                          key: ValueKey('ChannelPickerPage')),
-                    if (networkState == NetworkState.offline)
-                      const MaterialPage(
-                          child: WifiPickerPage(),
-                          key: ValueKey('WifiPickerPage')),
+                    if (networkState == NetworkState.online) channelPage,
+                    if (networkState == NetworkState.offline) wifiPickerPage
                   ],
-                  onPopPage: (route, result) => route.didPop(result),
+                  onDidRemovePage: (Page<Object?> page) {
+                    pages.remove(page);
+                    pages = pages.toList();
+                  },
                 );
               },
             ));

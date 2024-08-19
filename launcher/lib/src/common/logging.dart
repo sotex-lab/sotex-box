@@ -141,7 +141,7 @@ class DebugState {
 }
 
 class DebugBloc extends Bloc<DebugEvent, DebugState> {
-  DebugBloc() : super(DebugState(Queue<String>(), 10)) {
+  DebugBloc() : super(DebugState(Queue<String>(), 25)) {
     on<DebugPushEvent>((event, emit) async {
       if (state.logQueue.length < state.bufferSize) {
         state.logQueue.add(event.message);

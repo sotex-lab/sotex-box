@@ -4,16 +4,9 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 class DirectoryGetter {
-  Future<String> _applicationDirectory() async {
-    if (const String.fromEnvironment("build_type") == "DEVICE") {
-      return "/sdcard";
-    }
-
-    return (await getApplicationSupportDirectory()).path;
-  }
-
   Future<String> getMediaDirectory() async {
-    Directory applicationDirectory = Directory(await _applicationDirectory());
+    Directory applicationDirectory =
+        Directory((await getApplicationDocumentsDirectory()).path);
 
     final mediaDirectoryPath = join(applicationDirectory.path, "media");
 
@@ -27,7 +20,8 @@ class DirectoryGetter {
   }
 
   Future<String> getLogDirectory() async {
-    Directory applicationDirectory = Directory(await _applicationDirectory());
+    Directory applicationDirectory =
+        Directory((await getApplicationSupportDirectory()).path);
     final logDirectoryPath = join(applicationDirectory.path, "logs");
     final logDir = Directory(logDirectoryPath);
 

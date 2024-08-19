@@ -4,102 +4,95 @@ import 'package:launcher/src/channels/bloc/playback_bloc.dart';
 import 'package:launcher/src/common/logging.dart';
 import 'package:video_player/video_player.dart';
 
-class ChannelPickerPage extends StatefulWidget {
-  const ChannelPickerPage({Key? key}) : super(key: key);
+class ChannelPage extends StatefulWidget {
+  const ChannelPage({Key? key}) : super(key: key);
 
   @override
-  ChannelPickerPageState createState() => ChannelPickerPageState();
+  ChannelPageState createState() => ChannelPageState();
 }
 
-class ChannelPickerPageState extends State<ChannelPickerPage>
+class ChannelPageState extends State<ChannelPage>
     with TickerProviderStateMixin {
-  late AnimationController _animationController;
-
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500), value: 1.0);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _animationController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-        opacity: _animationController,
-        child: BlocBuilder<PlaybackBloc, PlaybackState>(
-          builder: (context, state) {
-            if (_animationController.status != AnimationStatus.completed) {
-              Future.delayed(const Duration(milliseconds: 500), () {
-                _animationController.forward();
-              });
-            }
-            if (state.current != null) {
-              state.current!.initialize().then((value) => {
-                    state.current!.addListener(() {
-                      void animationListener() {
-                        if (_animationController.status ==
-                            AnimationStatus.dismissed) {
-                          state.current!.dispose();
-                          context.read<PlaybackBloc>().add(PlaybackPlayNext());
-                          _animationController
-                              .removeListener(animationListener);
-                        }
-                      }
-
-                      if (state.current!.value.isCompleted &&
-                          _animationController.status ==
-                              AnimationStatus.completed) {
-                        _animationController.addListener(animationListener);
-                        _animationController.reverse();
-                      }
-                    })
-                  });
-              Future.delayed(const Duration(milliseconds: 500), () {
-                state.current!.play();
-              });
-              return AspectRatio(
-                aspectRatio: state.current!.value.aspectRatio,
-                child: VideoPlayer(state.current!),
-              );
-            } else {
+    return BlocBuilder<PlaybackBloc, PlaybackState>(
+      builder: (context, state) {
+        if (state.current != null) {
+          state.current!.addListener(() {
+            if (state.current!.value.position ==
+                state.current!.value.duration) {
               context.read<PlaybackBloc>().add(PlaybackPlayNext());
-              if (const String.fromEnvironment("build") == "DEBUG") {
-                return BlocBuilder<DebugBloc, DebugState>(
-                  builder: (context, state) {
-                    return Scaffold(
-                      backgroundColor: Colors.black,
-                      body: Center(
-                        child: BlocBuilder<DebugBloc, DebugState>(
-                          builder: (context, state) {
-                            return Container(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(
-                                state.logQueue.join("\n"),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.justify,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                );
-              } else {
-                return Center(
-                    key: UniqueKey(), child: const CircularProgressIndicator());
-              }
             }
-          },
-        ));
+          });
+          state.current!.play();
+          return AspectRatio(
+            aspectRatio: state.current!.value.aspectRatio,
+            child: VideoPlayer(state.current!),
+          );
+        } else {
+          context.read<PlaybackBloc>().add(PlaybackPlayNext());
+          if (const String.fromEnvironment("build") == "DEBUG") {
+            return const DiagnosticsViewer();
+          } else {
+            return Center(
+                key: UniqueKey(), child: const CircularProgressIndicator());
+          }
+        }
+      },
+    );
+  }
+}
+
+class DiagnosticsViewer extends StatelessWidget {
+  const DiagnosticsViewer({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          // Status Bar
+          Container(
+            color: Colors.grey[900],
+            padding: const EdgeInsets.all(16.0),
+            width: double.infinity,
+            child: const Text(
+              'Diagnostics',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // Main Content
+          Expanded(
+            child: BlocBuilder<DebugBloc, DebugState>(
+              builder: (context, state) {
+                return Container(
+                  width: double.infinity,
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(10.0),
+                  child: Text(
+                    state.logQueue.join("\n"),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.justify,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
