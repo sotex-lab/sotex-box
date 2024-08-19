@@ -26,8 +26,8 @@ jobs:
     - name: Setup Flutter
       uses: "subosito/flutter-action@v2.12.0"
       with:
-        flutter-version: '3.23.0'
         channel: 'stable'
+        flutter-version-file: pubspec.yaml
     - name: Format Flutter
       run: dart format ${{ matrix.app.directory }} --set-exit-if-changed -o json
     - name: Resolve Dependencies ${{ matrix.app.name }}
