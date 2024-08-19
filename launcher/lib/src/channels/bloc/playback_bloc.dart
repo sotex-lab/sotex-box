@@ -43,8 +43,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
 
         if (path != null) {
           current = VideoPlayerController.file(File(path));
-          await current.initialize();
-          await current.setLooping(false);
+          await current.initializeController();
         }
       }
       if (state.current != null) {
@@ -79,8 +78,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
           }
 
           playerController = VideoPlayerController.file(File(path));
-          await playerController.initialize();
-          await playerController.setLooping(false);
+          await playerController.initializeController();
           if (state.current != null) {
             state.current!.dispose();
           }
@@ -94,8 +92,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         String? path = await getPathIfExistsForItem(item);
         if (path == null) continue;
         playerController = VideoPlayerController.file(File(path));
-        await playerController.initialize();
-        await playerController.setLooping(false);
+        await playerController.initializeController();
         if (state.current != null) {
           state.current!.dispose();
         }
@@ -118,5 +115,12 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
   @override
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
+  }
+}
+
+extension ControllerInitialize on VideoPlayerController {
+  Future<void> initializeController() async {
+    await initialize();
+    await setLooping(false);
   }
 }
