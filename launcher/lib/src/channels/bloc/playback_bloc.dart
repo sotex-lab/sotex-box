@@ -20,7 +20,6 @@ final class PlaybackPlayNext extends PlaybackEvent {}
 class PlaybackState {
   final Queue<ScheduleItem> playbackQueue;
   final VideoPlayerController? current;
-//  final VideoPlayerController? next;
 
   PlaybackState(this.playbackQueue, this.current);
 
