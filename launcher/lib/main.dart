@@ -13,8 +13,7 @@ import 'package:launcher/src/sse/sse_entry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = BoxDatabase();
-  await db.clean();
+  BoxDatabase();
   startListeningForSSE();
   ScheduleProcessor(SSEScheduleMessage()).process();
   Bloc.observer = const AppObserver();
