@@ -50,6 +50,7 @@ __pypackages__/
 
 # Environments
 .env.json
+.env.device.json
 .env
 .venv
 env/
@@ -634,3 +635,6 @@ app.*.map.json
 /android/sotex_box/android/app/release
 
 /.gradle
+# pixi environments
+.pixi
+*.egg-info

@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     paths:
-      - "android/**"
+      - "launcher/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -18,10 +18,8 @@ jobs:
     strategy:
       matrix:
         app:
-          - directory: "./android/launcher"
+          - directory: "./launcher"
             name: launcher
-          - directory: "./android/sotex_box"
-            name: box
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2

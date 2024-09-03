@@ -1,9 +1,13 @@
-.cache
-.config
-.github
-BenchmarkDotNet.Artifacts
-docs
+.cache/
+.config/
+.github/
+BenchmarkDotNet.Artifacts/
+docs/
+launcher/
+load-tests/
+volumes.local/
+.pixi/
 
-bin/
-obj/
-out/
+**/bin/
+**/obj/
+**/out/

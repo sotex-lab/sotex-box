@@ -11,12 +11,6 @@ repos:
       - id: detect-private-key
   - repo: local
     hooks:
-      - id: export-requirements-txt
-        name: Export requirements.txt
-        entry: make py-export
-        language: system
-        files: 'pyproject.toml'
-
       ## Dotnet checks
       - id: dotnet-tool-restore
         name: Install dotnet tools
@@ -59,11 +53,6 @@ repos:
       - id: flutter-launcher-tests
         name: Flutter launcher tests
         entry: make flutter-test-launcher
-        language: system
-        files: '\.(dart)$'
-      - id: flutter-sotex_box-tests
-        name: Flutter sotex_box tests
-        entry: make flutter-test-box
         language: system
         files: '\.(dart)$'
 

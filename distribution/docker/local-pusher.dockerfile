@@ -1,10 +1,10 @@
-FROM python:3.10
+FROM ghcr.io/prefix-dev/pixi:0.23.0
 
 WORKDIR /app
 
-COPY requirements.txt /app/requirements.txt
-RUN pip install -r requirements.txt
-
 COPY python/local-pusher.py /app/minio_webhook_to_sqs.py
+COPY pixi.* /app/
 
-CMD ["python", "minio_webhook_to_sqs.py"]
+RUN pixi install
+
+CMD ["pixi", "run", "python", "minio_webhook_to_sqs.py"]

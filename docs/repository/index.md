@@ -25,8 +25,8 @@ Remember to remove .gitignored files if they render-->
 ├── infra # Folder containing all IAAC code we use
 ├── load-tests # Folder containing all load tests
 ├── mkdocs.yaml # Configuration file for this site
-├── poetry.lock # Lock of dependencies for poetry project
-├── pyproject.toml # Poetry project specification
+├── pixi.lock # Lock of dependencies for pixi project
+├── pixi.toml # Pixi project specification
 ├── requirements.txt # Autoexported file for python used for docker images based of scripts
 └── sotex-box.sln # Solution file that manages dotnet code
 ```
