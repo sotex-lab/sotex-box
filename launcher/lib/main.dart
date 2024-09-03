@@ -13,8 +13,7 @@ import 'package:launcher/src/sse/sse_entry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = BoxDatabase();
-  await db.clean();
+  BoxDatabase();
   startListeningForSSE();
   ScheduleProcessor(SSEScheduleMessage()).process();
   Bloc.observer = const AppObserver();
@@ -29,7 +28,6 @@ class SotexBox extends StatefulWidget {
 }
 
 class SotexBoxState extends State<SotexBox> {
-  final navigationCubit = NavigationCubit();
   @override
   void initState() {
     super.initState();
@@ -37,7 +35,10 @@ class SotexBoxState extends State<SotexBox> {
   }
 
   Future<void> hideScreen() async {
-    Future.delayed(const Duration(milliseconds: 3600), () {
+    Future.delayed(
+        Duration(
+            milliseconds: int.parse(
+                const String.fromEnvironment("splash_screen_duration"))), () {
       FlutterSplashScreen.hide();
     });
   }

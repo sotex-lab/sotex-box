@@ -634,6 +634,10 @@ app.*.map.json
 /android/sotex_box/android/app/profile
 /android/sotex_box/android/app/release
 
+**/launcher/ios
+**/launcher/linux
+**/launcher/macos
+
 /.gradle
 # pixi environments
 .pixi

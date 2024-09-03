@@ -12,13 +12,28 @@ class AppNavigator extends StatelessWidget {
     return BlocBuilder<NavigationCubit, NavigationState>(
         builder: (context, navigationState) =>
             BlocBuilder<NetworkCubit, NetworkState>(
-                builder: (context, networkState) => Navigator(pages: [
-                      if (navigationState is WiFiPicker ||
-                          networkState == NetworkState.offline)
-                        const MaterialPage(child: WifiPickerPage()),
-                      if (navigationState is ChannelPicker ||
-                          networkState == NetworkState.online)
-                        const MaterialPage(child: ChannelPickerPage())
-                    ], onPopPage: (route, result) => route.didPop(result))));
+                builder: (context, networkState) {
+              var pages = [
+                if (navigationState is WiFiPicker ||
+                    networkState == NetworkState.offline)
+                  const MaterialPage(child: WifiPickerPage()),
+                if (navigationState is ChannelPicker ||
+                    networkState == NetworkState.online)
+                  const MaterialPage(child: ChannelPage())
+              ];
+              return Navigator(
+                  pages: pages,
+                  onDidRemovePage: (Page<Object?> page) {
+                    pages.remove(page);
+                  });
+            }));
   }
 }
+
+// final pages = [
+//   if (navigationState is WiFiPicker || networkState == NetworkState.offline)
+//     const MaterialPage(child: WifiPickerPage()),
+//   if (navigationState is ChannelPicker ||
+//       networkState == NetworkState.online)
+//     const MaterialPage(child: ChannelPage())
+// ];

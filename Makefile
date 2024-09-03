@@ -141,7 +141,7 @@ reverse-ports: ## Reverse ports for backend and minio for local development, sho
 
 .PHONY: build-launcher
 build-launcher: ## Shorthand for building the launcher app locally
-	(cd launcher && flutter build apk --dart-define-from-file=.env.device.json --release)
+	(cd launcher && flutter build apk --dart-define-from-file=.env.json --release)
 
 ##@ Benchmarking
 .PHONY: dotnet-benchmark
