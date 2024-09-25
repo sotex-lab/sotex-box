@@ -19,7 +19,7 @@ endif
 
 export ANDROID_HOME ?= auto
 ifeq ($(ANDROID_HOME),auto)
-	$(shell echo "Setup ANDROID_HOME env variable")
+$(info "INFO: Setup ANDROID_HOME env variable")
 endif
 
 # Conditional assignment of COMPOSE_COMMAND
@@ -152,11 +152,11 @@ dotnet-benchmark: ## Shorthand for running dotnet benchmarks
 ##@ Infrastructure actions
 export AWS_ACCESS_KEY ?= auto
 ifeq ($(AWS_ACCESS_KEY),auto)
-	override AWS_ACCESS_KEY = $(shell taplo get -f ~/.aws/credentials 'service-account.aws_access_key_id')
+	override AWS_ACCESS_KEY := $(shell taplo get -f ~/.aws/credentials 'service-account.aws_access_key_id')
 endif
 export AWS_SECRET_KEY ?= auto
 ifeq ($(AWS_SECRET_KEY),auto)
-	override AWS_SECRET_KEY = $(shell taplo get -f ~/.aws/credentials 'service-account.aws_secret_access_key')
+	override AWS_SECRET_KEY := $(shell taplo get -f ~/.aws/credentials 'service-account.aws_secret_access_key')
 endif
 .PHONY: pulumi-up-staging
 pulumi-up-staging: ## Command to deploy the staging infra
