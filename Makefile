@@ -17,10 +17,10 @@ ifeq ($(CONTAINER_TOOL),auto)
 	override CONTAINER_TOOL = $(shell docker version >/dev/null 2>&1 && echo docker || echo podman)
 endif
 
-export ANDROID_HOME ?= auto
-ifeq ($(ANDROID_HOME),auto)
-	$(shell echo "Setup ANDROID_HOME env variable")
-endif
+# export ANDROID_HOME ?= auto
+# ifeq ($(ANDROID_HOME),auto)
+# 	$(shell echo "Setup ANDROID_HOME env variable")
+# endif
 
 # Conditional assignment of COMPOSE_COMMAND
 export COMPOSE_COMMAND ?= auto
