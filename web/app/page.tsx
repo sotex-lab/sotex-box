@@ -16,7 +16,7 @@ export default function Home() {
       </nav>
 
       <section className="p-2 flex-col justify-center items-center relative pb-40 mb-20">
-        <h1 className="text-4xl text-center pt-8 pb-4 text-white font-medium leading-snug">Multimedijalna platforma koja <br /> unapredjuje Vaš biznis.</h1>
+        <h1 className="text-4xl text-center 5t-8 pb-4 text-white font-medium leading-snug">Multimedijalna platforma koja <br /> unapredjuje Vaš biznis.</h1>
         <p className="text-center p-4 font-light text-slate-300 text-xl">Zabavan sadržaj visokog kvaliteta koji će Vam ostvariti nove klijente i povećati profit.</p>
         <div className="flex flex-row justify-center items-center gap-4 text-white pt-4 pb-16 lg:pb-32">
           <a href="#get" className="py-3 px-6 border-[1px] border-white rounded-3xl flex gap-1 justify-center">
