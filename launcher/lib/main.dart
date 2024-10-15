@@ -14,7 +14,6 @@ import 'package:launcher/src/sse/sse_entry.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   BoxDatabase();
-  startListeningForSSE();
   ScheduleProcessor(SSEScheduleMessage()).process();
   Bloc.observer = const AppObserver();
   runApp(const SotexBox());
@@ -34,11 +33,12 @@ class SotexBoxState extends State<SotexBox> {
     hideScreen();
   }
 
-  Future<void> hideScreen() async {
+  void hideScreen() {
     Future.delayed(
         Duration(
-            milliseconds: int.parse(
-                const String.fromEnvironment("splash_screen_duration"))), () {
+            milliseconds: int.tryParse(
+                    const String.fromEnvironment("splash_screen_duration")) ??
+                3600), () {
       FlutterSplashScreen.hide();
     });
   }
@@ -46,20 +46,30 @@ class SotexBoxState extends State<SotexBox> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: MultiBlocProvider(
-            providers: [
+      home: MultiBlocProvider(
+        providers: [
           BlocProvider(create: (context) => NavigationCubit()),
           BlocProvider(create: (context) => NetworkCubit()),
           BlocProvider(create: (context) => PlaybackBloc()),
           BlocProvider(create: (context) => DebugSingleton().getDebugBloc)
         ],
-            child: MaterialApp.router(
+        child: Builder(
+          builder: (context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              startListeningForSSE(context);
+            });
+
+            return MaterialApp.router(
               theme: ThemeData(
                   brightness: Brightness.dark, primaryColor: Colors.blueGrey),
               darkTheme: ThemeData(
                   brightness: Brightness.dark, primaryColor: Colors.blueGrey),
               themeMode: ThemeMode.system,
               routerDelegate: AppRouterDelegate(),
-            )));
+            );
+          },
+        ),
+      ),
+    );
   }
 }
