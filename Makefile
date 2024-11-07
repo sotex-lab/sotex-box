@@ -203,7 +203,7 @@ compose-up: container-build-local-pusher
 compose-up: compose-down
 compose-up: ensure-setup
 compose-up: ## Run local stack
-	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up
+	COMMIT_SHA=$(COMMIT_SHA) $(COMPOSE_COMMAND) -f docker-compose.yaml -f distribution/local/docker-compose.dev.yaml up $(FLAGS)
 
 .PHONY: compose-up-d
 compose-up-d: compose-down

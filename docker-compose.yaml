@@ -1,4 +1,14 @@
 services:
+  frontend:
+    container_name: frontend
+    build:
+      context: ./web
+      dockerfile: prod.Dockerfile
+    volumes:
+      - ./web/src:/app/src
+      - ./web/public:/app/public
+      - ./web/app:/app/app
+
   backend:
     container_name: backend
     image: ghcr.io/sotex-lab/sotex-box/backend:${COMMIT_SHA}

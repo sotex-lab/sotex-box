@@ -22,7 +22,7 @@ export function AccordionItem({ pair }: { pair: AccordionItem }) {
                 <div className="w-full p-2 border-b-sotex-black-450 border-b-[1px] cursor-pointer" onClick={() => { setExpanded(!expanded) }}>
                         <div className="flex flex-row justify-between items-center w-full">
                                 <p className="text-2xl text-white">{pair.question}</p>
-                                <Image alt="chevron up" className={`transition ease-in-out ${chevronRotation}`} src={"/icons/chevron-down.svg"} width={24} height={24}></Image>
+                                <Image alt="chevron up" className={`transition ease-in-out ${chevronRotation}`} src={"/assets/icons/chevron-down.svg"} width={24} height={24}></Image>
                         </div>
                         <div className={`transition-opacity ease-in-out duration-300 ${textVisible}`}>
                                 <p className={`text-lg text-slate-300 ${textVisible}`} > {pair.answer}</p>
