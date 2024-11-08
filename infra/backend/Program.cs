@@ -228,7 +228,7 @@ class SotexBoxStack : Stack
             ["GF_SECURITY_ADMIN_PASSWORD"] = Output.Create(secret_key),
             ["NGINX_PORT"] = Output.Create("80"),
             ["CONNECTION_STRING"] = connectionString,
-            ["AWS_PROTOCOL"] = Output.Create("https"),
+            ["AWS_PROTOCOL"] = Output.Create("http"),
             ["AWS_S3_URL"] = Output.Create(mapped.S3Url),
             ["AWS_REGION"] = Output.Create("eu-central-1"),
             ["AWS_S3_ACCESS_KEY"] = Output.Create(access_key),
