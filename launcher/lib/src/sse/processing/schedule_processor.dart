@@ -44,7 +44,7 @@ Future<String> getScheduleDownloadUrl(Dio dio) async {
     throw Exception("Backend host is not defined.");
   }
 
-  var url = "$backendHost/schedule/$deviceId";
+  var url = "$backendHost/api/schedule/$deviceId";
   final res = await dio.get(url);
   final scheduleDownloadUrl = res.data.toString();
 

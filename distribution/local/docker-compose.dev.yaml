@@ -1,4 +1,9 @@
 services:
+  frontend:
+    build:
+      context: ./web
+      dockerfile: dev.Dockerfile
+
   backend:
     environment:
       - ASPNETCORE_ENVIRONMENT=test
