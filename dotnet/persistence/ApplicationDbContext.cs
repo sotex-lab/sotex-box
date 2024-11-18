@@ -1,15 +1,15 @@
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using model.Core;
 using persistence.Converters;
+using Persistence.Repository.Base;
 
 namespace persistence;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    : IdentityDbContext<User>(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options) { }
-
     public DbSet<Ad> Ads { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<Device> Devices { get; set; }
