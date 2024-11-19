@@ -5,6 +5,7 @@ import 'package:launcher/src/channels/bloc/playback_bloc.dart';
 import 'package:launcher/src/common/logging.dart';
 import 'package:launcher/src/navigation/cubits/navigation_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:upgrader/upgrader.dart';
 import 'package:video_player/video_player.dart';
 
 class ChannelPage extends StatefulWidget {
@@ -85,43 +86,44 @@ class DiagnosticsViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Status Bar
-          Container(
-            color: Colors.grey[900],
-            padding: const EdgeInsets.all(16.0),
-            width: double.infinity,
-            child: const Text(
-              'Diagnostics',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      body: UpgradeAlert(
+        shouldPopScope: () => false,
+        child: Column(
+          children: [
+            Container(
+              color: Colors.grey[900],
+              padding: const EdgeInsets.all(16.0),
+              width: double.infinity,
+              child: const Text(
+                'Diagnostics',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          // Main Content
-          Expanded(
-            child: BlocBuilder<DebugBloc, DebugState>(
-              builder: (context, state) {
-                return Container(
-                  width: double.infinity,
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(10.0),
-                  child: Text(
-                    state.logQueue.join("\n"),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
+            Expanded(
+              child: BlocBuilder<DebugBloc, DebugState>(
+                builder: (context, state) {
+                  return Container(
+                    width: double.infinity,
+                    color: Colors.white,
+                    padding: const EdgeInsets.all(10.0),
+                    child: Text(
+                      state.logQueue.join("\n"),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.justify,
                     ),
-                    textAlign: TextAlign.justify,
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

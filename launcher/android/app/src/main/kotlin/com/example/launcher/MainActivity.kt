@@ -1,4 +1,4 @@
-package com.example.launcher
+package com.sotex.box
 
 import io.flutter.embedding.android.FlutterActivity
 import android.os.Bundle

@@ -24,6 +24,8 @@ class ScheduleItemProvider {
           batch.insert(tableScheduleItems, it.toMap());
         }
 
+        // await txn.delete(tableScheduleItems, where: "_createdAt < datetime('now', '-1 day')");
+        
         await batch.commit();
       });
 
@@ -34,13 +36,13 @@ class ScheduleItemProvider {
     }
   }
 
-  Future<void> removeOldEntries() async {
-    Database database = await boxDatabase.get();
-    await database.transaction((txn) async {
-      await txn.delete(tableScheduleItems,
-          where: '_createdAt < DATE_SUB(NOW(), INTERVAL 1 DAY)');
-    });
-  }
+  // Future<void> removeOldEntries() async {
+  //   Database database = await boxDatabase.get();
+  //   await database.transaction((txn) async {
+  //     await txn.delete(tableScheduleItems,
+  //         where: "_createdAt < datetime('now', '-1 day')");
+  //   });
+  // }
 
   Future<List<ScheduleItem>> getScheduleItems() async {
     Database database = await boxDatabase.get();

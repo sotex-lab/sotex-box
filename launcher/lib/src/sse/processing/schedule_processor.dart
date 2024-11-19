@@ -8,6 +8,7 @@ import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
 import 'package:launcher/src/sse/providers/schedule_item_provider.dart';
 import 'package:launcher/src/sse/sse_entry.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common/notification.dart';
 
@@ -18,10 +19,9 @@ class ScheduleProcessor extends Processor {
   Future<bool> process() async {
     try {
       final scheduleDownloadUrl = await getScheduleDownloadUrl(dio);
-      final DeviceSchedule deviceSchedule =
-          await downloadSchedule(dio, scheduleDownloadUrl);
+      final DeviceSchedule deviceSchedule = await downloadSchedule(dio, scheduleDownloadUrl);
       final insertCount = await saveScheduleToDatabase(deviceSchedule);
-      isolateDownloadMedia(deviceSchedule);
+      // isolateDownloadMedia(deviceSchedule);
       Notification().i("Inserted $insertCount schedule items in the database.");
     } catch (e) {
       Notification().e(e.toString());
@@ -35,7 +35,8 @@ class ScheduleProcessor extends Processor {
 }
 
 Future<String> getScheduleDownloadUrl(Dio dio) async {
-  const deviceId = String.fromEnvironment("device_id");
+  final prefs = await SharedPreferences.getInstance();
+  String deviceId = prefs.getString('deviceId') ?? '';
   if (deviceId == "") {
     throw Exception("Device id is not defined.");
   }
@@ -51,13 +52,13 @@ Future<String> getScheduleDownloadUrl(Dio dio) async {
   return scheduleDownloadUrl;
 }
 
-Future<DeviceSchedule> downloadSchedule(
-    Dio dio, String scheduleDownloadUrl) async {
+Future<DeviceSchedule> downloadSchedule(Dio dio, String scheduleDownloadUrl) async {
   final res2 = await dio.get(scheduleDownloadUrl);
   final schedule = res2.data.toString();
   final scheduleJson = jsonDecode(schedule) as Map<String, dynamic>;
   final deviceSchedule = DeviceSchedule.fromJson(scheduleJson);
-  downloadScheduleMedia(deviceSchedule);
+  await isolateDownloadMedia(deviceSchedule);
+  // downloadScheduleMedia(deviceSchedule);
   return deviceSchedule;
 }
 
@@ -79,8 +80,12 @@ isolateDownloadMedia(DeviceSchedule deviceSchedule) async {
     if (!await file.exists()) {
       Notification().i("File directory: '$itemPath'.");
       Notification().i("Downloading: '$item'.");
-      await dio.download(item.downloadLink, itemPath);
-      Notification().i("Finished download '$item'.");
+      try{
+        await dio.download(item.downloadLink, itemPath);
+        Notification().i("Finished download '$item'.");
+      } catch(e){
+        Notification().e("Faild to download video");
+      }
     } else {
       Notification().i("Already downloaded: '$item'.");
     }
