@@ -24,7 +24,7 @@ class ScheduleItemProvider {
           batch.insert(tableScheduleItems, it.toMap());
         }
 
-        // await txn.delete(tableScheduleItems, where: "_createdAt < datetime('now', '-1 day')");
+        await txn.delete(tableScheduleItems, where: "_createdAt < datetime('now', '-1 day')");
         
         await batch.commit();
       });
