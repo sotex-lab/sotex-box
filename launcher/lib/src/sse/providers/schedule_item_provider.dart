@@ -21,7 +21,7 @@ class ScheduleItemProvider {
         var batch = txn.batch();
 
         for (var it in items) {
-          batch.insert(tableScheduleItems, it.toMap());
+          batch.insert(tableScheduleItems, it.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
         }
 
         await txn.delete(tableScheduleItems, where: "_createdAt < datetime('now', '-1 day')");

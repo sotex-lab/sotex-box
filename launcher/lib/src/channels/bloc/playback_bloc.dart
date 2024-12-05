@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
@@ -19,7 +20,7 @@ final class PlaybackPlayNext extends PlaybackEvent {}
 
 class PlaybackState {
   final Queue<ScheduleItem> playbackQueue;
-  final VideoPlayerController? current;
+  VideoPlayerController? current;
 
   PlaybackState(this.playbackQueue, this.current);
 
@@ -31,96 +32,73 @@ class PlaybackState {
 
 class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
   final ScheduleItemProvider provider = ScheduleItemProvider();
+  Timer? _timer;
 
   PlaybackBloc() : super(PlaybackState(Queue<ScheduleItem>(), null)) {
-    on<PlaybackInitial>((event, emit) async {
-      VideoPlayerController? current;
-      final queue = Queue<ScheduleItem>.from(await provider.getScheduleItems());
-
-      if (queue.isNotEmpty) {
-        ScheduleItem item = queue.removeFirst();
-        String? path = await getPathIfExistsForItem(item);
-
-        if (path != null) {
-          current = VideoPlayerController.file(File(path));
-          await current.initializeController();
-        }
-      }
-      if (state.current != null) {
-        state.current!.dispose();
-      }
-      var newState = PlaybackState(queue, current);
-      emit(newState);
-    });
-
-    on<PlaybackPlayNext>((event, emit) async {
-      VideoPlayerController? playerController;
-
-      while (true) {
+      on<PlaybackPlayNext>((event, emit) async {
         if (state.playbackQueue.isEmpty) {
-          final queue =
-              Queue<ScheduleItem>.from(await provider.getScheduleItems());
+          final queue = Queue<ScheduleItem>.from(await provider.getScheduleItems());
+
           if (queue.isEmpty) {
             DebugSingleton().getDebugBloc.add(DebugPushEvent("Queue empty"));
-            await Future.delayed(const Duration(seconds: 5));
-            continue;
+            _timer = Timer.periodic(Duration(minutes: 1), (_){
+              add(PlaybackPlayNext());
+            });
+            return;
           }
 
           ScheduleItem item = queue.removeFirst();
-          DebugSingleton()
-              .getDebugBloc
-              .add(DebugPushEvent("Schedule item: ${item.ad.id}"));
           String? path = await getPathIfExistsForItem(item);
 
           if (path == null) {
-            await Future.delayed(const Duration(seconds: 5));
-            continue;
+            await Future.delayed(const Duration(seconds: 3));
+            //To continue with new queue
+            emit(PlaybackState(queue, state.current));
+            return;
           }
 
-          playerController = VideoPlayerController.file(File(path));
-          await playerController.initializeController();
-          if (state.current != null) {
-            state.current!.dispose();
+          _initializeAndPlay(path);
+          _timer?.cancel();
+          _timer = null;
+
+          emit(PlaybackState(queue, state.current));
+        } else {
+          ScheduleItem item = state.playbackQueue.removeFirst();
+          String? path = await getPathIfExistsForItem(item);
+
+          if (path == null) {
+            await Future.delayed(const Duration(seconds: 3));
+            add(PlaybackPlayNext());
+            return;
           }
 
-          var newState = PlaybackState(queue, playerController);
-          emit(newState);
-          return;
-        }
+          _initializeAndPlay(path);
 
-        ScheduleItem item = state.playbackQueue.removeFirst();
-        String? path = await getPathIfExistsForItem(item);
-        if (path == null) continue;
-        playerController = VideoPlayerController.file(File(path));
-        await playerController.initializeController();
-        if (state.current != null) {
-          state.current!.dispose();
+          emit(PlaybackState(state.playbackQueue, state.current));
         }
-        emit(PlaybackState(state.playbackQueue, playerController));
-        return;
       }
-    });
+    );
   }
 
-  @override
-  void onChange(Change<PlaybackState> change) {
-    super.onChange(change);
+  void _initializeAndPlay(String path){
+    state.current = VideoPlayerController.file(File(path))
+          ..initialize().then((_){
+            state.current!.addListener(_videoListener);
+            state.current!.setLooping(false);
+            state.current!.play();
+          }).catchError((error){
+            DebugSingleton().getDebugBloc.add(DebugPushEvent("Error with video, $error"));
+            add(PlaybackPlayNext());
+          });
   }
 
-  @override
-  void onTransition(Transition<PlaybackEvent, PlaybackState> transition) {
-    super.onTransition(transition);
-  }
-
-  @override
-  void onError(Object error, StackTrace stackTrace) {
-    super.onError(error, stackTrace);
-  }
-}
-
-extension ControllerInitialize on VideoPlayerController {
-  Future<void> initializeController() async {
-    await initialize();
-    await setLooping(false);
+  void _videoListener() {
+    if (state.current!.value.isInitialized &&
+        !state.current!.value.isPlaying &&
+        state.current!.value.position >= state.current!.value.duration) {
+      state.current!.removeListener(_videoListener);
+      state.current!.dispose();
+      add(PlaybackPlayNext());
+    }
   }
 }

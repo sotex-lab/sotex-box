@@ -42,7 +42,7 @@ class BoxDatabase {
           $columnUrl TEXT NOT NULL,
           $columnScope INTEGER NOT NULL,
           $columnTags TEXT NOT NULL,
-          $columnAdId TEXT NOT NULL
+          $columnAdId TEXT UNIQUE NOT NULL
           );
           ''');
     });

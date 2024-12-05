@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
+// import 'dart:isolate';
 import 'package:dio/dio.dart';
 import 'package:launcher/src/common/dio_access.dart';
 import 'package:launcher/src/database/media.dart';
@@ -69,7 +69,7 @@ Future<int> saveScheduleToDatabase(DeviceSchedule deviceSchedule) async {
 }
 
 Future<void> downloadScheduleMedia(DeviceSchedule deviceSchedule) async {
-  Isolate.spawn(isolateDownloadMedia, deviceSchedule);
+  // Isolate.spawn(isolateDownloadMedia, deviceSchedule);
 }
 
 isolateDownloadMedia(DeviceSchedule deviceSchedule) async {

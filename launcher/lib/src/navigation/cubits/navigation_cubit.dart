@@ -8,6 +8,8 @@ class ChannelPicker extends NavigationState {}
 
 class DeviceRegistration extends NavigationState {}
 
+class Diagnostics extends NavigationState {}
+
 class NavigationCubit extends Cubit<NavigationState> {
   NavigationCubit() : super(WiFiPicker());
 
@@ -16,4 +18,6 @@ class NavigationCubit extends Cubit<NavigationState> {
   void goToChannelPicker() => emit(ChannelPicker());
 
   void goToDeviceRegistration() => emit(DeviceRegistration());
+
+  void goToDiagnosticView() => emit(Diagnostics());
 }

@@ -52,7 +52,7 @@ Future<void> startListeningForSSE(BuildContext context, {String? deviceId}) asyn
         processSSE(sseData.toSSE());
       });
     }, onError: (error) async {
-      launcher_notification.Notification().i("SSE received: '${error.message}'.");
+      launcher_notification.Notification().e("SSE received: ${error.message}.");
     },
     autoReconnect: true,
     reconnectConfig: ReconnectConfig(
