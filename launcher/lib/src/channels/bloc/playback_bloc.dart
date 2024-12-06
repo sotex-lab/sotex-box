@@ -36,16 +36,18 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
 
   PlaybackBloc() : super(PlaybackState(Queue<ScheduleItem>(), null)) {
       on<PlaybackPlayNext>((event, emit) async {
-        if (state.playbackQueue.isEmpty) {
+        if (  state.playbackQueue.isEmpty) {
           final queue = Queue<ScheduleItem>.from(await provider.getScheduleItems());
 
-          if (queue.isEmpty) {
+          if (queue.isEmpty && _timer == null) {
             DebugSingleton().getDebugBloc.add(DebugPushEvent("Queue empty"));
             _timer = Timer.periodic(Duration(minutes: 1), (_){
               add(PlaybackPlayNext());
             });
             return;
           }
+
+          if(queue.isEmpty) return;
 
           ScheduleItem item = queue.removeFirst();
           String? path = await getPathIfExistsForItem(item);

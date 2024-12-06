@@ -53,21 +53,23 @@ class SotexBoxState extends State<SotexBox> {
           BlocProvider(create: (context) => PlaybackBloc()),
           BlocProvider(create: (context) => DebugSingleton().getDebugBloc)
         ],
-        child: Builder(
-          builder: (context) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              startListeningForSSE(context);
-            });
-
-            return MaterialApp.router(
-              theme: ThemeData(
-                  brightness: Brightness.dark, primaryColor: Colors.blueGrey),
-              darkTheme: ThemeData(
-                  brightness: Brightness.dark, primaryColor: Colors.blueGrey),
-              themeMode: ThemeMode.system,
-              routerDelegate: AppRouterDelegate(),
-            );
-          },
+        child: SafeArea(
+          child: Builder(
+            builder: (context) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                startListeningForSSE(context);
+              });
+          
+              return MaterialApp.router(
+                theme: ThemeData(
+                    brightness: Brightness.dark, primaryColor: Colors.blueGrey),
+                darkTheme: ThemeData(
+                    brightness: Brightness.dark, primaryColor: Colors.blueGrey),
+                themeMode: ThemeMode.system,
+                routerDelegate: AppRouterDelegate(),
+              );
+            },
+          ),
         ),
       ),
     );
