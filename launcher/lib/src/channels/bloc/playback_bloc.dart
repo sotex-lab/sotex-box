@@ -58,8 +58,14 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
             emit(PlaybackState(queue, state.current));
             return;
           }
+          
+          if (!File(path).existsSync()) {
+            DebugSingleton().getDebugBloc.add(DebugPushEvent("Video file does not exist: $path"));
+            add(PlaybackPlayNext());
+            return;
+          }
 
-          _initializeAndPlay(path);
+          await _initializeAndPlay(path);
           _timer?.cancel();
           _timer = null;
 
@@ -74,7 +80,13 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
             return;
           }
 
-          _initializeAndPlay(path);
+          if (!File(path).existsSync()) {
+            DebugSingleton().getDebugBloc.add(DebugPushEvent("Video file does not exist: $path"));
+            add(PlaybackPlayNext());
+            return;
+          }
+
+          await _initializeAndPlay(path);
 
           emit(PlaybackState(state.playbackQueue, state.current));
         }
@@ -82,16 +94,17 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     );
   }
 
-  void _initializeAndPlay(String path){
-    state.current = VideoPlayerController.file(File(path))
-          ..initialize().then((_){
-            state.current!.addListener(_videoListener);
-            state.current!.setLooping(false);
-            state.current!.play();
-          }).catchError((error){
-            DebugSingleton().getDebugBloc.add(DebugPushEvent("Error with video, $error"));
-            add(PlaybackPlayNext());
-          });
+  Future<void> _initializeAndPlay(String path) async {
+    state.current = VideoPlayerController.file(File(path));
+    try {
+      await state.current!.initialize().timeout(Duration(seconds: 10)); 
+      state.current!.addListener(_videoListener);
+      state.current!.setLooping(false);
+      state.current!.play();
+    } catch (error) {
+      DebugSingleton().getDebugBloc.add(DebugPushEvent("Error with video, $error"));
+      add(PlaybackPlayNext());
+    }
   }
 
   void _videoListener() {

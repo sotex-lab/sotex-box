@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-// import 'dart:isolate';
+import 'dart:isolate';
 import 'package:dio/dio.dart';
-import 'package:launcher/src/common/dio_access.dart';
 import 'package:launcher/src/database/media.dart';
 import 'package:launcher/src/sse/models/schedule.dart';
 import 'package:launcher/src/sse/processing/processor.dart';
@@ -18,8 +17,8 @@ class ScheduleProcessor extends Processor {
   @override
   Future<bool> process() async {
     try {
-      final scheduleDownloadUrl = await getScheduleDownloadUrl(dio);
-      final DeviceSchedule deviceSchedule = await downloadSchedule(dio, scheduleDownloadUrl);
+      final scheduleDownloadUrl = await getScheduleDownloadUrl();
+      final DeviceSchedule deviceSchedule = await downloadSchedule(scheduleDownloadUrl);
       final insertCount = await saveScheduleToDatabase(deviceSchedule);
       // isolateDownloadMedia(deviceSchedule);
       Notification().i("Inserted $insertCount schedule items in the database.");
@@ -34,7 +33,7 @@ class ScheduleProcessor extends Processor {
   }
 }
 
-Future<String> getScheduleDownloadUrl(Dio dio) async {
+Future<String> getScheduleDownloadUrl() async {
   final prefs = await SharedPreferences.getInstance();
   String deviceId = prefs.getString('deviceId') ?? '';
   if (deviceId == "") {
@@ -46,19 +45,19 @@ Future<String> getScheduleDownloadUrl(Dio dio) async {
   }
 
   var url = "$backendHost/api/schedule/$deviceId";
-  final res = await dio.get(url);
+  final res = await Dio().get(url);
   final scheduleDownloadUrl = res.data.toString();
 
   return scheduleDownloadUrl;
 }
 
-Future<DeviceSchedule> downloadSchedule(Dio dio, String scheduleDownloadUrl) async {
-  final res2 = await dio.get(scheduleDownloadUrl);
+Future<DeviceSchedule> downloadSchedule(String scheduleDownloadUrl) async {
+  final res2 = await Dio().get(scheduleDownloadUrl);
   final schedule = res2.data.toString();
   final scheduleJson = jsonDecode(schedule) as Map<String, dynamic>;
   final deviceSchedule = DeviceSchedule.fromJson(scheduleJson);
-  await isolateDownloadMedia(deviceSchedule);
-  // downloadScheduleMedia(deviceSchedule);
+  // await isolateDownloadMedia(deviceSchedule);
+  downloadScheduleMedia(deviceSchedule);
   return deviceSchedule;
 }
 
@@ -69,25 +68,26 @@ Future<int> saveScheduleToDatabase(DeviceSchedule deviceSchedule) async {
 }
 
 Future<void> downloadScheduleMedia(DeviceSchedule deviceSchedule) async {
-  // Isolate.spawn(isolateDownloadMedia, deviceSchedule);
-}
-
-isolateDownloadMedia(DeviceSchedule deviceSchedule) async {
-  final Dio dio = Dio();
   for (final item in deviceSchedule.schedule) {
     final itemPath = await getMediaPathForItem(item);
     var file = File(itemPath);
     if (!await file.exists()) {
-      Notification().i("File directory: '$itemPath'.");
-      Notification().i("Downloading: '$item'.");
-      try{
-        await dio.download(item.downloadLink, itemPath);
-        Notification().i("Finished download '$item'.");
-      } catch(e){
-        Notification().e("Faild to download video");
-      }
-    } else {
+      Notification().i("Started download '$item'.");
+      Isolate.spawn(isolateDownloadMedia,[item, itemPath]);
+    }
+    else{
       Notification().i("Already downloaded: '$item'.");
     }
+  }
+}
+
+void isolateDownloadMedia(List<dynamic> args) async {
+  final ScheduleItem item = args[0] as ScheduleItem;
+  final String itemPath = args[1] as String;
+
+  try {
+    await Dio().download(item.downloadLink, itemPath);
+  } catch (e) {
+    print("Faild to download video");
   }
 }
