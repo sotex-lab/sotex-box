@@ -4,10 +4,11 @@ using backend.Hangfire.Dashboard;
 using backend.Services;
 using Hangfire;
 using Hangfire.Dashboard;
-using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Identity;
 using model.Mappers;
 using OpenTelemetry.Metrics;
 using persistence;
+using Persistence.Repository.Base;
 using SseHandler;
 using SseHandler.Metrics;
 
@@ -19,6 +20,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddEventCoordinator();
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
+builder
+    .Services.AddIdentityCore<User>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddApiEndpoints();
 
 builder.Logging.AddSimpleConsole(options =>
 {
@@ -93,6 +100,7 @@ app.UseHangfireDashboard(
 );
 
 app.MapControllers();
+app.MapIdentityApi<User>().WithTags("Identity");
 
 app.Run();
 
